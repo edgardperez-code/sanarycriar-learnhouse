@@ -7,13 +7,14 @@
   position: relative;
 }
 
+/* Sanar y Criar: the band is the brand's dark violet (#190933). */
 .lh-theater-band::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -10;
-  background: #141414;
-  box-shadow: 0 0 0 100vmax #141414;
+  background: var(--color-violeta, #190933);
+  box-shadow: 0 0 0 100vmax var(--color-violeta, #190933);
   clip-path: inset(0 -100vmax -100vmax -100vmax);
 }
 

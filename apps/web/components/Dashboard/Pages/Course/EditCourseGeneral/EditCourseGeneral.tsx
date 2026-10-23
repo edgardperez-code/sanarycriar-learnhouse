@@ -21,6 +21,8 @@ import {
   CustomSelectValue,
 } from "./CustomSelect";
 import { useTranslation } from 'react-i18next';
+// Sanar y Criar: product type (course / ebook) switch.
+import ProductTypeToggle from '@components/SanarYCriar/ProductTypeToggle';
 
 type EditCourseStructureProps = {
   orgslug: string
@@ -236,6 +238,9 @@ function EditCourseGeneral(props: EditCourseStructureProps) {
             )}
 
             <div className="space-y-6">
+              {/* Sanar y Criar: product type (course / ebook) */}
+              <ProductTypeToggle />
+
               <FormField name="name">
                 <FormLabelAndMessage label={t('dashboard.courses.general.form.name_label')} message={formik.errors.name} />
                 <Form.Control asChild>

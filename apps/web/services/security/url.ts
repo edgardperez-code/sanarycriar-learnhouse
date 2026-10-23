@@ -22,9 +22,12 @@ export function safeInternalPath(path: string | null | undefined, fallback = '/'
   const value = cleanUrl(path)
   if (!value || !value.startsWith('/')) return fallback
   try {
-    return new URL(value, RELATIVE_BASE).origin === new URL(RELATIVE_BASE).origin
-      ? value
-      : fallback
+    // Sanar y Criar: return the normalized form, never the raw value. Dot
+    // segments collapse on the next parse ("/..//evil.com" -> "//evil.com"),
+    // and a path starting with "//" is read by browsers as another host.
+    const parsed = new URL(value, RELATIVE_BASE)
+    if (parsed.origin !== new URL(RELATIVE_BASE).origin || parsed.pathname.startsWith('//')) return fallback
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`
   } catch {
     return fallback
   }

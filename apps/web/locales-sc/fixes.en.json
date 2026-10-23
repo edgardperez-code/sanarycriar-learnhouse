@@ -1,0 +1,31 @@
+{
+  "sc_fixes": {
+    "course_actions": {
+      "continue": "Continue",
+      "leave": "Leave course",
+      "leave_title": "Leave this course?",
+      "leave_description": "Leaving deletes your progress in this course: the lessons you completed and where you were in each video.",
+      "leave_hint": "You can start it again whenever you like.",
+      "leave_confirm": "Yes, leave and delete my progress",
+      "leave_cancel": "Stay in the course",
+      "leaving": "Leaving the course…",
+      "leave_success": "You left the course.",
+      "leave_error": "We couldn't remove you from the course. Please try again."
+    },
+    "offers_archive": {
+      "checking": "Checking what this offer covers…",
+      "free_title": "This will become free for everyone",
+      "free_description_one": "This is the only active offer covering this item. If you archive it, anyone will be able to see it for free:",
+      "free_description_other": "This is the only active offer covering these {{count}} items. If you archive it, anyone will be able to see them for free:",
+      "free_hint_one": "To keep selling it, first add it to another offer or create a new one, then archive this one.",
+      "free_hint_other": "To keep selling them, first add them to another offer or create a new one, then archive this one.",
+      "check_failed": "We couldn't check whether any course or ebook would become free. Keep in mind that if this is an item's only offer, archiving it makes that item free for everyone.",
+      "type_course": "Course",
+      "type_ebook": "Ebook",
+      "unknown_resource": "Item {{id}}",
+      "confirm_free_one": "Archive and make it free",
+      "confirm_free_other": "Archive and make them free",
+      "archiving": "Archiving…"
+    }
+  }
+}

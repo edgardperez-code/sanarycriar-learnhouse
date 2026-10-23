@@ -1685,15 +1685,20 @@ async def update_org_default_language_config(
 
 
 def get_org_default_language(org_config: OrganizationConfig | None) -> str:
-    """Read the org's default language from its config, falling back to 'en'."""
+    """Read the org's default language from its config.
+
+    Sanar y Criar: falls back to DEFAULT_LANGUAGE ("es"), not "en".
+    """
+    from src.services.email.translations import DEFAULT_LANGUAGE
+
     if org_config is None or not org_config.config:
-        return "en"
+        return DEFAULT_LANGUAGE
     cfg = org_config.config
     v2 = cfg.get("customization", {}).get("general", {}).get("default_language")
     if v2:
         return v2
     v1 = cfg.get("general", {}).get("default_language")
-    return v1 or "en"
+    return v1 or DEFAULT_LANGUAGE
 
 
 async def update_org_watermark_config(

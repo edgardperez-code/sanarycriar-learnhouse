@@ -12,7 +12,7 @@ import { getCourseThumbnailMediaDirectory, getUserAvatarMediaDirectory } from '@
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
 import { getCourseMetadata } from '@services/courses/courses'
-import { BookMinus, FilePenLine, Settings2, MoreVertical, Copy, Download, CheckSquare, Square, Lock } from 'lucide-react'
+import { BookMinus, FilePenLine, Settings2, MoreVertical, Copy, Download, CheckSquare, Square, Lock, ArrowRight } from 'lucide-react'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import Link from 'next/link'
 import React from 'react'
@@ -37,6 +37,7 @@ type Course = {
   update_date: string
   public?: boolean
   published?: boolean
+  extra_metadata?: { product_type?: string } | null
   authors?: Array<{
     user: {
       id: string
@@ -153,9 +154,11 @@ function CourseThumbnail({ course, orgslug, customLink, isDashboard = false, isS
     : '/empty_thumbnail.png'
 
   const courseLink = customLink ? customLink : getUriWithOrg(orgslug, `/course/${removeCoursePrefix(course.course_uuid)}`)
+  // Sanar y Criar: product type eyebrow and CTA, like the marketing catalog card.
+  const isEbook = course.extra_metadata?.product_type === 'ebook'
 
   return (
-    <div onMouseEnter={handleMouseEnter} className={`group relative flex flex-col bg-white rounded-xl nice-shadow overflow-hidden w-full transition-all duration-300 hover:scale-[1.01] ${isSelected ? 'ring-2 ring-black ring-offset-2' : ''}`}>
+    <div onMouseEnter={handleMouseEnter} className={`group relative flex flex-col bg-white rounded-xl nice-shadow overflow-hidden w-full h-full transition-all duration-300 hover:scale-[1.01] ${isSelected ? 'ring-2 ring-black ring-offset-2' : ''}`}>
       {/* Selection checkbox - visible on hover or when selected (dashboard only) */}
       {isDashboard && onToggleSelect && (
         <button
@@ -215,25 +218,45 @@ function CourseThumbnail({ course, orgslug, customLink, isDashboard = false, isS
         )}
       </Link>
 
-      <div className="p-3 flex flex-col space-y-1.5">
-        <div className="flex items-start justify-between">
+      <div className="p-4 flex flex-1 flex-col">
+        <p className="sc-eyebrow text-[0.6875rem]">
+          {isEbook
+            ? t('sc_brand.card.ebook_type', { defaultValue: 'Ebook · PDF' })
+            : t('sc_brand.card.course_type', { defaultValue: 'Curso en video' })}
+        </p>
+        <div className="mt-1.5 flex items-start justify-between">
           <Link
             prefetch={false}
             href={courseLink}
             onClick={handleCardOpen}
-            className="text-base font-bold text-gray-900 leading-tight hover:text-black transition-colors line-clamp-1"
+            className="font-display text-lg font-semibold text-violeta leading-snug hover:text-lavanda-700 transition-colors line-clamp-2"
            dir="auto">
             {course.name}
           </Link>
         </div>
         
         {course.description && (
-          <p className="text-[11px] text-gray-500 line-clamp-2 min-h-[1.5rem]">
+          <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-violeta-500 line-clamp-2">
             {course.description}
           </p>
         )}
 
-        <div className="pt-1.5 flex items-center justify-between border-t border-gray-100">
+        {!isDashboard ? (
+          <div className="mt-auto pt-4 flex justify-end">
+            <Link
+              prefetch={false}
+              href={courseLink}
+              onClick={handleCardOpen}
+              className="inline-flex items-center gap-1.5 text-[0.875rem] font-semibold text-lavanda-600 hover:text-lavanda-700 transition-colors"
+            >
+              {isEbook
+                ? t('sc_brand.card.view_ebook', { defaultValue: 'Ver ebook' })
+                : t('sc_brand.card.view_course', { defaultValue: 'Ver curso' })}
+              <ArrowRight size={15} strokeWidth={2} aria-hidden="true" />
+            </Link>
+          </div>
+        ) : (
+        <div className="mt-auto pt-3 flex items-center justify-between border-t border-gray-100">
           <div className="flex items-center gap-2">
             {displayedAuthors.length > 0 && (
               <div className="flex -space-x-2 items-center">
@@ -280,6 +303,7 @@ function CourseThumbnail({ course, orgslug, customLink, isDashboard = false, isS
             {t('courses.start_learning')}
           </Link>
         </div>
+        )}
       </div>
     </div>
   )

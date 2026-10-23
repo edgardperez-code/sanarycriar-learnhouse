@@ -19,6 +19,9 @@ import AuthLayout from '@components/Auth/AuthLayout'
 import TurnstileWidget, { useTurnstileRequired, verifyTurnstileToken, type TurnstileWidgetHandle } from '@components/Auth/TurnstileWidget'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import { getAllowedAuthMethods } from '@services/auth/authMethods'
+// Sanar y Criar: keep ?redirect (back to an offer or course) across login/signup.
+import { useAuthRedirectHref, currentAuthRedirect } from '@components/Payments/useAuthRedirect'
+import { safeInternalPath } from '@services/security/url'
 
 interface LoginClientProps {
   org: any
@@ -37,6 +40,7 @@ const LoginClient = (props: LoginClientProps) => {
   const router = useRouter();
   const session = useLHSession() as any;
   const isAuthenticated = session?.status === 'authenticated'
+  const signupHref = useAuthRedirectHref('/signup')
 
   // The org's allowed sign-in methods. Offering a method the org has turned off
   // only leads to a 403 from the backend, so it isn't offered at all.
@@ -133,7 +137,7 @@ const LoginClient = (props: LoginClientProps) => {
   // before the mfaToken state lands.
   useEffect(() => {
     if (isAuthenticated && !isSubmitting && !mfaToken && !arrivedWithMfaRef.current) {
-      router.replace('/home')
+      router.replace(currentAuthRedirect() ?? '/home')
     }
   }, [isAuthenticated, isSubmitting, mfaToken, router])
 
@@ -145,7 +149,9 @@ const LoginClient = (props: LoginClientProps) => {
     // `redirect_to` is what the magic-link consume endpoint forwards when it
     // bounces a 2FA-enabled user here instead of signing them straight in.
     const raw = params.get('next') ?? params.get('redirect') ?? params.get('redirect_to')
-    const dest = raw && /^\/(?!\/)/.test(raw) ? raw : '/home'
+    // Sanar y Criar: the shared guard also rejects dot-segment payloads such
+    // as "/..//evil.com", which the regex let through.
+    const dest = safeInternalPath(raw || null, '/home')
     return `${window.location.origin}/redirect_from_auth?next=${encodeURIComponent(dest)}`
   }
 
@@ -884,7 +890,7 @@ const LoginClient = (props: LoginClientProps) => {
               {/* Sign Up Link */}
               <p className="text-center text-sm text-black/35 mt-6">
                 {t('auth.no_account')}{' '}
-                <Link href="/signup" className="text-black font-semibold hover:underline">
+                <Link href={signupHref} className="text-black font-semibold hover:underline">
                   {t('auth.sign_up')}
                 </Link>
               </p>

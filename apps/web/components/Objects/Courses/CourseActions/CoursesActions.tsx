@@ -2,10 +2,11 @@ import React, { useState } from 'react'
 import { removeCourse, startCourse } from '@services/courses/activity'
 import { revalidateTags, asArray } from '@services/utils/ts/requests'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { getUriWithOrg } from '@services/config/config'
 import { getOffersByResource } from '@services/payments/offers'
-import { UserPen, ClockIcon, ArrowRight, BookOpen, UserPlus } from 'lucide-react'
+import { UserPen, ClockIcon, ArrowRight, BookOpen, UserPlus, CheckCircle2, Lock, LogIn } from 'lucide-react'
 import { OfferCard } from './OfferCard'
 import { applyForContributor } from '@services/courses/courses'
 import toast from 'react-hot-toast'
@@ -17,6 +18,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
 import { useTranslation } from 'react-i18next'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
+// Sanar y Criar: ownership of paid courses comes from the payments access
+// endpoint, not from the TrailRun (see docs/spec-tecnica.md 4.1).
+import { useCourseAccess } from '@components/Hooks/useCourseAccess'
+import { useScT } from '@components/Payments/useScT'
+import { productTypeOfCourse, withRedirect } from '@components/Payments/commerce'
+// Sanar y Criar: free courses with history get "Continuar" + a confirmed leave.
+import {
+  LeaveCourseDialog,
+  LeaveCourseLink,
+  forgetLocalCourseProgress,
+  useFreeCourseContinue,
+} from '@components/ScFixes/FreeCourseContinue'
+import { useFixesT } from '@components/ScFixes/useFixesT'
+import { sessionUserKey } from '@components/SanarYCriar/progressLocal'
 
 interface CourseRun {
   status: string
@@ -55,12 +70,15 @@ interface CourseActionsProps {
 
 function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseActionsProps) {
   const { t } = useTranslation()
+  const { sc } = useScT()
+  const { fx } = useFixesT()
   const router = useRouter()
   const session = useLHSession() as any
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [isContributeLoading, setIsContributeLoading] = useState(false)
   const { contributorStatus, refetch } = useContributorStatus(courseuuid)
   const [isProgressOpen, setIsProgressOpen] = useState(false)
+  const [isLeaveOpen, setIsLeaveOpen] = useState(false)
   const org = useOrg() as any
   const { isUserPartOfTheOrg } = useOrgMembership()
   const queryClient = useQueryClient()
@@ -69,13 +87,16 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
   // Clean up course UUID by removing 'course_' prefix if it exists
   const cleanCourseUuid = course.course_uuid?.replace('course_', '');
   const resourceUuid = cleanCourseUuid ? `course_${cleanCourseUuid}` : null;
+  const coursePath = `/course/${cleanCourseUuid ?? courseuuid}`
+  const isEbook = productTypeOfCourse(course) === 'ebook'
 
-  const isStarted = trailData?.runs?.find(
+  const run = trailData?.runs?.find(
     (run: any) => {
       const cleanRunCourseUuid = run.course?.course_uuid?.replace('course_', '');
       return cleanRunCourseUuid === cleanCourseUuid;
     }
-  ) ?? false;
+  );
+  const isStarted = !!run;
 
   // Public endpoint: no auth needed, works for unauthenticated visitors too
   const { data: offersResult, isLoading } = useQuery({
@@ -86,19 +107,77 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
   });
   const linkedOffers: any[] = asArray(offersResult);
 
+  // Sanar y Criar: access decides "for sale" and "yours". If the access check
+  // is unavailable, fall back to the offers list (and never offer "Leave").
+  const { access, isLoading: isAccessLoading } = useCourseAccess(course.course_uuid)
+  const forSale = access ? access.for_sale : linkedOffers.length > 0
+  const hasAccess = access ? access.has_access : isStarted
+
+  const allActivities = (course.chapters ?? []).flatMap((chapter: any) => chapter.activities ?? [])
+  const firstActivity: any = allActivities[0]
+  const completedIds = new Set((run?.steps ?? []).filter((s: any) => s.complete !== false).map((s: any) => String(s.activity_id)))
+  const nextActivity: any = allActivities.find((a: any) => !completedIds.has(String(a.id))) ?? firstActivity
+
+  const activityHref = (activity: any) =>
+    getUriWithOrg(orgslug, '') + `/course/${courseuuid}/activity/${activity.activity_uuid.replace('activity_', '')}`
+
+  // Sanar y Criar: continue point for free courses (saved progress first).
+  const freeContinue = useFreeCourseContinue({
+    course,
+    orgslug,
+    trailData,
+    fallbackHref: nextActivity ? activityHref(nextActivity) : null,
+  })
+
+  const handleContinue = async () => {
+    const href = freeContinue.href
+    if (!href) return
+    if (!isStarted) {
+      // Saved progress without a TrailRun (opened from a direct link): start
+      // the course as well, so it shows up in the learner's trail.
+      setIsActionLoading(true)
+      try {
+        await startCourse('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
+        if (org?.id) queryClient.invalidateQueries({ queryKey: queryKeys.trail.org(org.id) })
+      } catch {
+        // Best effort: the trail is a convenience, the lesson still opens.
+      } finally {
+        setIsActionLoading(false)
+      }
+    }
+    router.push(href)
+  }
+
+  // Resolves true when the learner left (closes the confirmation dialog).
+  const handleLeaveCourse = async (): Promise<boolean> => {
+    try {
+      await removeCourse('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
+    } catch {
+      toast.error(fx('course_actions.leave_error'))
+      return false
+    }
+    forgetLocalCourseProgress(sessionUserKey(session), course)
+    if (org?.id) queryClient.invalidateQueries({ queryKey: queryKeys.trail.org(org.id) })
+    // The server deleted the saved positions too (progress.course / .activity).
+    queryClient.invalidateQueries({ queryKey: ['progress'] })
+    track(AnalyticsEvent.CourseLeft, { course_uuid: cleanCourseUuid })
+    toast.success(fx('course_actions.leave_success'))
+    return true
+  }
+
   const handleCourseAction = async () => {
     if (!session.data?.user) {
       track(AnalyticsEvent.CourseSignupPrompted, {
         reason: 'unauthenticated',
         intended_action: isStarted ? 'leave_course' : 'start_course',
       })
-      router.push(getUriWithOrg(orgslug, '/signup'))
+      router.push(getUriWithOrg(orgslug, withRedirect('/signup', coursePath)))
       return
     }
 
     // Check if user is part of the organization
     if (!isUserPartOfTheOrg) {
-      router.push(getUriWithOrg(orgslug, '/signup'))
+      router.push(getUriWithOrg(orgslug, withRedirect('/signup', coursePath)))
       return
     }
 
@@ -123,16 +202,9 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
         })
         toast.success(t('courses.start_course_success'), { id: loadingToast })
 
-        // Get the first activity from the first chapter
-        const firstChapter = course.chapters?.[0]
-        const firstActivity = firstChapter?.activities?.[0]
-
         if (firstActivity) {
           // Redirect to the first activity
-          router.push(
-            getUriWithOrg(orgslug, '') +
-            `/course/${courseuuid}/activity/${firstActivity.activity_uuid.replace('activity_', '')}`
-          )
+          router.push(activityHref(firstActivity))
         }
       }
     } catch (error) {
@@ -148,9 +220,36 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
     }
   }
 
+  // Sanar y Criar: the owner of a paid course can only start or continue it.
+  // "Leave course" would wipe their progress (remove_course_from_trail).
+  const handleOwnedAction = async () => {
+    if (isStarted) {
+      if (nextActivity) router.push(activityHref(nextActivity))
+      return
+    }
+    setIsActionLoading(true)
+    try {
+      await startCourse('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
+      if (org?.id) queryClient.invalidateQueries({ queryKey: queryKeys.trail.org(org.id) })
+      track(AnalyticsEvent.CourseStarted, {
+        course_uuid: cleanCourseUuid,
+        total_activities: allActivities.length,
+        has_offers: true,
+      })
+      if (firstActivity) router.push(activityHref(firstActivity))
+    } catch (error) {
+      console.error('Failed to start owned course:', error)
+      // The trail is a convenience: still let the owner in.
+      if (firstActivity) router.push(activityHref(firstActivity))
+      else toast.error(t('courses.start_course_error'))
+    } finally {
+      setIsActionLoading(false)
+    }
+  }
+
   const handleApplyToContribute = async () => {
     if (!session.data?.user) {
-      router.push(getUriWithOrg(orgslug, '/signup'))
+      router.push(getUriWithOrg(orgslug, withRedirect('/signup', coursePath)))
       return
     }
 
@@ -209,7 +308,7 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
     if (!session.data?.user) {
       return (
         <button
-          onClick={() => router.push(getUriWithOrg(orgslug, '/signup'))}
+          onClick={() => router.push(getUriWithOrg(orgslug, withRedirect('/signup', coursePath)))}
           aria-label={t('auth.sign_up_to_contribute')}
           className="w-full bg-white text-neutral-700 border border-neutral-200 py-3 rounded-lg nice-shadow font-semibold hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2 mt-3 cursor-pointer"
         >
@@ -259,14 +358,6 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
   const renderProgressSection = () => {
     const totalActivities = course.chapters?.reduce((acc: number, chapter: any) => acc + chapter.activities.length, 0) || 0;
 
-    // Find the correct run using the cleaned UUID
-    const run = trailData?.runs?.find(
-      (run: any) => {
-        const cleanRunCourseUuid = run.course?.course_uuid?.replace('course_', '');
-        return cleanRunCourseUuid === cleanCourseUuid;
-      }
-    );
-
     const completedActivities = run?.steps?.filter((step: any) => step.complete)?.length || 0;
     const progressPercentage = totalActivities > 0 ? Math.round((completedActivities / totalActivities) * 100) : 0;
 
@@ -290,7 +381,7 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
                         cx="32"
                         cy="32"
                         r="28"
-                        stroke="#e5e7eb"
+                        stroke="#EEEDFF"
                         strokeWidth="6"
                         fill="none"
                       />
@@ -332,7 +423,7 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
                       cx="32"
                       cy="32"
                       r="28"
-                      stroke="#e5e7eb"
+                      stroke="#EEEDFF"
                       strokeWidth="6"
                       fill="none"
                     />
@@ -340,7 +431,8 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
                       cx="32"
                       cy="32"
                       r="28"
-                      stroke="#10b981"
+                      // Sanar y Criar: brand lavanda-600 (was emerald #10b981).
+                      stroke="#6559CA"
                       strokeWidth="6"
                       fill="none"
                       strokeLinecap="round"
@@ -381,8 +473,120 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
     );
   };
 
-  if (isLoading) {
+  if (isLoading || isAccessLoading) {
     return <div className="animate-pulse h-20 bg-gray-100 rounded-lg nice-shadow" />
+  }
+
+  // Sanar y Criar: paid course the viewer already owns (or can manage).
+  if (forSale && hasAccess) {
+    const ownedTitle =
+      access?.reason === 'admin' || access?.reason === 'author'
+        ? sc('course_actions.staff_access_title')
+        : isEbook ? sc('course_actions.owned_ebook_title') : sc('course_actions.owned_course_title')
+    const ownedDescription =
+      access?.reason === 'admin' || access?.reason === 'author'
+        ? sc('course_actions.staff_access_description')
+        : isEbook ? sc('course_actions.owned_ebook_description') : sc('course_actions.owned_course_description')
+    const actionLabel = isEbook
+      ? sc('course_actions.read_now')
+      : isStarted ? sc('course_actions.continue') : sc('course_actions.start')
+
+    return (
+      <div className="bg-white nice-shadow rounded-lg overflow-hidden p-4">
+        <div className="space-y-4">
+          <div className="p-4 bg-[#EEEDFF] rounded-[20px]">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-[#6559CA] shrink-0" />
+              <h3 className="text-[#190933] font-semibold">{ownedTitle}</h3>
+            </div>
+            <p className="text-[#584F72] text-sm mt-1">{ownedDescription}</p>
+          </div>
+          {!isEbook && isStarted && renderProgressSection()}
+          {firstActivity && (
+            <button
+              onClick={handleOwnedAction}
+              disabled={isActionLoading}
+              aria-label={actionLabel}
+              className="w-full py-3 rounded-full nice-shadow font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer bg-[#190933] text-white hover:bg-[#41375B] disabled:opacity-70"
+            >
+              {isActionLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>{actionLabel}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          )}
+          {renderContributorButton()}
+          {!isEbook && (
+            <CourseProgress
+              course={course}
+              orgslug={orgslug}
+              isOpen={isProgressOpen}
+              onClose={() => setIsProgressOpen(false)}
+              trailData={trailData}
+            />
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Sanar y Criar: paid course the viewer does not own yet: offers to buy it.
+  if (forSale) {
+    const loginHref = getUriWithOrg(orgslug, withRedirect('/login', coursePath))
+    // Sanar y Criar: a payment under review is shown instead of the offers,
+    // so the buyer is not charged twice while PayPal confirms the first one.
+    if (access?.payment_pending) {
+      return (
+        <div className="space-y-3">
+          <div role="status" className="p-4 bg-amber-50 border border-amber-200 rounded-[20px] space-y-1">
+            <div className="flex items-center gap-2">
+              <ClockIcon className="w-4 h-4 text-amber-700" />
+              <h3 className="text-[#190933] font-semibold text-sm">{sc('course_actions.payment_pending_title')}</h3>
+            </div>
+            <p className="text-xs text-[#584F72] leading-relaxed">{sc('course_actions.payment_pending_description')}</p>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div className="space-y-3">
+        {linkedOffers.length > 1 && (
+          <p className="text-xs text-gray-400 font-medium px-1">
+            {sc('course_actions.options_available', { count: linkedOffers.length })}
+          </p>
+        )}
+        {linkedOffers.map((offer: any) => (
+          <OfferCard key={offer.offer_uuid ?? offer.offer_id} offer={offer} orgslug={orgslug} />
+        ))}
+        {linkedOffers.length === 0 && (
+          <div className="p-4 bg-white nice-shadow rounded-[20px] space-y-2">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-[#6559CA]" />
+              <h3 className="text-[#190933] font-semibold text-sm">
+                {isEbook ? sc('course_actions.paid_ebook_title') : sc('course_actions.paid_course_title')}
+              </h3>
+            </div>
+            <Link href={getUriWithOrg(orgslug, '/store')} className="text-sm text-[#4F43A4] underline">
+              {sc('course_actions.see_store')}
+            </Link>
+          </div>
+        )}
+        {!session.data?.user && (
+          <p className="text-xs text-[#584F72] px-1 flex items-center gap-1.5">
+            <LogIn className="w-3.5 h-3.5" />
+            <span>{sc('course_actions.already_bought')}</span>{' '}
+            <Link href={loginHref} className="font-semibold text-[#4F43A4] underline">
+              {sc('course_actions.login')}
+            </Link>
+          </p>
+        )}
+        {renderContributorButton()}
+      </div>
+    )
   }
 
   // Show join organization prompt for authenticated users who are not part of the org
@@ -400,7 +604,7 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
             </p>
           </div>
           <a
-            href={getUriWithOrg(orgslug, '/signup')}
+            href={getUriWithOrg(orgslug, withRedirect('/signup', coursePath))}
             className="w-full bg-neutral-900 text-white py-3 rounded-lg nice-shadow font-semibold hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
           >
             <UserPlus className="w-5 h-5" />
@@ -411,54 +615,48 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
     )
   }
 
-  if (linkedOffers.length > 0) {
-    // User already enrolled / started: show "you own this" notice + leave button
-    if (isStarted) {
-      return (
-        <div className="bg-white nice-shadow rounded-lg overflow-hidden p-4">
-          <div className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <h3 className="text-green-800 font-semibold">{t('courses.you_own_this_course')}</h3>
-              </div>
-              <p className="text-green-700 text-sm mt-1">
-                {t('courses.you_own_this_course_description')}
-              </p>
-            </div>
-            <button
-              onClick={handleCourseAction}
-              disabled={isActionLoading}
-              aria-label={t('courses.leave_course')}
-              className="w-full py-3 rounded-lg nice-shadow font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer bg-red-500 text-white hover:bg-red-600 disabled:bg-red-400"
-            >
-              {isActionLoading
-                ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                : renderActionButton('leave')
-              }
-            </button>
-            {renderContributorButton()}
-          </div>
-        </div>
-      )
-    }
-
-    // Not enrolled: show all available offers
+  // Sanar y Criar: free course with history (TrailRun or saved progress):
+  // "Continuar" to the exact point; leaving is secondary and confirmed.
+  if (session.data?.user && (isStarted || freeContinue.hasProgress)) {
     return (
-      <div className="space-y-3">
-        {linkedOffers.length > 1 && (
-          <p className="text-xs text-gray-400 font-medium px-1">
-            {linkedOffers.length} options available
-          </p>
-        )}
-        {linkedOffers.map((offer: any) => (
-          <OfferCard key={offer.offer_id} offer={offer} orgslug={orgslug} />
-        ))}
-        {renderContributorButton()}
+      <div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden p-4">
+        <div className="space-y-4">
+          {isStarted && renderProgressSection()}
+          {freeContinue.href && (
+            <button
+              onClick={handleContinue}
+              disabled={isActionLoading}
+              aria-label={fx('course_actions.continue')}
+              className="w-full py-3 rounded-full nice-shadow font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer bg-[#190933] text-white hover:bg-[#41375B] disabled:opacity-70"
+            >
+              {isActionLoading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>{fx('course_actions.continue')}</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+          )}
+          {isStarted && (
+            <LeaveCourseLink onClick={() => setIsLeaveOpen(true)} disabled={isActionLoading} />
+          )}
+          {renderContributorButton()}
+          <CourseProgress
+            course={course}
+            orgslug={orgslug}
+            isOpen={isProgressOpen}
+            onClose={() => setIsProgressOpen(false)}
+            trailData={trailData}
+          />
+        </div>
+        <LeaveCourseDialog open={isLeaveOpen} onOpenChange={setIsLeaveOpen} onConfirm={handleLeaveCourse} />
       </div>
     )
   }
 
+  // Free course: upstream behaviour.
   return (
     <div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden p-4">
       <div className="space-y-4">

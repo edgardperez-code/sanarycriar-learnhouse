@@ -41,7 +41,7 @@ export async function generateMetadata({
 
   const seoConfig = getOrgSeoConfig(org)
 
-  const title = buildPageTitle(podcastMeta?.podcast?.name || 'Podcast', org?.name || 'Organization', seoConfig)
+  const title = buildPageTitle(podcastMeta?.podcast?.name || 'Pódcast', org?.name || 'Sanar y Criar', seoConfig) // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
   const description = podcastMeta?.podcast?.description || seoConfig.default_meta_description || `Listen to this podcast from ${org?.name || 'this organization'}`
   const ogImageUrl = seoConfig.default_og_image
     ? getOrgOgImageMediaDirectory(org?.org_uuid, seoConfig.default_og_image)
@@ -151,8 +151,8 @@ export default async function PodcastPage({ params }: { params: PageParams }) {
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Home', url: await getServerCanonicalUrl(orgslug, '/') },
-    { name: 'Podcasts', url: await getServerCanonicalUrl(orgslug, '/podcasts') },
+    { name: 'Inicio', url: await getServerCanonicalUrl(orgslug, '/') },
+    { name: 'Pódcasts', url: await getServerCanonicalUrl(orgslug, '/podcasts') },
     { name: podcastMeta.podcast.name, url: await getServerCanonicalUrl(orgslug, `/podcast/${podcastuuid}`) },
   ])
 

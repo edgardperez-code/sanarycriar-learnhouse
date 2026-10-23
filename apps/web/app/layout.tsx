@@ -1,15 +1,28 @@
 import '../styles/globals.css'
 import React from 'react'
+import type { Metadata, Viewport } from 'next'
 import Providers from '@components/Providers'
-import { Wix_Madefor_Text, Tajawal } from 'next/font/google'
+import { Poppins, Playfair_Display, Tajawal } from 'next/font/google'
 
-const wixMadeforText = Wix_Madefor_Text({
+// Sanar y Criar: brand typography (brand manual p.1). Poppins for everything,
+// Playfair Display for titles, phrases and big numbers. `--font-default` keeps
+// the upstream variable name so every existing rule picks Poppins up.
+const poppins = Poppins({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-default',
 })
 
-// Wix Madefor Text has no Arabic subset, so Arabic would otherwise fall back to
+const playfairDisplay = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['500', '600'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+  variable: '--font-heading',
+})
+
+// Poppins has no Arabic subset, so Arabic would otherwise fall back to
 // whatever the OS provides (Geeza Pro, Segoe UI, Noto) and look like a
 // different product on every platform.
 //
@@ -26,7 +39,25 @@ const tajawal = Tajawal({
   weight: ['300', '400', '500', '700', '800'],
   display: 'swap',
   variable: '--font-arabic',
+  // Sanar y Criar: the UI is Spanish only; don't preload a face nobody uses.
+  preload: false,
 })
+
+// Sanar y Criar: brand icons (the "SyC" monogram of the marketing site). An
+// org favicon uploaded from the dashboard still wins (app/orgs/[orgslug]/layout.tsx).
+export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/sc-favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '48x48' },
+    ],
+    apple: '/sc-apple-touch-icon.png',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#FDF5EE',
+}
 
 export default function RootLayout({
   children,
@@ -35,12 +66,13 @@ export default function RootLayout({
 }) {
   // `dir` is deliberately absent from the <html> below. React only reconciles
   // attributes present in its virtual tree, so leaving it out means React never
-  // clobbers what dir-init.js wrote before paint. `lang="en"` stays as the
-  // no-JS baseline for crawlers; the script overwrites it for everyone else.
+  // clobbers what dir-init.js wrote before paint. `lang` is the no-JS baseline
+  // for crawlers; the script overwrites it for everyone else.
+  // Sanar y Criar: Spanish is the platform language.
   return (
     <html
-      className={`${wixMadeforText.variable} ${tajawal.variable}`}
-      lang="en"
+      className={`${poppins.variable} ${playfairDisplay.variable} ${tajawal.variable}`}
+      lang="es"
       suppressHydrationWarning
     >
       <head>

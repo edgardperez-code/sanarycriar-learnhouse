@@ -1,5 +1,4 @@
 import React from 'react'
-import YouTube from 'react-youtube'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { useOrg } from '@components/Contexts/OrgContext'
@@ -7,6 +6,10 @@ import { getUriWithOrg } from '@services/config/config'
 import { getCourseThumbnailMediaDirectory } from '@services/media/media'
 import LearnHousePlayer, { type PlayerNavItem } from './LearnHousePlayer'
 import VideoChapters from './VideoChapters'
+// Sanar y Criar: resume + progress saving (hosted and YouTube).
+import { useHostedVideoProgress } from './useVideoProgress'
+import YouTubeProgressPlayer from './YouTubeProgressPlayer'
+import ResumeToast from '@components/SanarYCriar/ResumeToast'
 import { positiveIntParam } from '@/lib/copilot/sources'
 import {
   isActivityHlsReady,
@@ -69,9 +72,11 @@ interface VideoActivityProps {
     chapters?: { activities?: NeighborActivity[] }[]
   }
   orgUuid?: string
+  /** Sanar y Criar: resume and save the learner's position (default on). */
+  trackProgress?: boolean
 }
 
-function VideoActivity({ activity, course, orgUuid }: VideoActivityProps) {
+function VideoActivity({ activity, course, orgUuid, trackProgress = true }: VideoActivityProps) {
   const org = useOrg() as any
   const router = useRouter()
   const { t } = useTranslation()
@@ -84,6 +89,15 @@ function VideoActivity({ activity, course, orgUuid }: VideoActivityProps) {
   // markup depends on it, so reading the URL during render is hydration-safe.
   const linkedStart = typeof window !== 'undefined' ? positiveIntParam(window.location.search, 't') : null
   const details = linkedStart ? { ...activity.details, startTime: linkedStart } : activity.details
+  // Sanar y Criar: `?t=` > saved position > details.startTime.
+  const resume = useHostedVideoProgress({
+    videoEl: activity.activity_sub_type === 'SUBTYPE_VIDEO_HOSTED' ? videoEl : null,
+    activityUuid: activity.activity_uuid,
+    courseUuid: course?.course_uuid,
+    baseStart: activity.details?.startTime || 0,
+    linkedStart,
+    enabled: trackProgress && activity.activity_sub_type === 'SUBTYPE_VIDEO_HOSTED',
+  })
 
   React.useEffect(() => {
     if (activity?.content?.uri) {
@@ -195,6 +209,14 @@ function VideoActivity({ activity, course, orgUuid }: VideoActivityProps) {
                     />
                   ) : null
                 })()}
+                {resume.toastAt != null && (
+                  <ResumeToast
+                    position={resume.toastAt}
+                    onRestart={resume.restart}
+                    onDismiss={resume.dismiss}
+                    autoHide={resume.started}
+                  />
+                )}
               </div>
               {chapters.length > 0 && (
                 <VideoChapters
@@ -217,28 +239,17 @@ function VideoActivity({ activity, course, orgUuid }: VideoActivityProps) {
           {activity.activity_sub_type === 'SUBTYPE_VIDEO_YOUTUBE' && (
             <div className="w-full">
               <div className="relative w-full aspect-video overflow-hidden rounded-[20px] ring-1 ring-white/10">
-                <YouTube
-                  className="w-full h-full"
-                  opts={{
-                    width: '100%',
-                    height: '100%',
-                    playerVars: {
-                      autoplay: activity.details?.autoplay ? 1 : 0,
-                      mute: activity.details?.muted ? 1 : 0,
-                      start: activity.details?.startTime || 0,
-                      end: activity.details?.endTime || undefined,
-                      controls: 1,
-                      modestbranding: 1,
-                      rel: 0
-                    },
-                  }}
-                  videoId={videoId}
-                  onReady={(event) => {
-                    if (activity.details?.startTime) {
-                      event.target.seekTo(activity.details.startTime, true)
-                    }
-                  }}
-                />
+                {videoId && (
+                  <YouTubeProgressPlayer
+                    key={activity.activity_uuid}
+                    videoId={videoId}
+                    activityUuid={activity.activity_uuid}
+                    courseUuid={course?.course_uuid}
+                    details={activity.details}
+                    linkedStart={linkedStart}
+                    trackProgress={trackProgress}
+                  />
+                )}
               </div>
             </div>
           )}

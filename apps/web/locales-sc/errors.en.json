@@ -1,0 +1,144 @@
+{
+  "sc_errors": {
+    "categories": {
+      "version_mismatch": {
+        "label": "update",
+        "title": "The app just updated",
+        "description": "A new version of Sanar y Criar was released while this page was open, so it briefly fell out of sync. Reloading will pick up the latest version."
+      },
+      "chunk_load": {
+        "label": "loading",
+        "title": "Part of the page didn't load",
+        "description": "Your browser was holding onto an older copy of the app and couldn't load a piece of it. A quick reload usually clears it right up."
+      },
+      "auth_session": {
+        "label": "session",
+        "title": "Your session expired",
+        "description": "You've been signed out or your sign-in needs refreshing. Logging back in will restore your access."
+      },
+      "plan_limit": {
+        "label": "plan",
+        "title": "This feature isn't available",
+        "description": "The feature you tried to use isn't included on the current plan, or it's turned off. Enabling it or upgrading the plan unlocks access."
+      },
+      "permission": {
+        "label": "permission",
+        "title": "You don't have access to this",
+        "description": "Your account doesn't have permission for this page or action. If you think that's a mistake, write to us and we'll look into it."
+      },
+      "rate_limit": {
+        "label": "rate limit",
+        "title": "Let's slow down for a moment",
+        "description": "You've made a lot of requests in a short time, so we've paused things briefly to keep your account safe. It'll free up shortly."
+      },
+      "not_found": {
+        "label": "not found",
+        "title": "We couldn't find that",
+        "description": "It may have been moved or deleted, or it may no longer be available. It's not something you did wrong."
+      },
+      "conflict": {
+        "label": "conflict",
+        "title": "That already exists",
+        "description": "This conflicts with something that's already there: for example, an account or item with the same name or email already exists."
+      },
+      "validation": {
+        "label": "validation",
+        "title": "Something needs a quick fix",
+        "description": "A field is missing, out of range, or in the wrong format. Adjust the highlighted input and try again."
+      },
+      "org_config": {
+        "label": "setup",
+        "title": "This workspace needs setup",
+        "description": "This organization isn't fully configured yet. It needs to be set up before it can be used."
+      },
+      "payment": {
+        "label": "payment",
+        "title": "We couldn't complete the payment",
+        "description": "Something interrupted the payment or the subscription change. You can safely try again; if you see a charge you don't recognize, write to us."
+      },
+      "upload": {
+        "label": "upload",
+        "title": "That upload didn't go through",
+        "description": "Your file may be too large or in an unsupported format, or the connection dropped mid-upload. Check the file and give it another try."
+      },
+      "ai": {
+        "label": "AI",
+        "title": "The AI assistant ran into trouble",
+        "description": "An AI request was interrupted or returned an incomplete response. These can be temporary, so trying again often works."
+      },
+      "offline": {
+        "label": "offline",
+        "title": "You appear to be offline",
+        "description": "We couldn't reach our servers, which usually means a network hiccup on the way. Check your connection and try again."
+      },
+      "service_unavailable": {
+        "label": "service",
+        "title": "A service is temporarily down",
+        "description": "A feature we rely on isn't responding or hasn't been set up yet. It's on our side and usually clears on its own."
+      },
+      "timeout": {
+        "label": "timeout",
+        "title": "That took too long",
+        "description": "The request timed out before it finished. The server may be busy; trying again usually works."
+      },
+      "server": {
+        "label": "server",
+        "title": "We hit a snag on our end",
+        "description": "Our servers returned an unexpected error while handling your request. This is on us, not you; trying again in a moment usually helps."
+      },
+      "unknown": {
+        "label": "unknown",
+        "title": "Something didn't go as planned",
+        "description": "We ran into an unexpected problem completing your request. It's been logged and is likely temporary; trying again often clears it. If it keeps happening, tell us what you were doing."
+      }
+    },
+    "fallback_title": "Something unexpected happened",
+    "fallback_description": "We ran into an error and it's been logged. Retrying or heading home usually helps.",
+    "actions": {
+      "retry": "Retry",
+      "try_again": "Try again",
+      "reload": "Reload",
+      "login": "Log back in",
+      "home": "Home",
+      "signout": "Sign out",
+      "signing_out": "Signing out…",
+      "report": "Report this problem",
+      "contact_support": "Write to us"
+    },
+    "details": {
+      "show": "Show technical details",
+      "hide": "Hide technical details",
+      "cause": "cause",
+      "status": "status",
+      "digest": "digest",
+      "ref": "ref"
+    },
+    "report_dialog": {
+      "title": "Tell us what happened",
+      "subtitle": "Your report goes straight to our team so we can fix it.",
+      "name": "Name",
+      "email": "Email",
+      "comments": "What were you doing when this happened?",
+      "submit": "Send report",
+      "close": "Close",
+      "success": "We got your report. Thank you!"
+    },
+    "not_found_page": {
+      "heading": "We couldn't find this page",
+      "description": "It may have moved, or the link may have a typo. From the home page you can see the courses and ebooks.",
+      "home": "Back to home"
+    },
+    "org_not_found": {
+      "title": "Enter your organization",
+      "description": "Enter your organization name to continue to the login page.",
+      "placeholder": "your-organization",
+      "redirecting": "Redirecting…",
+      "continue": "Continue",
+      "help": "Don't know your organization name? Ask whoever manages your account."
+    },
+    "org_inactive": {
+      "title": "This organization is no longer active",
+      "description": "This workspace has been deactivated. If you think that's a mistake, write to us."
+    }
+  }
+}

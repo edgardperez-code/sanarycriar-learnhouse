@@ -6,6 +6,9 @@ import { getUriWithOrg } from '@services/config/config'
 import Link from 'next/link'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+// Sanar y Criar: thin "watched" bar per activity.
+import { useCourseProgress } from '@/hooks/queries/useCourseProgress'
+import { cleanActivityUuid, progressRatio } from '@components/SanarYCriar/progressLocal'
 
 interface ActivityChapterDropdownProps {
   course: any
@@ -22,6 +25,17 @@ export default function ActivityChapterDropdown(props: ActivityChapterDropdownPr
 
   // Clean up course UUID by removing 'course_' prefix if it exists
   const cleanCourseUuid = props.course.course_uuid?.replace('course_', '');
+
+  // Sanar y Criar: furthest point watched per activity (0..1).
+  const { data: courseProgress } = useCourseProgress(props.course.course_uuid);
+  const watchedRatio = React.useMemo(() => {
+    const map = new Map<string, number>();
+    (courseProgress?.items ?? []).forEach((item) => {
+      const ratio = progressRatio(Math.max(item.max_position_seconds ?? 0, item.position_seconds ?? 0), item.duration_seconds);
+      if (ratio != null) map.set(cleanActivityUuid(item.activity_uuid), item.completed ? 1 : ratio);
+    });
+    return map;
+  }, [courseProgress]);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -105,8 +119,9 @@ export default function ActivityChapterDropdown(props: ActivityChapterDropdownPr
         aria-expanded={isOpen}
         aria-haspopup="true"
         className="bg-white rounded-full px-5 nice-shadow flex items-center space-x-2 p-2.5 text-gray-700 hover:bg-gray-50 transition delay-150 duration-300 ease-in-out"
-        aria-label="View all activities"
-        title="View all activities"
+        // Sanar y Criar: translated label (was hard-coded English).
+        aria-label={t('sc_learning.dropdown.view_all')}
+        title={t('sc_learning.dropdown.view_all')}
       >
         <ListTree size={17} />
         <span className="text-xs font-bold">{t('courses.chapters')}</span>
@@ -193,6 +208,25 @@ export default function ActivityChapterDropdown(props: ActivityChapterDropdownPr
                                   {getActivityTypeLabel(activity.activity_type, activity.activity_sub_type)}
                                 </span>
                               </div>
+                              {(() => {
+                                // Sanar y Criar: watched bar (videos with a saved position).
+                                const ratio = watchedRatio.get(cleanActivityUuid);
+                                if (ratio == null || ratio < 0.01) return null;
+                                const percent = Math.round(ratio * 100);
+                                return (
+                                  <div
+                                    className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[#EEEDFF]"
+                                    role="progressbar"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={percent}
+                                    aria-label={t('sc_learning.dropdown.watched', '{{percent}}% visto', { percent })}
+                                    title={t('sc_learning.dropdown.watched', '{{percent}}% visto', { percent })}
+                                  >
+                                    <div className="h-full rounded-full bg-[#7D75E2]" style={{ width: `${Math.max(4, percent)}%` }} />
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <div className="text-neutral-300 group-hover:text-neutral-400 transition-colors cursor-pointer">
                               <ArrowRight size={12} />

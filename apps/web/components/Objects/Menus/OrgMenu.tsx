@@ -1,7 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react'
 import CopilotBubble from '@components/Copilot/CopilotBubble'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
@@ -9,10 +8,11 @@ import { getUriWithOrg } from '@services/config/config'
 import { fetchRAGChatSessions, RAGChatSession } from '@services/ai/ai'
 import { HeaderProfileBox } from '@components/Security/HeaderProfileBox'
 import MenuLinks from './OrgMenuLinks'
-import { getOrgLogoMediaDirectory } from '@services/media/media'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { SearchBar } from '@components/Objects/Search/SearchBar'
+import { ArrowLeft } from 'lucide-react'
+import ScWordmark from './ScWordmark'
+import { getScSiteUrl } from './scBrand'
 import { usePathname } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
@@ -54,9 +54,13 @@ export const OrgMenu = (props: any) => {
   const session = useLHSession() as any;
   const _access_token = session?.data?.tokens?.access_token;
   const org = useOrg() as any;
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const [isFocusMode, setIsFocusMode] = useState(false)
   const pathname = usePathname()
+  // Sanar y Criar: the mobile panel remembers the path it was opened on, so
+  // any navigation (menu links, the profile dropdown) closes it.
+  const [menuOpenPath, setMenuOpenPath] = React.useState<string | null>(null)
+  const isMenuOpen = menuOpenPath !== null && menuOpenPath === pathname
+  const setIsMenuOpen = (open: boolean) => setMenuOpenPath(open ? pathname : null)
   const { t } = useTranslation()
   const { rights } = useAdminStatus()
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
@@ -84,10 +88,10 @@ export const OrgMenu = (props: any) => {
   }
   const topOffset = isJoinBannerVisible ? JOIN_BANNER_HEIGHT : 0
 
-  // Get primary color from org config (v2: customization.general.color, v1: general.color)
   const config = org?.config?.config
-  const primaryColor = config?.customization?.general?.color || config?.general?.color || ''
-  const colors = getMenuColorClasses(primaryColor)
+  // Sanar y Criar: the header always uses the brand palette; the org colour
+  // (customization.general.color) only tints emails.
+  const colors = getMenuColorClasses('')
 
   // Filter dashboard menu items by resolved_features from API
   const rf = config?.resolved_features
@@ -141,45 +145,40 @@ export const OrgMenu = (props: any) => {
 
   return (
     <>
-      <div className="backdrop-blur-lg h-[60px] blur-3xl" style={{ zIndex: 'var(--z-behind)', marginTop: topOffset }}></div>
+      <div className="h-[60px]" style={{ zIndex: 'var(--z-behind)', marginTop: topOffset }}></div>
+      {/* Sanar y Criar: light brand bar (nube, borde) with the text wordmark,
+          text links and "Volver al sitio", like the marketing site header.
+          The org logo/colour and the search box are not shown here. */}
       <nav
-        aria-label="Top navigation"
-        className={`backdrop-blur-lg fixed start-0 end-0 h-[60px] ${!primaryColor ? 'bg-white/90 nice-shadow' : ''}`}
+        aria-label={t('sc_brand.nav_label', { defaultValue: 'Navegación principal' })}
+        className="fixed start-0 end-0 h-[60px] border-b border-borde bg-nube/90 backdrop-blur-md supports-[backdrop-filter]:bg-nube/80"
         style={{
           zIndex: 'var(--z-nav)',
-          backgroundColor: primaryColor || undefined,
           top: topOffset
         }}
       >
-        <div className="flex items-center justify-between w-full max-w-(--breakpoint-2xl) mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex items-center space-x-5 md:w-auto w-full">
-            <div className="logo flex md:w-auto w-full justify-center">
-              <Link href={getUriWithOrg(orgslug, '/')}>
-                <div className="flex w-auto h-9 rounded-md items-center m-auto py-1 justify-center">
-                  {org?.logo_image ? (
-                    <img
-                      src={`${getOrgLogoMediaDirectory(org.org_uuid, org?.logo_image)}`}
-                      alt="Learnhouse"
-                      style={{ width: 'auto', height: '100%' }}
-                      className="rounded-md"
-                    />
-                  ) : (
-                    <LearnHouseLogo logoFilter={colors.logoFilter} />
-                  )}
-                </div>
-              </Link>
-            </div>
+        <div className="flex items-center justify-between gap-4 w-full max-w-(--breakpoint-2xl) mx-auto px-4 sm:px-6 lg:px-8 h-full">
+          <div className="flex items-center gap-8 min-w-0 overflow-hidden p-1 -m-1">
+            <Link
+              href={getUriWithOrg(orgslug, '/')}
+              className="shrink-0 rounded-md"
+              aria-label={t('sc_brand.home_label', { defaultValue: 'Sanar y Criar, inicio' })}
+            >
+              <ScWordmark />
+            </Link>
             <div className="hidden md:flex">
-              <MenuLinks orgslug={orgslug} primaryColor={primaryColor} />
+              <MenuLinks orgslug={orgslug} />
             </div>
           </div>
 
-          {/* Search Section */}
-          <div className="hidden md:flex flex-1 justify-center max-w-lg px-4">
-            <SearchBar orgslug={orgslug} className="w-full" primaryColor={primaryColor} />
-          </div>
-
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-1.5">
+            <a
+              href={getScSiteUrl()}
+              className="hidden lg:inline-flex items-center gap-1.5 me-2 whitespace-nowrap text-[0.875rem] font-medium text-violeta-500 underline-offset-[0.4em] decoration-rosa-300 decoration-2 hover:text-violeta hover:underline"
+            >
+              <ArrowLeft size={15} strokeWidth={1.75} aria-hidden="true" />
+              {t('sc_brand.back_to_site', { defaultValue: 'Volver al sitio' })}
+            </a>
             {/* Progress / Trail */}
             <AuthenticatedClientElement checkMethod="authentication">
               <div className="hidden md:flex">
@@ -191,7 +190,7 @@ export const OrgMenu = (props: any) => {
                         className={`p-2 rounded-lg transition-colors ${colors.iconBtn}`}
                         aria-label={t('courses.progress')}
                       >
-                        <Signpost size={20} weight="fill" />
+                        <Signpost size={20} weight="regular" />
                       </Link>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="text-xs">
@@ -201,8 +200,8 @@ export const OrgMenu = (props: any) => {
                 </TooltipProvider>
               </div>
             </AuthenticatedClientElement>
-            {/* Boards */}
-            {rf?.boards?.enabled && (
+            {/* Boards (Sanar y Criar: staff only; learners see courses and the store) */}
+            {rf?.boards?.enabled && rights?.dashboard?.action_access && (
               <AuthenticatedClientElement checkMethod="authentication">
                 <div className="hidden md:flex">
                   <TooltipProvider delayDuration={0}>
@@ -213,7 +212,7 @@ export const OrgMenu = (props: any) => {
                           className={`p-2 rounded-lg transition-colors ${colors.iconBtn}`}
                           aria-label="Boards"
                         >
-                          <ChalkboardSimple size={20} weight="fill" />
+                          <ChalkboardSimple size={20} weight="regular" />
                         </Link>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="text-xs">
@@ -225,7 +224,7 @@ export const OrgMenu = (props: any) => {
               </AuthenticatedClientElement>
             )}
             {/* AI Copilot */}
-            {rf?.ai?.enabled && config?.admin_toggles?.ai?.copilot_enabled !== false && (
+            {rf?.ai?.enabled && config?.admin_toggles?.ai?.copilot_enabled !== false && rights?.dashboard?.action_access && (
               <AuthenticatedClientElement checkMethod="authentication">
                 <div className="hidden md:flex">
                   <CopilotMenuButton
@@ -251,7 +250,7 @@ export const OrgMenu = (props: any) => {
                             className={`p-2 rounded-lg transition-colors ${colors.iconBtn}`}
                             aria-label={t('common.dashboard')}
                           >
-                            <SquaresFour size={20} weight="fill" />
+                            <SquaresFour size={20} weight="regular" />
                           </button>
                         </DropdownMenuTrigger>
                       </TooltipTrigger>
@@ -298,7 +297,7 @@ export const OrgMenu = (props: any) => {
                             className={`p-2 rounded-lg transition-colors ${colors.iconBtn}`}
                             aria-label={t('common.help')}
                           >
-                            <Question size={20} weight="fill" />
+                            <Question size={20} weight="regular" />
                           </button>
                         </DropdownMenuTrigger>
                       </TooltipTrigger>
@@ -360,11 +359,17 @@ export const OrgMenu = (props: any) => {
             )}
 
             <div className="hidden md:flex">
-              <HeaderProfileBox primaryColor={primaryColor} />
+              <HeaderProfileBox />
             </div>
             <button
-              className={`md:hidden focus:outline-hidden ${colors.text}`}
+              type="button"
+              className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-full text-violeta hover:bg-lavanda-100"
               onClick={toggleMenu}
+              aria-expanded={isMenuOpen}
+              aria-controls="sc-mobile-menu"
+              aria-label={isMenuOpen
+                ? t('sc_brand.close_menu', { defaultValue: 'Cerrar menú' })
+                : t('sc_brand.open_menu', { defaultValue: 'Abrir menú' })}
             >
               {isMenuOpen ? (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -379,28 +384,42 @@ export const OrgMenu = (props: any) => {
           </div>
         </div>
       </nav>
-      <div
-        className={`fixed inset-x-0 bg-white/80 backdrop-blur-lg md:hidden shadow-lg transition-all duration-300 ease-in-out ${
-          isMenuOpen ? 'opacity-100' : '-top-full opacity-0'
-        }`}
-        style={{
-          zIndex: 'var(--z-nav-menu)',
-          top: isMenuOpen ? topOffset + 60 : undefined
-        }}
-      >
-        <div className="flex flex-col px-4 py-3 space-y-4 justify-center items-center">
-          {/* Mobile Search */}
-          <div className="w-full px-2">
-            <SearchBar orgslug={orgslug} isMobile={true} />
-          </div>
-          <div className='py-4'>
-            <MenuLinks orgslug={orgslug} />
-          </div>
-          <div className="border-t border-gray-200">
-            <HeaderProfileBox />
-          </div>
+      {isMenuOpen && (
+        <div
+          id="sc-mobile-menu"
+          className="fixed inset-x-0 border-b border-borde bg-nube md:hidden shadow-lg shadow-violeta/5"
+          style={{
+            zIndex: 'var(--z-nav-menu)',
+            top: topOffset + 60
+          }}
+        >
+          <nav
+            aria-label={t('sc_brand.mobile_nav_label', { defaultValue: 'Menú móvil' })}
+            className="flex flex-col px-4 pt-2 pb-6"
+          >
+            <MenuLinks orgslug={orgslug} variant="mobile" onNavigate={() => setIsMenuOpen(false)} />
+            <AuthenticatedClientElement checkMethod="authentication">
+              <Link
+                href={getUriWithOrg(orgslug, '/trail')}
+                onClick={() => setIsMenuOpen(false)}
+                className="flex min-h-12 items-center border-t border-borde py-3 text-base font-medium text-violeta-600"
+              >
+                {t('courses.progress')}
+              </Link>
+            </AuthenticatedClientElement>
+            <a
+              href={getScSiteUrl()}
+              className="flex min-h-12 items-center gap-2 border-t border-borde py-3 text-base font-medium text-violeta-600"
+            >
+              <ArrowLeft size={16} strokeWidth={1.75} aria-hidden="true" />
+              {t('sc_brand.back_to_site', { defaultValue: 'Volver al sitio' })}
+            </a>
+            <div className="mt-4">
+              <HeaderProfileBox variant="mobile" />
+            </div>
+          </nav>
         </div>
-      </div>
+      )}
 
       {/* Feedback Modal */}
       <FeedbackModal
@@ -462,7 +481,7 @@ const CopilotMenuButton = ({
                 className="relative p-2 rounded-lg transition-colors hover:bg-violet-500/10"
                 aria-label="Copilot"
               >
-                <ChatCircle size={20} weight="fill" className="text-violet-500" />
+                <ChatCircle size={20} weight="regular" className="text-violet-500" />
                 {/* Active indicator dot */}
                 {isBubbleMode && bubbleOpen && (
                   <span className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-violet-500 ring-2 ring-white dark:ring-neutral-900" />
@@ -554,17 +573,5 @@ const CopilotMenuButton = ({
         </button>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-const LearnHouseLogo = ({ logoFilter }: { logoFilter: string }) => {
-  return (
-    <Image
-      src="/lrn-text.svg"
-      alt="LearnHouse logo"
-      width={133}
-      height={40}
-      style={{ height: 'auto', filter: logoFilter }}
-    />
   )
 }

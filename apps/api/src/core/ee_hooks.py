@@ -85,6 +85,9 @@ async def check_ee_activity_paid_access(request, activity_id, user, db_session) 
     hooks = get_ee_hooks()
     if hooks and hasattr(hooks, "check_activity_paid_access"):
         return await hooks.check_activity_paid_access(request, activity_id, user, db_session)
-    # If EE is not available, grant access (free tier behavior)
-    return True
+    # Sanar y Criar: without EE, our own payments module decides (a course with
+    # no offer stays free; see src/services/payments/access.py).
+    from src.services.payments.access import check_activity_paid_access
+
+    return await check_activity_paid_access(request, activity_id, user, db_session)
 

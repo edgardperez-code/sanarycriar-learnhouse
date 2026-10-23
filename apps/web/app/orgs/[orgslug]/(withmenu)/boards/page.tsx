@@ -30,7 +30,7 @@ export async function generateMetadata({
     ? getOrgOgImageMediaDirectory(org?.org_uuid, seoConfig.default_og_image)
     : null
   const imageUrl = ogImageUrl || (org ? getOrgThumbnailMediaDirectory(org.org_uuid, org.thumbnail_image) : undefined)
-  const title = buildPageTitle('Boards', org?.name || 'Organization', seoConfig)
+  const title = buildPageTitle('Tableros', org?.name || 'Sanar y Criar', seoConfig) // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
   const description = org?.description || seoConfig.default_meta_description || `Collaborative boards from ${org?.name || 'this organization'}`
   const canonical = await getServerCanonicalUrl(orgslug, '/boards')
 
@@ -103,8 +103,8 @@ export default async function BoardsPage({ params }: { params: PageParams }) {
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Home', url: await getServerCanonicalUrl(orgslug, '/') },
-    { name: 'Boards', url: await getServerCanonicalUrl(orgslug, '/boards') },
+    { name: 'Inicio', url: await getServerCanonicalUrl(orgslug, '/') },
+    { name: 'Tableros', url: await getServerCanonicalUrl(orgslug, '/boards') },
   ])
 
   return (

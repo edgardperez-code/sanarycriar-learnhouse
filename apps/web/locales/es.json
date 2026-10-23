@@ -7,9 +7,9 @@
     "your_organizations": "Tus organizaciones",
     "no_orgs_message": "Parece que aún no formas parte de ninguna organización. Únete a una para verla aquí.",
     "assignments": "Tareas",
-    "boards": "Pizarras",
+    "boards": "Tableros",
     "payments": "Pagos",
-    "playgrounds": "Playgrounds",
+    "playgrounds": "Espacios interactivos",
     "organization": "Organización",
     "dashboard": "Panel de control",
     "settings": "Ajustes",
@@ -118,20 +118,20 @@
           "title": "Función Estándar"
         },
         "boards": {
-          "title": "Standard Feature",
-          "description": "Boards is a premium feature available only to organizations on our Standard plan or higher. Upgrade to unlock collaborative boards for real-time brainstorming and planning."
+          "title": "Función Estándar",
+          "description": "Los tableros son una función premium disponible solo para organizaciones con plan Estándar o superior. Cambia de plan para desbloquear tableros colaborativos para lluvias de ideas y planificación en tiempo real."
         },
         "playgrounds": {
-          "title": "Standard Feature",
-          "description": "Playgrounds is a premium feature available only to organizations on our Standard plan or higher. Upgrade to create interactive AI-generated experiences for your learners."
+          "title": "Función Estándar",
+          "description": "Los espacios interactivos son una función premium disponible solo para organizaciones con plan Estándar o superior. Cambia de plan para crear experiencias interactivas generadas por IA para tus estudiantes."
         },
         "scorm": {
-          "title": "Enterprise Feature",
-          "description": "SCORM support is a premium feature available only to organizations on our Enterprise plan. Upgrade to import and deliver SCORM packages alongside your courses."
+          "title": "Función Enterprise",
+          "description": "La compatibilidad con SCORM es una función premium disponible solo para organizaciones con plan Enterprise. Cambia de plan para importar y ofrecer paquetes SCORM junto con tus cursos."
         },
         "webhooks": {
-          "title": "Pro Feature",
-          "description": "Automations is a premium feature available only to organizations on our Pro plan or higher. Upgrade to wire your courses up to webhooks and external integrations."
+          "title": "Función Pro",
+          "description": "Las automatizaciones son una función premium disponible solo para organizaciones con plan Pro o superior. Cambia de plan para conectar tus cursos con webhooks e integraciones externas."
         },
         "api_access": {
           "title": "Función Pro",
@@ -148,17 +148,17 @@
         "names": {
           "courses": "Cursos",
           "communities": "Comunidades",
-          "podcasts": "Podcasts",
+          "podcasts": "Pódcasts",
           "payments": "Pagos",
           "trail": "Seguimiento de progreso",
-          "boards": "Pizarras",
-          "playgrounds": "Playgrounds",
+          "boards": "Tableros",
+          "playgrounds": "Espacios interactivos",
           "library": "Biblioteca",
           "folders": "Biblioteca"
         },
         "public": {
           "title": "{{feature}} no disponible",
-          "description": "Esta función no está disponible actualmente para esta organización. Por favor, contacte a un administrador si necesita acceso."
+          "description": "Esta sección no está disponible por ahora. Si crees que deberías tener acceso, escríbenos."
         },
         "dashboard": {
           "title": "{{feature}} desactivado",
@@ -209,9 +209,9 @@
     "powered_by": "Desarrollado con",
     "results": "resultado",
     "no_content_yet": "Aún no hay contenido",
-    "other": "Other",
-    "disabled": "Disabled",
-    "store": "Store",
+    "other": "Otro",
+    "disabled": "Desactivado",
+    "store": "Tienda",
     "organizations": "Organizaciones",
     "billing": "Facturación",
     "create_organization": "Crear organización",
@@ -228,7 +228,15 @@
     "leave_organization_title": "¿Salir de la organización?",
     "leave_organization_desc": "Perderás el acceso a {{org}} y se te eliminará de sus miembros. Podrás volver a unirte más adelante si recibes una invitación.",
     "leave_organization_error": "No se pudo salir de esta organización. Inténtalo de nuevo.",
-    "leaving": "Saliendo…"
+    "leaving": "Saliendo…",
+    "select": "Selecciona…",
+    "continue": "Continuar",
+    "dismiss": "Cerrar",
+    "sign_out": "Cerrar sesión",
+    "move_up": "Subir",
+    "move_down": "Bajar",
+    "less": "Menos",
+    "more": "Más"
   },
   "banner": {
     "viewing_as_guest": "Estás viendo {{name}} como invitado.",
@@ -242,7 +250,7 @@
     "email": "Correo electrónico",
     "password": "Contraseña",
     "forgot_password": "¿Olvidaste tu contraseña?",
-    "login_to": "Bienvenido de nuevo",
+    "login_to": "Hola de nuevo",
     "sign_up": "Registrarse",
     "sign_in_with_google": "Iniciar sesión con Google",
     "wrong_email_password": "Correo o contraseña incorrectos",
@@ -303,7 +311,7 @@
     "password_req_lowercase": "Al menos una letra minúscula (a-z)",
     "password_req_number": "Al menos un número (0-9)",
     "password_req_special": "Al menos un carácter especial (!@#$%...)",
-    "welcome_back": "Bienvenido de nuevo",
+    "welcome_back": "Hola de nuevo",
     "enter_credentials": "Ingresa tus credenciales para acceder a tu cuenta",
     "no_account": "¿No tienes una cuenta?",
     "already_have_account": "¿Ya tienes una cuenta?",
@@ -358,16 +366,40 @@
     "privacy_policy": "Política de privacidad",
     "image_title_forgot": "Restablece tu contraseña.",
     "image_subtitle_forgot": "Te ayudaremos a recuperar el acceso a tu cuenta en un instante.",
-    "image_title_login": "Bienvenido de nuevo a LearnHouse.",
+    "image_title_login": "Qué bueno verte de nuevo en Sanar y Criar.",
     "image_subtitle_login": "Retoma donde lo dejaste: tus cursos, estudiantes y herramientas te esperan.",
     "image_title_reset": "Casi listo.",
     "image_subtitle_reset": "Crea una contraseña segura para mantener tu cuenta protegida.",
-    "image_title_signup": "Empieza a enseñar con LearnHouse.",
+    "image_title_signup": "Empieza a aprender con Sanar y Criar.",
     "image_subtitle_signup": "Crea tu cuenta y lanza tu primer curso en minutos.",
     "image_title_verify": "Verifica tu correo electrónico.",
     "image_subtitle_verify": "Un paso rápido para proteger tu cuenta y empezar.",
     "turnstile_failed": "Verificación fallida. Por favor, intenta de nuevo.",
-    "resend_verification": "¿No lo recibiste? Reenviar correo"
+    "resend_verification": "¿No lo recibiste? Reenviar correo",
+    "no_sign_up_method_available": "Esta organización limitó las formas de iniciar sesión, así que aquí no se pueden crear cuentas. Escríbele a un administrador.",
+    "continue_to_dashboard": "Ir a tu panel",
+    "mfa_invalid_code": "Ese código no es correcto. Revisa que la hora de tu dispositivo se ajuste automáticamente y prueba con el siguiente código.",
+    "mfa_title": "Verificación en dos pasos",
+    "mfa_subtitle_backup": "Escribe uno de los códigos de respaldo que guardaste.",
+    "mfa_subtitle": "Escribe el código de 6 dígitos de tu app de autenticación.",
+    "mfa_backup_code": "Código de respaldo",
+    "mfa_code": "Código de verificación",
+    "mfa_verify": "Verificar",
+    "mfa_use_authenticator": "Usar mi app de autenticación",
+    "mfa_use_backup": "Usar un código de respaldo",
+    "mfa_back_to_login": "Volver a iniciar sesión",
+    "magic_title": "Inicia sesión con un enlace",
+    "magic_sent_title": "Revisa tu correo",
+    "magic_sent_body": "Si existe una cuenta con {{email}}, acabamos de enviarle un enlace seguro para iniciar sesión. Vence en poco tiempo, así que úsalo pronto.",
+    "magic_back_to_login": "Volver a iniciar sesión",
+    "magic_subtitle": "Escribe tu correo y te enviaremos un enlace para entrar, sin contraseña.",
+    "magic_send": "Enviarme un enlace de acceso",
+    "magic_use_password": "Prefiero usar mi contraseña",
+    "choose_sign_in_method": "Elige cómo quieres iniciar sesión.",
+    "no_sign_in_method_available": "Esta organización limitó las formas de iniciar sesión y ninguno de los métodos permitidos está disponible aquí. Escríbele a un administrador.",
+    "complete_profile": {
+      "title": "Completa tu perfil"
+    }
   },
   "validation": {
     "required": "Obligatorio",
@@ -375,7 +407,9 @@
     "password_min_length": "La contraseña debe tener al menos 8 caracteres",
     "username_min_length": "El nombre de usuario debe tener al menos 4 caracteres",
     "title_required": "El título es obligatorio",
-    "content_required": "El contenido es obligatorio"
+    "content_required": "El contenido es obligatorio",
+    "invalid_number": "Debe ser un número",
+    "invalid_option": "Elige una de las opciones disponibles"
   },
   "courses": {
     "my_courses": "Mis cursos",
@@ -399,14 +433,14 @@
     "join_organization": "Unirse a la organización",
     "purchase_course_title": "Comprar curso",
     "purchase_course_description": "Selecciona una opción de pago para acceder a este curso",
-    "ready_to_begin": "¿Listo para empezar?",
+    "ready_to_begin": "¿Todo listo para empezar?",
     "start_learning_journey": "Comienza tu aprendizaje con {{count}} actividades emocionantes",
     "course_progress": "Progreso del curso",
     "progress": "Progreso",
     "completed_of": "{{completed}} de {{total}} completados",
     "quit_all_courses": "Abandonar todos los cursos",
     "quitting_courses": "Abandonando cursos ({{progress}}%)",
-    "quit_all_courses_confirm": "¿Estás seguro de que quieres abandonar todos los cursos? Esta acción no se puede deshacer y perderás todo tu progreso.",
+    "quit_all_courses_confirm": "¿Seguro que quieres abandonar todos los cursos? Esta acción no se puede deshacer y perderás todo tu progreso.",
     "quit_all_courses_title": "¿Abandonar todos los cursos?",
     "no_courses_available": "Aún no hay cursos disponibles",
     "new_course": "Nuevo curso",
@@ -430,12 +464,13 @@
     "failed_load_courses": "Error al cargar los cursos",
     "start_learning": "Empezar a aprender",
     "edit_content": "Editar contenido",
-    "delete_course_confirm": "¿Estás seguro de que quieres eliminar este curso?",
+    "delete_course_confirm": "¿Seguro que quieres eliminar este curso?",
     "delete_course_title": "¿Eliminar {{name}}?",
     "course_count": "{{count}} curso",
     "course_count_plural": "{{count}} cursos",
     "authors_and_updates": "Autores y actualizaciones",
     "course_updates": "Actualizaciones del curso",
+    "rss_feed": "Feed RSS de novedades del curso",
     "no_updates_yet": "Aún no hay actualizaciones",
     "no_updates_desc": "Las novedades de este curso aparecerán aquí",
     "quit_course": "Abandonar curso",
@@ -459,7 +494,7 @@
     "image": "Imagen",
     "upload_image": "Subir imagen",
     "choose_from_gallery": "Elegir de la galería",
-    "enter_to_add": "Enter para añadir...",
+    "enter_to_add": "Presiona Enter para agregar...",
     "select_visibility": "Seleccionar visibilidad",
     "and_x_more": "y {{count}} más",
     "update": "actualización",
@@ -476,12 +511,13 @@
     "update_deleted_success": "Actualización eliminada con éxito",
     "failed_delete_update": "Error al eliminar la actualización",
     "delete_update": "Eliminar actualización",
-    "delete_update_confirm": "¿Estás seguro de que quieres eliminar esta actualización?",
+    "delete_update_confirm": "¿Seguro que quieres eliminar esta actualización?",
     "delete_update_title": "¿Eliminar actualización?",
     "congratulations": "¡Felicidades! 🎉",
     "successfully_completed": "Has completado con éxito",
     "keep_going": "¡Sigue así! 💪",
     "keep_going_description": "¡Buen trabajo! Completa el resto de actividades para desbloquear tu certificado de finalización.",
+    "keep_going_description_no_certificate": "¡Vas muy bien! Completa las actividades que faltan para terminar el curso.",
     "making_great_progress": "Llevas un gran progreso en",
     "continue_learning": "Continuar aprendiendo",
     "back_to_course": "Volver al curso",
@@ -650,7 +686,7 @@
       "from_existing_description": "Sube archivos de otra plataforma y organízalos en un curso"
     },
     "copied": "¡Copiado!",
-    "quit_course_confirm": "¿Estás seguro de que quieres abandonar este curso? Perderás todo tu progreso.",
+    "quit_course_confirm": "¿Seguro que quieres abandonar este curso? Perderás todo tu progreso.",
     "quit_course_title": "¿Abandonar curso?",
     "usergroup_filter": {
       "all_courses": "Todos los cursos",
@@ -665,7 +701,8 @@
     "no_image_in_clipboard": "No se encontró ninguna imagen en el portapapeles",
     "clipboard_read_error": "No se pudo leer el portapapeles",
     "sign_in_to_see_courses": "Inicia sesión para ver tus cursos",
-    "sign_in_to_see_courses_description": "Los cursos de esta academia podrían estar visibles solo después de iniciar sesión."
+    "sign_in_to_see_courses_description": "Los cursos de esta academia podrían estar visibles solo después de iniciar sesión.",
+    "browse_all_courses": "Ver todos los cursos"
   },
   "communities": {
     "title": "Comunidades",
@@ -707,7 +744,7 @@
       "delete": "Eliminar",
       "delete_discussions_title": "¿Eliminar {{count}} discusión?",
       "delete_discussions_title_plural": "¿Eliminar {{count}} discusiones?",
-      "delete_discussions_confirm": "¿Estás seguro de que deseas eliminar {{count}} {{type}}? Esta acción no se puede deshacer.",
+      "delete_discussions_confirm": "¿Seguro que quieres eliminar {{count}} {{type}}? Esta acción no se puede deshacer.",
       "no_results": "No se encontraron resultados",
       "no_results_description": "Intenta ajustar tu búsqueda o eliminar el filtro",
       "clear_search": "Borrar búsqueda",
@@ -720,7 +757,7 @@
       "edit": "Editar",
       "delete": "Eliminar",
       "delete_title": "¿Eliminar discusión?",
-      "delete_confirm": "¿Estás seguro de que deseas eliminar esta discusión? Esta acción no se puede deshacer.",
+      "delete_confirm": "¿Seguro que quieres eliminar esta discusión? Esta acción no se puede deshacer.",
       "delete_button": "Eliminar discusión",
       "no_details": "No se proporcionaron detalles adicionales.",
       "delete_failed": "Error al eliminar la discusión"
@@ -732,7 +769,7 @@
       "unlock_discussion": "Desbloquear discusión",
       "delete_discussion": "Eliminar discusión",
       "delete_title": "¿Eliminar discusión?",
-      "delete_confirm": "¿Estás seguro de que deseas eliminar esta discusión? Esta acción no se puede deshacer.",
+      "delete_confirm": "¿Seguro que quieres eliminar esta discusión? Esta acción no se puede deshacer.",
       "votes": "votos",
       "delete_failed": "Error al eliminar la discusión",
       "lock_failed": "Error al actualizar el estado de bloqueo",
@@ -779,6 +816,10 @@
       "details_label": "Detalles (opcional)",
       "details_placeholder": "Agrega más contexto o detalles a tu discusión...",
       "editor_hint": "Usa la barra de herramientas para dar formato a tu texto con negrita, cursiva, listas y más.",
+      "rich_content_hint": "Pega un enlace de YouTube para insertar el video, o usa la barra de herramientas para darle formato al texto.",
+      "embed_video_title": "Insertar video de YouTube",
+      "embed_video_prompt": "Pega el enlace de un video de YouTube",
+      "embed_video_invalid": "Solo se pueden insertar enlaces de videos de YouTube.",
       "cancel": "Cancelar",
       "submit": "Publicar discusión",
       "title_required": "El título es obligatorio",
@@ -807,7 +848,7 @@
     }
   },
   "podcasts": {
-    "podcasts": "Podcasts",
+    "podcasts": "Pódcasts",
     "browse_description": "Escucha podcasts de esta organización",
     "new_podcast": "Nuevo Podcast",
     "search_placeholder": "Buscar podcasts...",
@@ -827,7 +868,7 @@
     "listen_now": "Escuchar ahora",
     "delete_podcast": "Eliminar Podcast",
     "delete_podcast_title": "¿Eliminar Podcast?",
-    "delete_podcast_confirm": "¿Estás seguro de que quieres eliminar este podcast? Esta acción no se puede deshacer y todos los episodios serán eliminados.",
+    "delete_podcast_confirm": "¿Seguro que quieres eliminar este podcast? Esta acción no se puede deshacer y todos los episodios serán eliminados.",
     "deleting_podcast": "Eliminando podcast...",
     "podcast_deleted_success": "Podcast eliminado con éxito",
     "podcast_deleted_error": "Error al eliminar el podcast",
@@ -847,7 +888,7 @@
         "created": "Episodio creado",
         "creating": "Creando episodio...",
         "delete": "Eliminar",
-        "delete_confirm": "¿Estás seguro de que quieres eliminar este episodio? Esta acción no se puede deshacer.",
+        "delete_confirm": "¿Seguro que quieres eliminar este episodio? Esta acción no se puede deshacer.",
         "delete_error": "Error al eliminar el episodio",
         "delete_title": "¿Eliminar episodio?",
         "deleted": "Episodio eliminado",
@@ -926,7 +967,8 @@
     "search_results": "{{count}} podcast(s) encontrados para \"{{query}}\""
   },
   "activities": {
-    "video": "Vídeo",
+    "video_chapters": "Capítulos",
+    "video": "Video",
     "document": "Documento",
     "page": "Página",
     "assignment": "Tarea",
@@ -983,13 +1025,21 @@
     "autosaved": "Guardado",
     "autosaving": "Guardando…",
     "save_answers": "Guardar respuestas",
+    "grid_columns_2": "2 columnas",
+    "grid_columns_3": "3 columnas",
+    "grid_columns_4": "4 columnas",
+    "add_card": "Agregar tarjeta",
+    "ungroup_cards": "Desagrupar tarjetas",
+    "group_into_grid": "Agrupar en cuadrícula",
     "markdown": "Markdown",
     "custom": "Personalizado",
-    "scorm": "SCORM"
+    "scorm": "SCORM",
+    "count_one": "{{count}} actividad",
+    "count_other": "{{count}} actividades"
   },
   "assignments": {
     "submit_assignment": "Enviar tarea",
-    "submit_assignment_confirm": "¿Estás seguro de que quieres enviar tu tarea para calificar? Una vez enviada, no podrás realizar cambios.",
+    "submit_assignment_confirm": "¿Seguro que quieres enviar tu tarea para calificar? Una vez enviada, no podrás realizar cambios.",
     "submit_assignment_title": "Enviar tarea para corregir",
     "submit_for_grading": "Enviar para corregir",
     "submitting": "Enviando…",
@@ -1016,7 +1066,18 @@
     },
     "quiz": {
       "correct_answer": "Correcta",
-      "incorrect_answer": "Incorrecta"
+      "incorrect_answer": "Incorrecta",
+      "select_one": "Elige una respuesta",
+      "select_all_that_apply": "Elige todas las que correspondan",
+      "response_type_single": "Una respuesta",
+      "response_type_multiple": "Varias respuestas",
+      "no_correct_option_warning": "Sin opción correcta: esta pregunta no se toma en cuenta al calificar",
+      "question_fallback_label": "Pregunta",
+      "grading_mode_label": "Calificación",
+      "grading_all_or_nothing": "Todo o nada",
+      "grading_partial_credit": "Puntaje parcial",
+      "grading_all_or_nothing_hint": "Una pregunta suma puntos solo si las respuestas elegidas coinciden exactamente con la clave.",
+      "grading_partial_credit_hint": "Las preguntas de \"elige todas las que correspondan\" suman parte de los puntos; cada opción incorrecta anula una correcta."
     },
     "quick_grade": {
       "full": "Total",
@@ -1038,7 +1099,18 @@
     "no_task_submission_to_grade": "Este estudiante aún no ha enviado un archivo para esta tarea.",
     "past_due": "Fecha límite vencida",
     "past_due_description": "La fecha límite de esta tarea fue el {{date}}. Ya no se pueden guardar respuestas ni enviarlas para calificación.",
-    "past_due_title": "Fecha límite vencida"
+    "past_due_title": "Fecha límite vencida",
+    "ungraded_badge": "Sin calificación",
+    "hand_in": "Entregar mi trabajo",
+    "hand_in_title": "Entrega tu trabajo",
+    "hand_in_confirm": "Tu trabajo se le entregará a tu docente. No lleva calificación.",
+    "handed_in": "Entregado",
+    "solution_title": "Respuesta modelo",
+    "solution_download": "Descargar la respuesta modelo",
+    "solution_locked_title": "Respuesta modelo bloqueada",
+    "solution_locked_on_submission": "Entrega tu trabajo y la respuesta modelo se desbloquea al instante.",
+    "solution_locked_after_grading": "La respuesta modelo se desbloquea cuando tu trabajo haya sido calificado.",
+    "retry_assignment_confirm_ungraded": "Tu entrega actual se reiniciará para que puedas empezar de nuevo, y la respuesta modelo se volverá a bloquear hasta que entregues el siguiente intento."
   },
   "certificate": {
     "certificate": "Certificado",
@@ -1093,8 +1165,8 @@
       "users": "Miembros",
       "communities": "Comunidades",
       "discussions": "Discusiones",
-      "playgrounds": "Playgrounds",
-      "podcasts": "Podcasts"
+      "playgrounds": "Espacios interactivos",
+      "podcasts": "Pódcasts"
     }
   },
   "ai": {
@@ -1113,6 +1185,10 @@
     "one_time_payment": "Pago único",
     "per_month": "(al mes)",
     "per_month_short": "/mes",
+    "billing_per_month": "al mes",
+    "billing_per_year": "al año",
+    "billing_suffix_month": "/ mes",
+    "billing_suffix_year": "/ año",
     "subscribe_now": "Suscribirse ahora",
     "purchase_now": "Comprar ahora",
     "failed_checkout": "Error al iniciar el proceso de pago",
@@ -1122,6 +1198,7 @@
     "stripe_wait": "Espera mientras configuramos tu integración con Stripe...",
     "stripe_return": "Ya puedes volver al panel para empezar a usar los pagos.",
     "stripe_retry": "Inténtalo de nuevo o contacta con soporte si el problema persiste.",
+    "stripe_login_required": "No has iniciado sesión en Sanar y Criar en este navegador. Inicia sesión y vuelve a empezar la conexión desde la configuración de pagos.",
     "subscription": "Suscripción",
     "benefits": "Beneficios:",
     "min_price": "Precio mínimo:",
@@ -1181,10 +1258,10 @@
         "characters_left": "{{count}} caracteres restantes",
         "additional_details": "Detalles adicionales",
         "clear_all": "Limpiar todo",
-        "add_detail": "Añadir detalle",
-        "add_general": "Añadir General",
-        "add_academic": "Añadir Académico",
-        "add_professional": "Añadir Profesional",
+        "add_detail": "Agregar detalle",
+        "add_general": "Agregar datos generales",
+        "add_academic": "Agregar datos académicos",
+        "add_professional": "Agregar datos profesionales",
         "profile_picture": "Foto de perfil",
         "change_avatar": "Cambiar avatar",
         "recommended_size": "Tamaño recomendado 100x100",
@@ -1194,7 +1271,12 @@
         "avatar_updated": "Avatar actualizado",
         "profile_updated": "Perfil actualizado con éxito",
         "relogin_message": "Por favor, inicia sesión nuevamente con tu nuevo correo electrónico: {{email}}",
-        "logout_warning": "Serás desconectado después de cambiar tu correo electrónico",
+        "logout_warning": "Tu sesión se cerrará después de cambiar tu correo electrónico",
+        "current_password": "Contraseña actual",
+        "current_password_hint": "Escribe tu contraseña actual para confirmar el cambio de correo",
+        "mfa_code": "Código de verificación en dos pasos",
+        "mfa_code_hint": "Escribe un código de tu app de autenticación para confirmar el cambio de correo",
+        "update_failed": "No se pudo actualizar el perfil",
         "detail_label_placeholder": "Introduce etiqueta (ej: Título, Ubicación)",
         "remove": "Eliminar",
         "icon": "Icono",
@@ -1229,7 +1311,8 @@
           "industry": "Industria",
           "expertise": "Experiencia",
           "community": "Comunidad"
-        }
+        },
+        "signin_again": "Vuelve a iniciar sesión"
       },
       "password": {
         "title": "Cambiar contraseña",
@@ -1240,7 +1323,8 @@
         "updating": "Actualizando...",
         "password_updated": "Contraseña actualizada con éxito",
         "relogin_message": "Por favor, inicia sesión nuevamente con tu nueva contraseña",
-        "logout_warning": "Serás desconectado después de cambiar tu contraseña"
+        "logout_warning": "Tu sesión se cerrará después de cambiar tu contraseña",
+        "update_failed": "No se pudo actualizar la contraseña. Vuelve a iniciar sesión."
       },
       "profile_builder": {
         "title": "Constructor de perfil",
@@ -1380,7 +1464,61 @@
         "current_session_title": "Sesión actual",
         "current_session_subtitle": "El dispositivo desde el que has iniciado sesión ahora mismo.",
         "this_device": "Este dispositivo",
-        "sign_out": "Cerrar sesión"
+        "sign_out": "Cerrar sesión",
+        "mfa": {
+          "rate_limited": "Demasiados intentos. Espera un momento y vuelve a intentarlo.",
+          "status_error": "No se pudo cargar tu configuración de verificación en dos pasos.",
+          "copy_failed": "No se pudo copiar. Selecciona el texto y cópialo a mano.",
+          "codes_file_header": "Sanar y Criar: códigos de respaldo de la verificación en dos pasos. Cada código se puede usar una sola vez.",
+          "already_enabled": "La verificación en dos pasos ya está activada en esta cuenta.",
+          "setup_failed": "No se pudo iniciar la configuración de la verificación en dos pasos. Inténtalo de nuevo.",
+          "enabled_toast": "La verificación en dos pasos ya está activada.",
+          "invalid_code": "Ese código no es válido. Inténtalo de nuevo.",
+          "regenerate_failed": "No se pudieron generar nuevos códigos de respaldo. Inténtalo de nuevo.",
+          "disabled_toast": "Se desactivó la verificación en dos pasos.",
+          "disable_failed": "No se pudo desactivar la verificación en dos pasos. Inténtalo de nuevo.",
+          "retry_in": "Puedes volver a intentarlo en {{seconds}} s.",
+          "code_label": "Código de autenticación",
+          "code_hint": "Escribe el código de 6 dígitos que aparece ahora en tu app de autenticación.",
+          "title": "Verificación en dos pasos",
+          "subtitle": "Pide un código de un solo uso de tu app de autenticación cada vez que inicies sesión.",
+          "retry": "Reintentar",
+          "codes_once_title": "Esta es la única vez que verás estos códigos.",
+          "codes_once_body": "Guárdalos ahora en un lugar seguro. Cada código sirve una vez para iniciar sesión si pierdes el acceso a tu app de autenticación. Cuando salgas de esta pantalla no podrás recuperarlos; tendrías que generar otros nuevos.",
+          "copied": "Copiados",
+          "copy_all": "Copiar todos",
+          "download": "Descargar .txt",
+          "codes_ack": "Ya guardé estos códigos en un lugar seguro.",
+          "done": "Listo",
+          "step_password_title": "Confirma tu contraseña",
+          "step_password_body": "Por tu seguridad, escribe tu contraseña actual para continuar.",
+          "continue": "Continuar",
+          "step_scan_title": "Escanea este código con tu app de autenticación",
+          "step_scan_body": "Abre una app de autenticación (1Password, Google Authenticator, Authy, …) y escanea el código de abajo.",
+          "qr_alt": "Código QR para configurar la verificación en dos pasos",
+          "qr_failed": "No se pudo dibujar el código QR. Usa la clave de configuración.",
+          "secret_label": "O escribe esta clave de configuración a mano",
+          "copy_secret": "Copiar clave de configuración",
+          "secret_hint": "Útil para apps de autenticación de computadora que no pueden escanear un código QR.",
+          "step_verify_title": "Confirma el código de tu app",
+          "back": "Atrás",
+          "wait_seconds": "Espera {{seconds}} s",
+          "verify_and_enable": "Verificar y activar",
+          "enabled": "Activada",
+          "enabled_since": "Desde el {{date}}",
+          "enabled_hint": "Para iniciar sesión se necesita un código de tu app de autenticación.",
+          "regenerate": "Generar nuevos códigos de respaldo",
+          "disable": "Desactivar",
+          "codes_remaining": "Te quedan {{remaining}} códigos de respaldo",
+          "codes_low": "genera un nuevo juego para no quedarte sin acceso.",
+          "regenerate_body": "Al generar un nuevo juego, todos tus códigos de respaldo actuales dejan de funcionar de inmediato.",
+          "regenerate_confirm": "Generar códigos nuevos",
+          "disable_warning": "Si la desactivas, el inicio de sesión ya no tendrá el segundo paso y se borrarán tus códigos de respaldo.",
+          "disable_confirm": "Desactivar la verificación en dos pasos",
+          "not_enabled": "No activada",
+          "not_enabled_hint": "Protege tu cuenta pidiendo también un código de un solo uso de tu app de autenticación al iniciar sesión.",
+          "enable": "Activar"
+        }
       }
     },
     "sign_out": "Cerrar sesión",
@@ -1403,7 +1541,7 @@
     "role_instructor": "INSTRUCTOR",
     "role_instructor_desc": "Puede gestionar su propio contenido",
     "role_user": "USUARIO",
-    "role_user_desc": "Alumno (solo lectura)",
+    "role_user_desc": "Estudiante (solo lectura)",
     "instructor": "Instructor"
   },
   "time": {
@@ -1415,6 +1553,22 @@
     "minutes_ago": "hace {{count}} minutos"
   },
   "dashboard": {
+    "nav": {
+      "sidebar_navigation": "Navegación lateral del panel",
+      "mobile_navigation": "Navegación móvil del panel",
+      "top_navigation": "Navegación superior",
+      "collapse_sidebar": "Contraer barra lateral",
+      "expand_sidebar": "Expandir barra lateral",
+      "open_courses_menu": "Abrir menú de cursos",
+      "open_assignments_menu": "Abrir menú de tareas",
+      "open_users_menu": "Abrir menú de usuarios",
+      "open_organization_menu": "Abrir menú de la organización",
+      "open_organizations_menu": "Abrir menú de organizaciones",
+      "open_developers_menu": "Abrir menú de desarrolladores",
+      "open_language_menu": "Abrir menú de idioma",
+      "open_help_menu": "Abrir menú de ayuda",
+      "other": "Otros"
+    },
     "home": {
       "cards": {
         "courses": {
@@ -1435,7 +1589,7 @@
         }
       },
       "learnhouse_university": "Universidad LearnHouse",
-      "welcome_back": "Bienvenido de nuevo",
+      "welcome_back": "Hola de nuevo",
       "plan": "plan",
       "create_course": "Crear curso",
       "analytics": "Analíticas",
@@ -1443,7 +1597,7 @@
       "settings": "Configuración",
       "courses": "Cursos",
       "communities": "Comunidades",
-      "podcasts": "Podcasts",
+      "podcasts": "Pódcasts",
       "boards": "Tableros",
       "published": "publicado",
       "draft": "borrador",
@@ -1452,7 +1606,7 @@
       "episodes": "episodios",
       "participants": "participantes",
       "loading": "Cargando...",
-      "enable_analytics_description": "Habilite las analíticas para ver usuarios en vivo, registros y más.",
+      "enable_analytics_description": "Activa las analíticas para ver usuarios en vivo, registros y más.",
       "enable": "Habilitar",
       "quick_stats": "Estadísticas rápidas",
       "full_analytics": "Analíticas completas",
@@ -1561,21 +1715,21 @@
           "learnings_empty_text": "Todos los elementos de aprendizaje deben tener texto",
           "learnings_invalid_json": "Formato JSON no válido",
           "tags_label": "Etiquetas",
-          "tags_placeholder": "Enter para añadir...",
+          "tags_placeholder": "Presiona Enter para agregar...",
           "thumbnail_type_label": "Tipo de miniatura",
           "thumbnail_type_image": "Imagen",
-          "thumbnail_type_video": "Vídeo",
+          "thumbnail_type_video": "Video",
           "thumbnail_type_both": "Ambos",
           "thumbnail_label": "Miniatura",
           "image_search_placeholder": "Buscar imágenes..."
         },
         "thumbnail": {
           "upload_image": "Subir imagen",
-          "upload_video": "Subir vídeo",
+          "upload_video": "Subir video",
           "gallery": "Galería",
           "tabs": {
             "image": "Imagen",
-            "video": "Vídeo"
+            "video": "Video"
           },
           "supported_formats": {
             "image": "Formatos admitidos: PNG, JPG/JPEG (máx. 8MB)",
@@ -1594,7 +1748,7 @@
           "description": "El curso está disponible públicamente en internet, es indexado por buscadores y cualquiera puede acceder",
           "active": "Activo",
           "confirmation_title": "¿Cambiar a público?",
-          "confirmation_message": "¿Estás seguro de que quieres que este curso sea público en internet?",
+          "confirmation_message": "¿Seguro que quieres que este curso sea público en internet?",
           "confirmation_button": "Cambiar a público"
         },
         "users_only": {
@@ -1602,7 +1756,7 @@
           "description": "El curso solo es accesible para usuarios registrados. Además, puedes elegir qué grupos de usuarios tienen acceso",
           "active": "Activo",
           "confirmation_title": "¿Cambiar a solo usuarios?",
-          "confirmation_message": "¿Estás seguro de que quieres que este curso solo sea accesible para usuarios registrados?",
+          "confirmation_message": "¿Seguro que quieres que este curso solo sea accesible para usuarios registrados?",
           "confirmation_button": "Cambiar a solo usuarios"
         },
         "usergroups": {
@@ -1644,7 +1798,7 @@
           "description": "El curso está abierto a colaboradores. Los usuarios pueden postularse para ayudar a mejorar el contenido.",
           "active": "Activo",
           "confirmation_title": "¿Abrir a colaboradores?",
-          "confirmation_message": "¿Estás seguro de que quieres abrir este curso a colaboradores?",
+          "confirmation_message": "¿Seguro que quieres abrir este curso a colaboradores?",
           "confirmation_button": "Abrir a colaboradores"
         },
         "closed_to_contributors": {
@@ -1652,7 +1806,7 @@
           "description": "El curso está cerrado a colaboradores. Solo los colaboradores actuales pueden modificar el contenido.",
           "active": "Activo",
           "confirmation_title": "¿Cerrar a colaboradores?",
-          "confirmation_message": "¿Estás seguro de que quieres cerrar este curso a colaboradores?",
+          "confirmation_message": "¿Seguro que quieres cerrar este curso a colaboradores?",
           "confirmation_button": "Cerrar a colaboradores"
         },
         "search": {
@@ -1703,7 +1857,7 @@
       },
       "certification": {
         "title": "Certificación del curso",
-        "subtitle": "Activa y configura certificados para los alumnos que completen el curso",
+        "subtitle": "Activa y configura certificados para los estudiantes que completen el curso",
         "form": {
           "certification_name_label": "Nombre de la certificación",
           "certification_name_required": "Obligatorio si la certificación está activa",
@@ -1788,7 +1942,7 @@
         "states": {
           "disabled": {
             "title": "Certificación no configurada",
-            "message": "Activa la certificación para otorgar certificados a los alumnos tras completar el curso.",
+            "message": "Activa la certificación para otorgar certificados a los estudiantes al completar el curso.",
             "button": "Activar certificación",
             "creating": "Creando..."
           },
@@ -1917,6 +2071,8 @@
           "block_links_description": "Rechaza discusiones o respuestas que contengan URLs.",
           "disable_reactions_label": "Desactivar reacciones",
           "disable_reactions_description": "Desactiva las reacciones de emoji en las discusiones de esta comunidad.",
+          "allow_rich_content_label": "Permitir contenido enriquecido",
+          "allow_rich_content_description": "Permite que los miembros inserten videos de YouTube en sus conversaciones. Solo se admite YouTube y cada publicación se revisa en el servidor. Desactivado por defecto; recomendado para comunidades pequeñas y de confianza, como un solo grupo.",
           "min_post_length_label": "Longitud mínima del post",
           "max_post_length_label": "Longitud máxima del post",
           "max_comment_length_label": "Longitud máxima de respuesta",
@@ -1968,7 +2124,7 @@
           },
           "delete": {
             "title": "¿Eliminar {{name}}?",
-            "message": "¿Estás seguro de que quieres eliminar esta comunidad? Todas las discusiones se eliminarán permanentemente.",
+            "message": "¿Seguro que quieres eliminar esta comunidad? Todas las discusiones se eliminarán permanentemente.",
             "button": "Eliminar comunidad"
           }
         },
@@ -1984,7 +2140,7 @@
           "public": {
             "active": "Activo",
             "confirmation_button": "Cambiar a Público",
-            "confirmation_message": "¿Estás seguro de que quieres que esta comunidad sea pública?",
+            "confirmation_message": "¿Seguro que quieres que esta comunidad sea pública?",
             "confirmation_title": "¿Cambiar a Público?",
             "description": "La comunidad está disponible públicamente. Cualquiera puede ver y participar en las discusiones.",
             "title": "Público"
@@ -1992,7 +2148,7 @@
           "restricted": {
             "active": "Activo",
             "confirmation_button": "Cambiar a Restringido",
-            "confirmation_message": "¿Estás seguro de que quieres restringir esta comunidad? Solo los miembros de grupos de usuarios vinculados tendrán acceso.",
+            "confirmation_message": "¿Seguro que quieres restringir esta comunidad? Solo los miembros de grupos de usuarios vinculados tendrán acceso.",
             "confirmation_title": "¿Cambiar a Restringido?",
             "description": "La comunidad solo es accesible para miembros de grupos de usuarios seleccionados. Vincula grupos de usuarios para otorgar acceso.",
             "title": "Restringido"
@@ -2052,7 +2208,7 @@
           },
           "delete_chapter": {
             "title": "¿Eliminar {{name}}?",
-            "message": "¿Estás seguro de que quieres eliminar este capítulo?",
+            "message": "¿Seguro que quieres eliminar este capítulo?",
             "button": "Eliminar capítulo"
           },
           "new_activity": {
@@ -2061,7 +2217,7 @@
           },
           "delete_activity": {
             "title": "¿Eliminar {{name}}?",
-            "message": "¿Estás seguro de que quieres eliminar esta actividad?",
+            "message": "¿Seguro que quieres eliminar esta actividad?",
             "button": "Eliminar actividad"
           }
         },
@@ -2080,14 +2236,17 @@
           "publish_all_success": "Todas las actividades se publicaron correctamente",
           "unpublish_all": "Despublicar todo",
           "unpublish_all_success": "Todas las actividades se despublicaron correctamente",
-          "publish_all_error": "No se pudieron actualizar algunas actividades"
+          "publish_all_error": "No se pudieron actualizar algunas actividades",
+          "back": "Volver",
+          "save_name": "Guardar nombre",
+          "rename_chapter": "Renombrar capítulo"
         },
         "bulk_actions": {
           "selected": "{{count}} seleccionada(s)",
           "clear": "Limpiar",
           "delete": "Eliminar",
           "delete_title": "Eliminar actividades seleccionadas",
-          "delete_confirm": "¿Estás seguro de que deseas eliminar {{count}} actividades seleccionadas? Esta acción no se puede deshacer.",
+          "delete_confirm": "¿Seguro que quieres eliminar {{count}} actividades seleccionadas? Esta acción no se puede deshacer.",
           "delete_button": "Eliminar actividades",
           "delete_success": "{{count}} actividades eliminadas correctamente",
           "delete_error": "No se pudieron eliminar algunas actividades",
@@ -2095,7 +2254,9 @@
           "publish_error": "No se pudieron publicar algunas actividades",
           "unpublish_success": "{{count}} actividades despublicadas correctamente",
           "unpublish_error": "No se pudieron despublicar algunas actividades",
-          "partial_error": "{{failed}} de {{total}} actividades no se pudieron actualizar"
+          "partial_error": "{{failed}} de {{total}} actividades no se pudieron actualizar",
+          "publish_tooltip": "Publicar seleccionados",
+          "unpublish_tooltip": "Despublicar seleccionados"
         },
         "chapter_element": {
           "chapter_name_placeholder": "Nombre del capítulo"
@@ -2107,7 +2268,7 @@
             "draft": "Borrador"
           },
           "types": {
-            "video": "Vídeo",
+            "video": "Video",
             "document": "Documento",
             "assignment": "Tarea",
             "assignments": "Tareas",
@@ -2115,7 +2276,7 @@
             "dynamic_page": "Página dinámica",
             "scorm": "Scorm",
             "markdown": "Markdown",
-            "embed": "Embed",
+            "embed": "Contenido insertado",
             "resource": "Recurso",
             "custom": "Personalizado"
           },
@@ -2193,7 +2354,7 @@
           "description_hint": "Deja vacío para usar la descripción del curso. Recomendado: 150-160 caracteres",
           "description_label": "Meta descripción",
           "description_placeholder": "Ingresa una descripción atractiva para los resultados de búsqueda",
-          "enable_jsonld_hint": "Agrega marcado schema.org de Course para fragmentos enriquecidos en resultados de búsqueda",
+          "enable_jsonld_hint": "Agrega marcado schema.org de tipo Course para mostrar fragmentos enriquecidos en los resultados de búsqueda",
           "enable_jsonld_label": "Habilitar datos estructurados JSON-LD",
           "keywords_hint": "Lista de palabras clave separadas por comas relacionadas con tu curso",
           "keywords_label": "Palabras clave",
@@ -2268,9 +2429,10 @@
           "domains": "Dominios",
           "seo": "SEO",
           "automations": "Automatizaciones",
-          "api": "API Access",
-          "menu": "Menu",
-          "danger": "Zona de Peligro"
+          "api": "Acceso a la API",
+          "menu": "Menú",
+          "danger": "Zona de Peligro",
+          "course_end": "Fin del curso"
         },
         "pages": {
           "general": {
@@ -2310,16 +2472,23 @@
             "title": "Dominios personalizados"
           },
           "api": {
-            "title": "API Access",
-            "subtitle": "Manage API tokens and programmatic access"
+            "title": "Acceso a la API",
+            "subtitle": "Administra los tokens de API y el acceso programático"
           },
           "menu": {
-            "title": "Public menu",
-            "subtitle": "Choose and order the links shown in your public navigation"
+            "title": "Menú público",
+            "subtitle": "Elige y ordena los enlaces de tu navegación pública"
           },
           "danger": {
             "title": "Zona de Peligro",
             "subtitle": "Acciones irreversibles y destructivas para esta organización"
+          },
+          "seo": {
+            "subtitle": "Administra la configuración de posicionamiento en buscadores (SEO)"
+          },
+          "course_end": {
+            "title": "Fin del curso",
+            "subtitle": "Personaliza la pantalla que ven los estudiantes al terminar un curso"
           }
         },
         "name": "Nombre de la organización",
@@ -2338,6 +2507,9 @@
         "footer_text": "Texto del pie de página",
         "footer_text_placeholder": "Introduce el texto del pie de página...",
         "footer_text_desc": "Texto personalizado que se muestra en la parte inferior de las páginas de tu organización",
+        "email_sender_name": "Nombre del remitente de los correos",
+        "email_sender_name_placeholder": "El nombre de tu organización",
+        "email_sender_name_desc": "El nombre que ven los destinatarios en los correos enviados por esta organización: enlaces de acceso, restablecimiento de contraseña, invitaciones, verificación y bienvenida. Esos correos también llevan tu logo, tu color de marca en los botones y tu configuración de marca de agua. Aquí solo cambia el nombre; la dirección de envío sigue siendo la de la plataforma, que es lo que permite que estos correos pasen las verificaciones SPF y DKIM. Déjalo vacío para usar el nombre predeterminado de la plataforma.",
         "default_language": "Idioma predeterminado",
         "default_language_desc": "El idioma que ven los nuevos visitantes por defecto y el que se utiliza para los correos enviados en nombre de esta organización. Los miembros pueden cambiar su propio idioma de la interfaz.",
         "watermark_desc": "Mostrar la marca de agua de LearnHouse en las páginas de tu organización",
@@ -2363,16 +2535,16 @@
         "accepted_files": "Acepta PNG, JPG (máx. 5MB)",
         "recommended_size": "Tamaño recomendado: 200x100 píxeles",
         "add_preview": "Añadir vista previa",
-        "drag_to_reorder": "Arrastra para reordenar • Máximo 4 vistas previas • Admite imágenes y vídeos",
+        "drag_to_reorder": "Arrastra para reordenar • Máximo 4 vistas previas • Admite imágenes y videos",
         "video_modal": {
           "title": "Añadir vista previa",
           "images": "Subir imágenes",
           "youtube": "YouTube",
-          "youtube_desc": "Añadir vídeo de YouTube",
+          "youtube_desc": "Añadir video de YouTube",
           "loom": "Loom",
-          "loom_desc": "Añadir vídeo de Loom",
-          "url_placeholder": "Pega la URL de tu vídeo de {{service}}",
-          "add_button": "Añadir vídeo"
+          "loom_desc": "Añadir video de Loom",
+          "url_placeholder": "Pega la URL de tu video de {{service}}",
+          "add_button": "Añadir video"
         },
         "toasts": {
           "logo_success": "Logo actualizado",
@@ -2389,10 +2561,10 @@
           "max_previews": "Solo puedes subir {{count}} vista previa más",
           "max_previews_plural": "Solo puedes subir {{count}} vistas previas más",
           "invalid_url": "URL de {{type}} no válida",
-          "video_exists": "Este vídeo ya ha sido añadido",
-          "adding_video": "Añadiendo vista previa de vídeo...",
-          "video_preview_added": "Vista previa de vídeo añadida",
-          "video_preview_error": "Error al añadir la vista previa de vídeo",
+          "video_exists": "Este video ya ha sido añadido",
+          "adding_video": "Añadiendo vista previa de video...",
+          "video_preview_added": "Vista previa de video añadida",
+          "video_preview_error": "Error al añadir la vista previa de video",
           "updating_order": "Actualizando el orden de las vistas previas..."
         },
         "favicon_preview": "Vista previa del favicon (32×32)"
@@ -2404,7 +2576,98 @@
           "images": "Imágenes y vistas previas",
           "social": "Enlaces sociales",
           "theme": "Tema",
-          "auth": "Auth"
+          "auth": "Auth",
+          "logos": "Logos",
+          "previews": "Vistas previas"
+        },
+        "where_it_appears": "Dónde aparece",
+        "specs": {
+          "formats": "PNG o JPG",
+          "max_size": "Hasta 5 MB",
+          "wide_size": "Unos 400×200 px",
+          "square_size": "512×512 px, sin esquinas redondeadas",
+          "favicon_size": "64×64 px",
+          "thumbnail_size": "1200×600 px",
+          "transparent_png": "Funciona mejor un PNG transparente"
+        },
+        "logos": {
+          "wide": {
+            "title": "Logo horizontal",
+            "description": "Tu logo principal. Aparece en el encabezado público, en los certificados y en cualquier lugar donde quepa una marca horizontal.",
+            "add": "Agregar logo horizontal",
+            "replace": "Reemplazar logo horizontal"
+          },
+          "square": {
+            "title": "Logo cuadrado",
+            "description": "Una marca compacta para espacios cuadrados: el panel de inicio de sesión, el selector de organizaciones y la barra lateral del panel. Mientras no agregues uno, el logo horizontal se ajusta a esos espacios.",
+            "add": "Agregar logo cuadrado",
+            "replace": "Reemplazar logo cuadrado",
+            "inherited": "Por ahora se usa el logo horizontal. Agrega una versión cuadrada para que llene el espacio."
+          },
+          "favicon": {
+            "title": "Favicon",
+            "description": "El ícono pequeño de la pestaña del navegador y de los marcadores.",
+            "add": "Agregar favicon",
+            "replace": "Reemplazar favicon"
+          },
+          "toasts": {
+            "uploading": "Subiendo…",
+            "wide_success": "Logo horizontal actualizado",
+            "wide_error": "No se pudo subir el logo horizontal",
+            "square_success": "Logo cuadrado actualizado",
+            "square_error": "No se pudo subir el logo cuadrado",
+            "favicon_success": "Favicon actualizado",
+            "favicon_error": "No se pudo subir el favicon"
+          }
+        },
+        "vignettes": {
+          "public_header": "Encabezado público",
+          "sign_in": "Página de inicio de sesión",
+          "org_switcher": "Selector de organizaciones",
+          "sidebar": "Barra lateral del panel",
+          "browser_tab": "Pestaña del navegador",
+          "certificate": "Certificado",
+          "explore_card": "Ficha en Explorar",
+          "link_preview": "Vista previa del enlace",
+          "gallery": "Galería en Explorar",
+          "footer": "Pie de página público"
+        },
+        "theme": {
+          "color_title": "Color principal",
+          "color_desc": "Tiñe el encabezado público y el fondo de la página detrás de él. Déjalo vacío para un encabezado blanco.",
+          "no_color": "Sin color",
+          "clear": "Quitar",
+          "font_title": "Fuente",
+          "font_desc": "Se usa en todas las páginas públicas. Elige de la lista seleccionada o busca entre todas las Google Fonts.",
+          "search_fonts": "Buscar fuentes…",
+          "no_fonts": "No se encontraron fuentes",
+          "all_fonts": "Mostrando resultados de todas las Google Fonts",
+          "default": "predeterminada",
+          "preview": "Vista previa en vivo",
+          "note": "Los cambios se aplican a tus páginas públicas cuando guardes."
+        },
+        "auth": {
+          "message_title": "Mensaje de bienvenida",
+          "message_desc": "Se muestra debajo de tu nombre en las páginas de inicio de sesión y registro. Déjalo vacío para usar el predeterminado.",
+          "background_title": "Fondo",
+          "background_desc": "Lo que va detrás de tu logo en el panel de inicio de sesión: el degradado predeterminado o una foto que subas o generes.",
+          "text_title": "Color del texto",
+          "text_desc": "Texto claro para fondos oscuros y texto oscuro para fondos claros.",
+          "preview_note": "El recuadro del logo usa tu logo cuadrado, o ajusta el horizontal si no has agregado uno."
+        },
+        "social": {
+          "title": "Redes sociales",
+          "description": "Enlazadas desde el pie de página de todas las páginas públicas.",
+          "links_title": "Enlaces personalizados",
+          "links_desc": "Hasta tres enlaces extra en el pie de página, como tu sitio web principal o un centro de ayuda."
+        },
+        "previews": {
+          "thumbnail_title": "Miniatura",
+          "thumbnail_desc": "La imagen de portada de tu organización cuando aparece en listados o se comparte: en la página Explorar de LearnHouse y en las vistas previas de enlaces.",
+          "thumbnail_add": "Agregar miniatura",
+          "thumbnail_replace": "Reemplazar miniatura",
+          "gallery_title": "Galería de vista previa",
+          "gallery_desc": "Hasta cuatro imágenes o videos que se muestran en la ficha de tu organización en Explorar. Arrastra para reordenar."
         }
       },
       "auth_branding": {
@@ -2473,6 +2736,7 @@
         "enable_ai": "Activar funciones de IA",
         "enable_ai_description": "Permite funciones impulsadas por IA en el contenido y las experiencias de aprendizaje de tu organización",
         "admin_only": "Solo los administradores pueden modificar la configuración de IA.",
+        "currently_disabled": "Las funciones de IA están desactivadas para esta organización. Activa el interruptor de abajo para volver a habilitarlas.",
         "features_enabled": "Funciones de IA disponibles",
         "feature_editor": "Asistencia de IA para el editor de contenido",
         "feature_activity": "Interacciones de IA en actividades de aprendizaje",
@@ -2481,11 +2745,11 @@
           "save_success": "Configuración de IA actualizada con éxito",
           "save_error": "Error al actualizar la configuración de IA"
         },
-        "ai_copilot": "AI Copilot",
-        "ai_copilot_description": "Let learners ask questions about course content. Uses indexed material to provide grounded answers with source citations.",
-        "feature_editor_description": "AI-powered content editing assistance for course creators.",
-        "feature_activity_description": "AI assistant available within activities to help learners.",
-        "always_on": "Always on"
+        "ai_copilot": "Copiloto de IA",
+        "ai_copilot_description": "Permite que los estudiantes hagan preguntas sobre el contenido del curso. Usa el material indexado para dar respuestas fundamentadas con citas de las fuentes.",
+        "feature_editor_description": "Ayuda con IA para editar el contenido, pensada para quienes crean cursos.",
+        "feature_activity_description": "Asistente de IA disponible dentro de las actividades para ayudar a los estudiantes.",
+        "always_on": "Siempre activo"
       },
       "features": {
         "title": "Configuración de funcionalidades",
@@ -2507,14 +2771,14 @@
           },
           "podcasts": {
             "description": "Habilitar creación de podcasts y contenido de audio para tu organización",
-            "title": "Podcasts"
+            "title": "Pódcasts"
           },
           "boards": {
             "title": "Tableros",
             "description": "Crea tableros colaborativos con listas y tarjetas para la gestión de proyectos"
           },
           "playgrounds": {
-            "title": "Playgrounds",
+            "title": "Espacios interactivos",
             "description": "Crea experiencias interactivas generadas por IA para tus estudiantes"
           }
         },
@@ -2561,7 +2825,7 @@
           "path_method": "Ruta y Método",
           "ip_address": "Dirección IP",
           "status": "Estado",
-          "payload": "Payload"
+          "payload": "Datos"
         },
         "loading": "Cargando actividad...",
         "no_logs": "No se encontraron registros",
@@ -2596,7 +2860,7 @@
         "select_section": "Selecciona una sección para editar o añade una nueva",
         "section_types": {
           "hero": {
-            "label": "Hero",
+            "label": "Portada",
             "description": "Añade una sección hero con encabezado y llamada a la acción"
           },
           "text_and_image": {
@@ -2614,6 +2878,70 @@
           "featured_courses": {
             "label": "Cursos",
             "description": "Añade una sección para mostrar cursos seleccionados"
+          },
+          "video": {
+            "label": "Video",
+            "description": "Inserta un video de YouTube, Vimeo o Loom, o sube el tuyo"
+          },
+          "rich_text": {
+            "label": "Texto",
+            "description": "Un título y texto con formato, escrito en Markdown"
+          },
+          "features": {
+            "label": "Características",
+            "description": "Una cuadrícula de tarjetas con ícono, título y descripción"
+          },
+          "stats": {
+            "label": "Cifras",
+            "description": "Números grandes con una etiqueta, como estudiantes o cursos"
+          },
+          "testimonials": {
+            "label": "Testimonios",
+            "description": "Citas de estudiantes o clientes"
+          },
+          "faq": {
+            "label": "Preguntas frecuentes",
+            "description": "Preguntas que se despliegan para mostrar su respuesta"
+          },
+          "cta": {
+            "label": "Llamado a la acción",
+            "description": "Un banner llamativo con un título y botones"
+          },
+          "gallery": {
+            "label": "Galería",
+            "description": "Una cuadrícula de imágenes"
+          },
+          "spacer": {
+            "label": "Espaciador",
+            "description": "Espacio vacío, con una línea divisoria opcional"
+          },
+          "pricing": {
+            "label": "Precios",
+            "description": "Tarjetas de planes con precio, lista de características y un botón"
+          },
+          "steps": {
+            "label": "Pasos",
+            "description": "Una secuencia numerada, en fila o apilada"
+          },
+          "columns": {
+            "label": "Columnas",
+            "description": "De dos a cuatro columnas de texto en Markdown"
+          },
+          "image": {
+            "label": "Imagen",
+            "description": "Una sola imagen grande con leyenda y enlace opcionales"
+          },
+          "embed": {
+            "label": "Contenido insertado",
+            "description": "Un formulario, calendario, mapa o tablero de un servicio compatible"
+          },
+          "banner": {
+            "label": "Anuncio",
+            "description": "Una barra delgada para novedades o promociones"
+          },
+          "countdown": {
+            "label": "Cuenta regresiva",
+            "description": "Un temporizador en vivo hasta un lanzamiento o una fecha límite"
           }
         },
         "add_section": "Añadir sección",
@@ -2731,10 +3059,241 @@
           "select_courses": "Seleccionar cursos",
           "loading_courses": "Cargando cursos...",
           "selected": "Seleccionado",
-          "select": "Seleccionar"
+          "select": "Seleccionar",
+          "private_badge": "Solo usuarios",
+          "private_badge_hint": "Los visitantes que no hayan iniciado sesión no verán este curso en la página de inicio.",
+          "private_selected_warning": "Algunos cursos seleccionados están configurados como Solo usuarios, así que los visitantes sin sesión iniciada no los verán. Haz públicos esos cursos para mostrárselos a todos."
         },
         "org_id_not_found": "ID de organización no encontrado",
-        "unknown_section_type": "Unknown section type"
+        "unknown_section_type": "Tipo de sección desconocido",
+        "video_editor": {
+          "title": "Sección de video",
+          "title_label": "Título",
+          "title_placeholder": "Mira el recorrido",
+          "description_label": "Descripción",
+          "description_placeholder": "Texto opcional que aparece encima del video",
+          "url_label": "Video",
+          "url_help": "Pega un enlace de YouTube, Vimeo o Loom, la URL directa de un archivo de video, o sube un archivo MP4/WebM.",
+          "upload_video": "Subir video"
+        },
+        "visibility": {
+          "title": "Visibilidad",
+          "description": "Elige quién ve esta sección en la página de inicio",
+          "everyone": "Todos",
+          "logged_in": "Solo usuarios con sesión iniciada",
+          "logged_out": "Solo visitantes sin sesión iniciada"
+        },
+        "templates": {
+          "title": "Empezar desde una plantilla",
+          "description": "Elige un punto de partida y luego edita cada sección. O agrega las secciones una por una.",
+          "sections_count_one": "{{count}} sección",
+          "sections_count_other": "{{count}} secciones",
+          "academy": {
+            "name": "Academia",
+            "description": "Portadas distintas para visitantes y miembros, cifras, cómo funciona, cursos, testimonios, preguntas frecuentes y un banner de registro."
+          },
+          "product": {
+            "name": "Formación de producto",
+            "description": "Portada, video de recorrido, temas, cursos recientes y un banner de contacto."
+          },
+          "minimal": {
+            "name": "Mínima",
+            "description": "Una breve presentación y tus cursos más recientes."
+          },
+          "launch": {
+            "name": "Lanzamiento",
+            "description": "Barra de anuncio, portada alta, cuenta regresiva en vivo, pasos, columnas, planes de precios y preguntas frecuentes, con animaciones de entrada."
+          }
+        },
+        "blocks": {
+          "title_label": "Título",
+          "subtitle_label": "Subtítulo",
+          "description_label": "Descripción",
+          "columns": "Columnas",
+          "align": "Alineación",
+          "align_start": "Inicio",
+          "align_center": "Centro",
+          "move_up": "Subir",
+          "move_down": "Bajar",
+          "remove": "Quitar",
+          "duplicate": "Duplicar sección",
+          "upload_image": "Subir imagen",
+          "hidden": "Ocultar esta sección",
+          "hidden_help": "Se conserva en el editor sin mostrarse en la página de inicio.",
+          "style": "Fondo, colores y espaciado",
+          "background": "Fondo",
+          "background_none": "Ninguno",
+          "background_solid": "Color sólido",
+          "background_gradient": "Degradado",
+          "background_image": "Imagen",
+          "color": "Color",
+          "gradient_from": "Desde",
+          "gradient_to": "Hasta",
+          "text_color": "Color del texto",
+          "spacing": "Espaciado vertical",
+          "spacing_none": "Ninguno",
+          "spacing_small": "Pequeño",
+          "spacing_medium": "Mediano",
+          "spacing_large": "Grande",
+          "anchor": "Ancla",
+          "anchor_help": "Permite que un botón salte a esta sección.",
+          "buttons": "Botones",
+          "add_button": "Agregar botón",
+          "button_text": "Texto del botón",
+          "button_text_default": "Ver cursos",
+          "button_background": "Fondo",
+          "button_color": "Texto",
+          "rich_text": {
+            "title": "Sección de texto",
+            "content": "Contenido",
+            "markdown_help": "Markdown: **negrita**, *cursiva*, [enlace](https://...), listas y ## títulos.",
+            "default_title": "Sobre nosotros",
+            "default_content": "Escribe algo sobre tu escuela. Se admite **Markdown**."
+          },
+          "features": {
+            "title": "Sección de características",
+            "add": "Agregar característica",
+            "icon": "Ícono (emoji)",
+            "default_title": "Por qué aprender con nosotros",
+            "default_item_title": "Característica",
+            "default_item_description": "Describe esta característica en una frase."
+          },
+          "stats": {
+            "title": "Sección de cifras",
+            "add": "Agregar cifra",
+            "value": "Valor",
+            "label": "Etiqueta",
+            "default_label": "Estudiantes"
+          },
+          "testimonials": {
+            "title": "Sección de testimonios",
+            "add": "Agregar testimonio",
+            "quote": "Cita",
+            "author": "Nombre",
+            "role": "Cargo o empresa",
+            "photo_url": "URL de la foto",
+            "default_title": "Lo que dicen los estudiantes"
+          },
+          "faq": {
+            "title": "Sección de preguntas frecuentes",
+            "add": "Agregar pregunta",
+            "question": "Pregunta",
+            "answer": "Respuesta",
+            "default_title": "Preguntas frecuentes"
+          },
+          "cta": {
+            "title": "Sección de llamado a la acción",
+            "heading": "Título",
+            "default_heading": "¿Empezamos?"
+          },
+          "gallery": {
+            "title": "Sección de galería",
+            "add": "Agregar imagen",
+            "alt": "Texto alternativo"
+          },
+          "spacer": {
+            "title": "Espaciador",
+            "size": "Tamaño",
+            "divider": "Mostrar una línea divisoria"
+          },
+          "courses": {
+            "mode": "Cursos que se muestran",
+            "mode_selected": "Los cursos que yo elija",
+            "mode_latest": "Cursos más recientes",
+            "limit": "Cuántos"
+          },
+          "device": "Dispositivos",
+          "device_all": "Todos los dispositivos",
+          "device_desktop": "Solo computadora",
+          "device_mobile": "Solo móvil",
+          "show_from": "Mostrar desde",
+          "show_until": "Mostrar hasta",
+          "width": "Ancho",
+          "width_normal": "Normal",
+          "width_narrow": "Angosto",
+          "title_align": "Alineación del título",
+          "animation": "Animación de entrada",
+          "animation_none": "Ninguna",
+          "animation_fade": "Aparecer",
+          "animation_slide_up": "Deslizar hacia arriba",
+          "export": "Exportar",
+          "import": "Importar",
+          "import_invalid": "Este archivo no es una exportación válida de la página de inicio",
+          "import_done": "Página de inicio importada ({{count}} secciones). Guarda para publicarla.",
+          "hero": {
+            "title": "Tamaño de la portada y capa oscura",
+            "height": "Altura",
+            "height_screen": "Pantalla completa",
+            "overlay": "Capa oscura",
+            "overlay_help": "Oscurece el fondo para que el texto se lea bien sobre una foto."
+          },
+          "pricing": {
+            "title": "Sección de precios",
+            "add": "Agregar plan",
+            "name": "Nombre del plan",
+            "price": "Precio",
+            "period": "/ mes",
+            "features": "Características, una por línea",
+            "highlighted": "Destacar este plan",
+            "button_default": "Empezar",
+            "default_title": "Precios sencillos",
+            "default_plan": "Gratis",
+            "linked_offer": "Producto de la tienda vinculado",
+            "linked_none": "Ninguno (escribe el precio tú)",
+            "linked_missing": "El producto ya no está disponible",
+            "linked_help": "El precio y el enlace de pago vienen de la tienda y se mantienen sincronizados. El nombre, la descripción y las características son los del producto, salvo que escribas los tuyos.",
+            "linked_missing_help": "Este producto está archivado o no aparece públicamente, así que este plan se oculta en la página de inicio.",
+            "store_hint": "Tu tienda tiene productos que puedes convertir en planes.",
+            "add_from_store": "Agregar planes desde la tienda",
+            "store_empty": "No hay productos de la tienda publicados. Crea uno en Pagos para vincular los planes al pago.",
+            "buy_default": "Comprar ahora"
+          },
+          "steps": {
+            "title": "Sección de pasos",
+            "layout": "Diseño",
+            "horizontal": "En fila",
+            "vertical": "Apilados",
+            "add": "Agregar paso",
+            "default_title": "Cómo funciona"
+          },
+          "columns_block": {
+            "title": "Sección de columnas",
+            "add": "Agregar columna"
+          },
+          "image": {
+            "title": "Sección de imagen",
+            "caption": "Leyenda",
+            "link": "Enlace",
+            "rounded": "Esquinas redondeadas y sombra"
+          },
+          "embed": {
+            "title": "Sección de contenido insertado",
+            "url": "URL",
+            "help": "Compatibles: Calendly, Typeform, Tally, Airtable, Google Docs, Forms y Maps, Figma, Loom, Canva, Miro, YouTube y Vimeo.",
+            "not_allowed": "Este servicio no es compatible, así que no se mostrará nada.",
+            "height": "Altura (px)"
+          },
+          "banner": {
+            "title": "Anuncio",
+            "text": "Texto",
+            "link_text": "Texto del enlace",
+            "schedule_tip": "Consejo: usa \"Mostrar desde\" y \"Mostrar hasta\" arriba para que este anuncio se vea solo por un tiempo.",
+            "default_text": "Acabamos de lanzar un curso nuevo"
+          },
+          "countdown": {
+            "title": "Sección de cuenta regresiva",
+            "target": "Cuenta hasta",
+            "done_text": "Texto cuando termine",
+            "default_heading": "Muy pronto"
+          },
+          "page": {
+            "title": "Configuración de la página",
+            "description": "Configuración de toda la página de inicio.",
+            "width": "Ancho del contenido",
+            "width_wide": "Amplio",
+            "gap": "Espacio entre secciones"
+          }
+        }
       },
       "theme": {
         "primary_color": "Color primario",
@@ -2752,7 +3311,7 @@
         "auto_provision": "Aprovisionar usuarios automáticamente",
         "auto_provision_desc": "Crear cuentas de usuario automáticamente para inicios de sesión SSO por primera vez.",
         "delete": "Eliminar configuración SSO",
-        "delete_confirm": "¿Estás seguro de que quieres eliminar esta configuración SSO? Los usuarios ya no podrán iniciar sesión via SSO.",
+        "delete_confirm": "¿Seguro que quieres eliminar esta configuración SSO? Los usuarios ya no podrán iniciar sesión via SSO.",
         "delete_error": "Error al eliminar la configuración SSO",
         "delete_success": "Configuración SSO eliminada",
         "deleting": "Eliminando...",
@@ -2766,7 +3325,7 @@
         "oidc_info": "Conectar directamente con cualquier proveedor de identidad compatible con OpenID Connect (Azure AD, Okta, Google Workspace, Keycloak).",
         "oidc_issuer_url": "URL del emisor",
         "oidc_issuer_url_help": "La URL del emisor OIDC. Los endpoints serán descubiertos automáticamente desde /.well-known/openid-configuration.",
-        "oidc_scopes": "Scopes",
+        "oidc_scopes": "Ámbitos (scopes)",
         "oidc_scopes_help": "Scopes OAuth a solicitar (separados por espacios). Por defecto: openid email profile",
         "open_setup_portal": "Configurar proveedor de identidad",
         "provider": "Proveedor SSO",
@@ -2787,30 +3346,30 @@
       },
       "seo": {
         "org_seo": {
-          "quick_links": "Enlaces rapidos",
-          "important_seo_urls": "URLs SEO importantes para tu organizacion",
+          "quick_links": "Enlaces rápidos",
+          "important_seo_urls": "URLs importantes para el SEO de tu organización",
           "sitemap": "Sitemap:",
           "robots_txt": "Robots.txt:",
           "default_meta_tags": "Meta tags predeterminados",
-          "set_default_metadata": "Establecer metadatos predeterminados",
-          "title_suffix": "Sufijo del titulo",
-          "title_suffix_hint": "Se anade a todos los titulos, ej. \" | Mi Academia\"",
-          "default_description": "Descripcion predeterminada",
-          "default_description_hint": "Descripcion de respaldo cuando una pagina no tiene una",
-          "social_open_graph": "Social & Open Graph",
-          "social_open_graph_hint": "Controla como aparecen tus paginas al compartir en redes sociales",
+          "set_default_metadata": "Define los metadatos predeterminados para todas las páginas",
+          "title_suffix": "Sufijo del título",
+          "title_suffix_hint": "Se agrega a todos los títulos de página, p. ej. \" | Mi Academia\"",
+          "default_description": "Descripción predeterminada",
+          "default_description_hint": "Descripción de respaldo cuando una página no tiene una propia",
+          "social_open_graph": "Redes sociales y Open Graph",
+          "social_open_graph_hint": "Controla cómo se ven tus páginas cuando se comparten en redes sociales",
           "default_og_image": "Imagen OG predeterminada",
           "default_og_image_hint": "Imagen predeterminada para redes sociales (1200x630 recomendado)",
           "twitter_handle": "Cuenta de Twitter",
           "twitter_handle_hint": "Se muestra en las tarjetas de Twitter como cuenta del sitio",
-          "search_engine_verification": "Verificacion de motores de busqueda",
-          "search_engine_verification_hint": "Verificar propiedad con motores de busqueda",
+          "search_engine_verification": "Verificación en buscadores",
+          "search_engine_verification_hint": "Verifica la propiedad del sitio con los buscadores",
           "google_search_console": "Google Search Console",
-          "google_search_console_hint": "Codigo de verificacion de Google Search Console",
-          "indexing_controls": "Controles de indexacion",
-          "indexing_controls_hint": "Controla que paginas pueden indexar los motores de busqueda",
+          "google_search_console_hint": "Código de verificación de Google Search Console",
+          "indexing_controls": "Controles de indexación",
+          "indexing_controls_hint": "Controla qué páginas pueden indexar los buscadores",
           "hide_communities": "Ocultar comunidades",
-          "hide_communities_hint": "Ocultar paginas de comunidad de los motores de busqueda"
+          "hide_communities_hint": "Ocultar las páginas de comunidad de los buscadores"
         },
         "copied_to_clipboard": "Copiado al portapapeles",
         "save_failed": "Error al guardar la configuración SEO"
@@ -2818,8 +3377,8 @@
       "domains": {
         "title": "Dominios personalizados",
         "subtitle": "Configurar dominios personalizados",
-        "empty_description": "Anade tu propio dominio para una experiencia de marca.",
-        "add_domain": "Anadir dominio",
+        "empty_description": "Agrega tu propio dominio para ofrecer a tus estudiantes una experiencia con tu marca.",
+        "add_domain": "Agregar dominio",
         "domain_name": "Nombre de dominio",
         "enter_domain": "Introduce tu dominio",
         "verify": "Verificar",
@@ -2831,16 +3390,16 @@
         "active": "Activo",
         "failed": "Fallido",
         "ssl_active": "SSL activo",
-        "failed_add": "No se pudo anadir el dominio",
+        "failed_add": "No se pudo agregar el dominio",
         "failed_delete": "No se pudo eliminar el dominio",
         "failed_verify": "No se pudo verificar el dominio",
         "verifying_domain": "Verificando dominio...",
         "domain_verified": "Dominio verificado",
-        "domain_added": "Dominio anadido",
+        "domain_added": "Dominio agregado",
         "domain_removed": "Dominio eliminado",
-        "no_domains_yet": "Aun no hay dominios",
-        "add_first_domain": "Anade tu primer dominio",
-        "add_custom_domain": "Anadir dominio personalizado",
+        "no_domains_yet": "Aún no hay dominios personalizados",
+        "add_first_domain": "Agrega tu primer dominio para empezar",
+        "add_custom_domain": "Agregar dominio personalizado",
         "add_custom_domain_desc": "Introduce el dominio que quieres usar.",
         "domain_label": "Dominio",
         "domain_hint": "Introduce un dominio o subdominio (ej. learn.empresa.com)",
@@ -2870,7 +3429,7 @@
         "check": "Comprobar",
         "checking_ssl": "Comprobando estado SSL...",
         "delete_domain_title": "Eliminar dominio personalizado",
-        "delete_domain_confirm": "¿Estás seguro de que quieres eliminar este dominio? Esta acción no se puede deshacer.",
+        "delete_domain_confirm": "¿Seguro que quieres eliminar este dominio? Esta acción no se puede deshacer.",
         "delete_domain": "Eliminar dominio",
         "verify_domain_desc": "Añade los siguientes registros DNS en tu proveedor de dominio para verificar la propiedad.",
         "issuer": "Emisor",
@@ -2879,7 +3438,7 @@
       "automations": {
         "webhooks_title": "Webhooks",
         "webhooks_subtitle": "Enviar notificaciones en tiempo real a servicios externos",
-        "webhooks_description": "Los endpoints webhook reciben solicitudes HTTP POST cuando ocurren eventos en tu organizacion."
+        "webhooks_description": "Los endpoints de webhook reciben solicitudes HTTP POST cuando ocurren eventos en tu organización."
       },
       "usage": {
         "plan_resource_usage": "Plan y uso de recursos",
@@ -2892,60 +3451,151 @@
         "base_credits": "Creditos base",
         "purchased": "Comprados",
         "used": "Usados",
-        "remaining": "Restantes"
+        "remaining": "Restantes",
+        "upsell": {
+          "title": "Haz más con un plan superior",
+          "subtitle": "Cambia de plan para ampliar tus límites y desbloquear más funciones.",
+          "popular": "Popular",
+          "compare": "Comparar todos los planes"
+        }
       },
       "api_access": {
-        "title": "API Access",
-        "api_tokens": "API Tokens",
-        "docs_playground": "Documentation & Playground",
-        "something_not_working": "Something not working as expected?",
-        "tokens_description": "API tokens allow external applications to access your organization's data securely.",
-        "create_token": "Create Token",
-        "no_tokens_yet": "No API tokens yet",
-        "create_first_token": "Create your first token to get started",
-        "create_api_token": "Create API Token",
-        "token_name": "Token Name *",
-        "expires": "Expires",
-        "never": "Never",
-        "revoked": "Revoked",
-        "revoke": "Revoke",
-        "api_docs_title": "API Documentation & Playground",
-        "create_token_desc": "Create a new API token for programmatic access. The token will only be shown once.",
-        "token_name_label": "Token Name *",
-        "description_label": "Description",
-        "expiration_label": "Expiration Date (optional)",
-        "expiration_hint": "Leave empty for a token that never expires",
-        "permissions_label": "Permissions",
-        "read_only": "Read Only",
-        "full_access": "Full Access",
-        "custom": "Custom",
-        "cancel": "Cancel",
-        "save_token_warning": "Save your token now!",
-        "save_token_hint": "This is the only time you'll see this token. Copy it and store it securely.",
-        "your_api_token": "Your API Token",
-        "done": "Done"
+        "title": "Acceso a la API",
+        "api_tokens": "Tokens de API",
+        "docs_playground": "Documentación y entorno de pruebas",
+        "something_not_working": "¿Algo no funciona como esperabas?",
+        "tokens_description": "Los tokens de API permiten que aplicaciones externas accedan de forma segura a los datos de tu organización.",
+        "create_token": "Crear token",
+        "no_tokens_yet": "Todavía no hay tokens de API",
+        "create_first_token": "Crea tu primer token para empezar",
+        "create_api_token": "Crear token de API",
+        "token_name": "Nombre del token *",
+        "expires": "Vence",
+        "never": "Nunca",
+        "revoked": "Revocado",
+        "revoke": "Revocar",
+        "api_docs_title": "Documentación de la API y entorno de pruebas",
+        "create_token_desc": "Crea un nuevo token de API para el acceso programático. El token se mostrará una sola vez.",
+        "token_name_label": "Nombre del token *",
+        "description_label": "Descripción",
+        "expiration_label": "Fecha de vencimiento (opcional)",
+        "expiration_hint": "Déjalo vacío para un token que no vence nunca",
+        "permissions_label": "Permisos",
+        "read_only": "Solo lectura",
+        "full_access": "Acceso completo",
+        "custom": "Personalizado",
+        "cancel": "Cancelar",
+        "save_token_warning": "¡Guarda tu token ahora!",
+        "save_token_hint": "Esta es la única vez que verás este token. Cópialo y guárdalo en un lugar seguro.",
+        "your_api_token": "Tu token de API",
+        "done": "Listo"
       },
       "general": {
         "validation": {
-          "short_description_required": "Short description is required",
-          "short_description_max": "Short description must be 100 characters or less",
-          "about_max": "About text must be 400 characters or less",
-          "label_required": "Organization label is required"
+          "short_description_required": "La descripción corta es obligatoria",
+          "short_description_max": "La descripción corta debe tener 100 caracteres o menos",
+          "about_max": "El texto de \"Acerca de\" debe tener 400 caracteres o menos",
+          "label_required": "La etiqueta de la organización es obligatoria"
         }
       },
       "menu": {
-        "title": "Public navigation",
-        "subtitle": "Toggle, reorder, rename links and add your own. Links only appear if the related feature is on your plan and enabled.",
-        "save": "Save changes",
-        "saving": "Saving menu…",
-        "saved": "Menu updated",
-        "error": "Couldn't update the menu",
-        "add_custom": "Add a custom link",
-        "add": "Add",
-        "label_placeholder": "Label",
-        "custom_required": "A label and a URL are required",
-        "plan_locked": "Requires {{plan}} plan",
-        "feature_off": "Feature is off"
+        "title": "Navegación pública",
+        "subtitle": "Activa, reordena y renombra enlaces, o agrega los tuyos. Los enlaces solo aparecen si la función correspondiente está en tu plan y activada.",
+        "save": "Guardar cambios",
+        "saving": "Guardando el menú…",
+        "saved": "Menú actualizado",
+        "error": "No se pudo actualizar el menú",
+        "add_custom": "Agregar un enlace personalizado",
+        "add": "Agregar",
+        "label_placeholder": "Etiqueta",
+        "custom_required": "Se necesitan una etiqueta y una URL",
+        "plan_locked": "Requiere el plan {{plan}}",
+        "feature_off": "La función está desactivada"
+      },
+      "danger_zone": {
+        "delete_org_tooltip": "Eliminar la organización de forma permanente"
+      },
+      "security": {
+        "saving": "Guardando la política de seguridad…",
+        "save_error": "No se pudo guardar la política de seguridad.",
+        "save_success": "Política de seguridad actualizada",
+        "admin_mfa_first": "Activa la verificación en dos pasos en tu propia cuenta antes de exigirla en la organización.",
+        "admin_mfa_first_why": "Si no, la política te dejaría fuera de tu propia organización apenas se guarde, y no quedaría ningún administrador para desactivarla.",
+        "admin_mfa_first_cta": "Configurar la verificación en dos pasos en mi cuenta",
+        "not_admin_title": "No tienes acceso a esta configuración",
+        "not_admin_body": "Solo los administradores de la organización pueden ver o cambiar el requisito de verificación en dos pasos.",
+        "read_only": "Puedes revisar esta página, pero solo un administrador de la organización puede cambiar la política.",
+        "methods_title": "Métodos de inicio de sesión permitidos",
+        "methods_description": "Elige cómo pueden iniciar sesión los miembros en esta organización. Deja todos los métodos marcados para no poner restricciones.",
+        "methods_empty_warning": "Sin ningún método seleccionado, nadie podría iniciar sesión en esta organización. Elige al menos uno.",
+        "methods_effect": "Los métodos desmarcados desaparecen de la página de inicio de sesión de esta organización, y a los miembros que ya entraron con uno de ellos se les pide volver a iniciar sesión con un método permitido.",
+        "session_sharing_label": "Permitir compartir sesiones con learnhouse.io",
+        "session_sharing_hint": "Si está desactivado, iniciar sesión en learnhouse.io no les da acceso a esta organización; los miembros deben volver a iniciar sesión desde la página de esta organización con un método permitido.",
+        "saving_short": "Guardando…",
+        "save": "Guardar cambios",
+        "cancel": "Cancelar",
+        "load_error": "No se pudo cargar el estado de verificación en dos pasos de tu organización.",
+        "reset_error": "No se pudo restablecer la verificación en dos pasos de este miembro.",
+        "load_error_title": "Algo salió mal",
+        "retry": "Reintentar",
+        "subtitle": "Exige la verificación en dos pasos a todas las personas de esta organización.",
+        "compliance_title": "Cobertura de la verificación en dos pasos",
+        "compliance_count": "{{enabled}} de {{total}} miembros tienen activada la verificación en dos pasos",
+        "refresh": "Actualizar",
+        "stat_enrolled": "Activada",
+        "stat_exempt": "Exentos (inicio de sesión externo)",
+        "stat_blocked": "Quedarían bloqueados",
+        "blocked_hint_active": "Estos miembros pierden el acceso a esta organización cuando termine su periodo de gracia, salvo que activen la verificación.",
+        "members_title": "Miembros",
+        "members_sorted": "primero quienes no la tienen",
+        "members_empty": "Todavía no hay miembros en esta organización.",
+        "you": "tú",
+        "badge_enrolled": "Activada",
+        "badge_exempt": "Exento: {{method}}",
+        "badge_not_enrolled": "Sin activar",
+        "reset_hint": "Borra la verificación en dos pasos de este miembro para que pueda configurarla de nuevo",
+        "resetting": "Restableciendo…",
+        "reset_confirm": "¿Confirmas el restablecimiento?",
+        "reset_2fa": "Restablecer 2FA",
+        "show_less": "Mostrar menos",
+        "show_all": "Mostrar los {{count}} miembros",
+        "policy_title": "Exigir verificación en dos pasos",
+        "policy_description": "Los miembros sin segundo paso quedan bloqueados en esta organización cuando termina su periodo de gracia. Conservan su cuenta y cualquier otra organización a la que pertenezcan, y recuperan el acceso en cuanto la activan.",
+        "active_since": "Política activa desde el {{date}}",
+        "active_no_date": "La política está activa",
+        "no_restart_note": "Guardar cambios en una política ya activa no reinicia la cuenta regresiva de nadie; los plazos existentes siguen contando desde la fecha de arriba. La cuenta regresiva solo se reinicia si desactivas el requisito y lo vuelves a activar.",
+        "grace_label": "Periodo de gracia",
+        "grace_immediately": "De inmediato",
+        "grace_days": "{{count}} días",
+        "grace_hint_immediate": "Los miembros sin verificación en dos pasos quedan bloqueados apenas se guarda la política.",
+        "grace_hint_days": "Los miembros tienen {{count}} días para activarla antes de quedar bloqueados. Los miembros nuevos tienen el mismo plazo desde el día en que se unen.",
+        "exempt_label": "Eximir a quienes inician sesión con Google o SSO",
+        "exempt_hint": "Su proveedor de identidad ya se encarga de la verificación de varios pasos, así que pedirles un segundo paso aquí no aporta nada.",
+        "self_blocking": "Tu propio plazo ya venció. Activa la verificación ahora para conservar el acceso a esta organización.",
+        "self_days_left": "Te quedan {{count}} días para activar tú también la verificación en dos pasos.",
+        "confirm_title": "¿Exigir la verificación en dos pasos a todos?",
+        "confirm_none": "Todas las personas de esta organización tienen activada la verificación en dos pasos o están exentas. Nadie pierde el acceso.",
+        "confirm_immediate": "{{count}} de {{total}} miembros perderán el acceso a esta organización de inmediato, apenas guardes.",
+        "confirm_deadline": "{{count}} de {{total}} miembros perderán el acceso a esta organización el {{date}}, salvo que activen la verificación en dos pasos antes.",
+        "confirm_list_title": "A quiénes afecta",
+        "confirm_exempt_note": "{{count}} miembros están exentos porque inician sesión con un proveedor de identidad externo.",
+        "confirm_reversible": "Se puede revertir: al desactivar el requisito, el acceso se restablece de inmediato.",
+        "confirm_button": "Sí, exigir la verificación en dos pasos"
+      },
+      "course_end": {
+        "title": "Pantalla de fin del curso",
+        "subtitle": "Se muestra a los estudiantes cuando terminan un curso",
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "saved": "Pantalla de fin del curso guardada",
+        "error": "No se pudo guardar la pantalla de fin del curso",
+        "message_label": "Mensaje",
+        "message_help": "Reemplaza la línea predeterminada debajo del título de felicitación. Déjalo vacío para mantener la predeterminada.",
+        "button_text_label": "Texto del botón",
+        "button_link_label": "Enlace del botón",
+        "button_link_help": "Una ruta interna como /courses o una URL completa con https://. Déjalo vacío para enlazar a tu catálogo de cursos.",
+        "link_invalid": "Usa una ruta interna que empiece con / o una URL completa http(s)",
+        "preview": "Vista previa"
       }
     },
     "users": {
@@ -2956,12 +3606,19 @@
           "roles": "Roles",
           "signups": "Inscripciones y códigos de invitación",
           "add": "Invitar miembros",
-          "audit_logs": "Registros de auditoría"
+          "audit_logs": "Registros de auditoría",
+          "analytics": "Analíticas",
+          "sign_in": "Inicio de sesión",
+          "two_factor": "Verificación en dos pasos"
         },
         "pages": {
           "users": {
             "title": "Usuarios",
             "subtitle": "Gestiona los usuarios de tu organización, asigna roles y permisos"
+          },
+          "analytics": {
+            "title": "Analíticas de estudiantes",
+            "subtitle": "Un registro completo y exportable de la actividad de aprendizaje de cada estudiante"
           },
           "signups": {
             "title": "Inscripciones y códigos de invitación",
@@ -2982,6 +3639,14 @@
           "audit_logs": {
             "title": "Registros de auditoría",
             "subtitle": "Rastrea y supervisa todas las actividades dentro de tu organización"
+          },
+          "two_factor": {
+            "title": "Verificación en dos pasos",
+            "subtitle": "Exige la verificación en dos pasos a los miembros de esta organización"
+          },
+          "sign_in": {
+            "title": "Inicio de sesión",
+            "subtitle": "Elige cómo pueden iniciar sesión los miembros en esta organización"
           }
         },
         "mobile": {
@@ -3002,19 +3667,143 @@
         "failed_load": "No se pudo cargar el expediente del estudiante.",
         "back_to_students": "Volver a estudiantes",
         "no_behavioral": "Sin datos de comportamiento (las analíticas pueden no estar configuradas para este periodo).",
-        "ranges": { "d30": "30 días", "d90": "90 días", "y1": "1 año" },
-        "kpi": { "courses": "Cursos", "completed": "{{count}} completados", "avg_progress": "Progreso medio", "time_spent": "Tiempo dedicado", "assignments": "Tareas", "avg_grade": "media {{grade}}", "certificates": "Certificados", "connections": "Conexiones", "last": "última {{date}}" },
-        "tabs": { "connections": "Conexiones", "courses": "Cursos", "assignments": "Tareas", "code": "Código", "community": "Comunidad", "certificates": "Certificados", "behavior": "Comportamiento" },
-        "identity": { "verified": "Verificado", "unverified": "Sin verificar", "via": "vía {{method}}" },
-        "connections": { "title": "Conexiones", "empty": "Aún no hay conexiones registradas." },
-        "courses": { "title": "Progreso del curso", "empty": "No inscrito en ningún curso.", "activities": "{{done}}/{{total}} actividades", "enrolled": "Inscrito {{date}}" },
-        "assignments": { "title": "Tareas", "empty": "Sin entregas de tareas.", "attempt": "intento {{number}}", "feedback": "Comentarios:" },
-        "code": { "title": "Ejercicios de código", "empty": "Sin envíos de código.", "activity": "Actividad", "result": "Resultado", "tests": "Pruebas", "time": "Tiempo", "when": "Cuándo", "passed": "Superado", "failed": "Fallido" },
-        "community": { "title": "Participación en la comunidad", "empty": "Sin actividad en la comunidad.", "discussions": "Debates", "comments": "Comentarios" },
-        "certificates": { "title": "Certificados obtenidos", "empty": "Sin certificados obtenidos." },
-        "behavior": { "title": "Analíticas de comportamiento", "time_by_course": "Tiempo dedicado por curso", "searches": "Búsquedas" },
-        "status": { "completed": "completado", "in_progress": "en curso", "paused": "en pausa", "cancelled": "cancelado", "graded": "calificado", "submitted": "entregado", "pending": "pendiente", "late": "atrasado", "not_submitted": "sin entregar" },
-        "comparison": { "student": "Estudiante", "enrolled": "Inscrito", "completed": "Completado", "certificates": "Certificados", "last_connection": "Última conexión", "view": "Ver" }
+        "ranges": {
+          "d30": "30 días",
+          "d90": "90 días",
+          "y1": "1 año"
+        },
+        "kpi": {
+          "courses": "Cursos",
+          "completed": "{{count}} completados",
+          "avg_progress": "Progreso medio",
+          "time_spent": "Tiempo dedicado",
+          "assignments": "Tareas",
+          "avg_grade": "media {{grade}}",
+          "certificates": "Certificados",
+          "connections": "Conexiones",
+          "last": "última {{date}}"
+        },
+        "tabs": {
+          "connections": "Conexiones",
+          "courses": "Cursos",
+          "assignments": "Tareas",
+          "code": "Código",
+          "community": "Comunidad",
+          "certificates": "Certificados",
+          "behavior": "Comportamiento"
+        },
+        "identity": {
+          "verified": "Verificado",
+          "unverified": "Sin verificar",
+          "via": "vía {{method}}"
+        },
+        "connections": {
+          "title": "Conexiones",
+          "empty": "Aún no hay conexiones registradas.",
+          "device": "Dispositivo",
+          "raw_agent": "User agent sin procesar",
+          "unknown_device": "Dispositivo desconocido"
+        },
+        "courses": {
+          "title": "Progreso del curso",
+          "empty": "No inscrito en ningún curso.",
+          "activities": "{{done}}/{{total}} actividades",
+          "enrolled": "Inscrito {{date}}"
+        },
+        "assignments": {
+          "title": "Tareas",
+          "empty": "Sin entregas de tareas.",
+          "attempt": "intento {{number}}",
+          "feedback": "Comentarios:",
+          "tasks": "{{done}}/{{total}} tareas enviadas",
+          "no_tasks": "Esta tarea no tiene ejercicios."
+        },
+        "code": {
+          "title": "Ejercicios de código",
+          "empty": "Sin envíos de código.",
+          "activity": "Actividad",
+          "result": "Resultado",
+          "tests": "Pruebas",
+          "time": "Tiempo",
+          "when": "Cuándo",
+          "passed": "Superado",
+          "failed": "Fallido",
+          "language": "Lenguaje",
+          "course": "Curso",
+          "untitled_activity": "Actividad sin título"
+        },
+        "community": {
+          "title": "Participación en la comunidad",
+          "empty": "Sin actividad en la comunidad.",
+          "discussions": "Debates",
+          "comments": "Comentarios",
+          "in_discussion": "En \"{{title}}\"",
+          "community": "Comunidad"
+        },
+        "certificates": {
+          "title": "Certificados obtenidos",
+          "empty": "Sin certificados obtenidos.",
+          "credential_id": "ID de la credencial"
+        },
+        "behavior": {
+          "title": "Analíticas de comportamiento",
+          "time_by_course": "Tiempo dedicado por curso",
+          "searches": "Búsquedas",
+          "views": "Vistas de páginas y contenido",
+          "untitled_course": "Curso sin título"
+        },
+        "status": {
+          "completed": "completado",
+          "in_progress": "en curso",
+          "paused": "en pausa",
+          "cancelled": "cancelado",
+          "graded": "calificado",
+          "submitted": "entregado",
+          "pending": "pendiente",
+          "late": "atrasado",
+          "not_submitted": "sin entregar"
+        },
+        "comparison": {
+          "student": "Estudiante",
+          "enrolled": "Inscrito",
+          "completed": "Completado",
+          "certificates": "Certificados",
+          "last_connection": "Última conexión",
+          "view": "Ver"
+        },
+        "export_include_raw": "Incluir los datos sin procesar de las entregas",
+        "answer": {
+          "question": "Pregunta",
+          "answered": "Respondió",
+          "expected": "Respuesta esperada",
+          "no_answer": "Sin respuesta",
+          "correct": "Correcta",
+          "incorrect": "Incorrecta",
+          "correct_answer": "Respuesta correcta",
+          "not_graded": "Sin calificación automática",
+          "score": "{{correct}}/{{total}} correctas",
+          "explanation": "Explicación",
+          "raw_note": "Ejercicio personalizado (se muestran los campos sin procesar)",
+          "not_submitted": "No enviado",
+          "manual": "calificado a mano",
+          "source_code": "Código enviado",
+          "test_cases": "Casos de prueba",
+          "hidden_test": "Prueba oculta {{number}}",
+          "test_passed": "Aprobada",
+          "test_failed": "Fallida",
+          "actual": "Resultado",
+          "download_file": "Descargar archivo"
+        },
+        "task_types": {
+          "QUIZ": "Cuestionario",
+          "FORM": "Completar los espacios",
+          "SHORT_ANSWER": "Respuesta corta",
+          "NUMBER_ANSWER": "Respuesta numérica",
+          "FILE_SUBMISSION": "Subir archivo",
+          "CODE": "Ejercicio de código",
+          "CUSTOM": "Ejercicio personalizado",
+          "OTHER": "Otro"
+        }
       },
       "active_users": {
         "title": "Usuarios activos",
@@ -3033,7 +3822,8 @@
           "remove_error": "Error al eliminar al usuario",
           "updating_role": "Actualizando rol...",
           "role_update_success": "Rol actualizado con éxito",
-          "role_update_error": "Error al actualizar el rol"
+          "role_update_error": "Error al actualizar el rol",
+          "export_csv": "Exportar usuarios (CSV)"
         },
         "modals": {
           "update_role": {
@@ -3042,16 +3832,20 @@
           },
           "remove_user": {
             "title": "¿Eliminar {{username}}?",
-            "message": "¿Estás seguro de que quieres eliminar a este usuario de la organización?",
+            "message": "¿Seguro que quieres eliminar a este usuario de la organización?",
             "button": "Eliminar usuario"
           }
         },
+        "beyond_included": "{{count}} por encima de tu plan",
+        "beyond_included_tooltip": "Estos miembros superan la cantidad que incluye tu plan. Solo se cuentan los que estuvieron activos este mes. Consulta la facturación para más detalles.",
         "search_placeholder": "Buscar usuarios...",
         "no_results": "No se encontraron usuarios que coincidan con tu búsqueda",
         "no_users": "Aún no hay usuarios en esta organización",
         "pagination": {
           "showing": "Mostrando {{start}}-{{end}} de {{total}}",
-          "page": "Página {{current}} de {{total}}"
+          "page": "Página {{current}} de {{total}}",
+          "previous": "Página anterior",
+          "next": "Página siguiente"
         }
       },
       "signups": {
@@ -3062,7 +3856,7 @@
           "description": "Los usuarios pueden unirse libremente desde la página de registro",
           "active": "Activo",
           "change_to": "Cambiar a abierto",
-          "confirmation_message": "¿Estás seguro de que quieres cambiar el mecanismo de registro a abierto? Esto permitirá que los usuarios se unan a tu organización libremente.",
+          "confirmation_message": "¿Seguro que quieres cambiar el mecanismo de registro a abierto? Esto permitirá que los usuarios se unan a tu organización libremente.",
           "confirmation_title": "¿Cambiar a abierto?"
         },
         "closed": {
@@ -3070,7 +3864,7 @@
           "description": "Los usuarios solo pueden unirse mediante invitación",
           "active": "Activo",
           "change_to": "Cambiar a cerrado",
-          "confirmation_message": "¿Estás seguro de que quieres cambiar el mecanismo de registro a cerrado? Esto permitirá que los usuarios se unan a tu organización solo mediante invitación.",
+          "confirmation_message": "¿Seguro que quieres cambiar el mecanismo de registro a cerrado? Esto permitirá que los usuarios se unan a tu organización solo mediante invitación.",
           "confirmation_title": "¿Cambiar a cerrado?"
         },
         "invite_codes": {
@@ -3090,7 +3884,7 @@
           "actions": {
             "delete_code": "Eliminar código",
             "delete_confirmation_title": "¿Eliminar código?",
-            "delete_confirmation_message": "¿Estás seguro de que quieres eliminar este código de invitación?",
+            "delete_confirmation_message": "¿Seguro que quieres eliminar este código de invitación?",
             "generate": "Generar código de invitación",
             "generate_title": "Generar código de invitación",
             "generate_description": "Genera un nuevo código de invitación para tu organización"
@@ -3145,7 +3939,7 @@
           "no_results": "No se encontraron invitaciones que coincidan con tu búsqueda",
           "remove_button": "Eliminar",
           "remove_error": "Error al eliminar la invitación",
-          "remove_message": "¿Estás seguro de que deseas eliminar la invitación para {{email}}?",
+          "remove_message": "¿Seguro que quieres eliminar la invitación para {{email}}?",
           "remove_success": "Invitación eliminada",
           "remove_title": "Eliminar invitación",
           "removing": "Eliminando invitación...",
@@ -3266,7 +4060,7 @@
           },
           "delete": {
             "title": "¿Eliminar grupo de usuarios?",
-            "message": "Se eliminará el acceso a todos los recursos para todos los usuarios de este grupo. ¿Estás seguro de que quieres eliminar este grupo de usuarios?",
+            "message": "Se eliminará el acceso a todos los recursos para todos los usuarios de este grupo. ¿Seguro que quieres eliminar este grupo de usuarios?",
             "button": "Eliminar grupo de usuarios"
           }
         },
@@ -3382,7 +4176,9 @@
                 "coursechapters": "Capítulos de cursos",
                 "activities": "Actividades",
                 "roles": "Roles",
-                "dashboard": "Panel de control"
+                "dashboard": "Panel de control",
+                "folders": "Carpetas",
+                "media": "Archivos multimedia"
               },
               "actions": {
                 "create": "crear",
@@ -3442,6 +4238,8 @@
                 "coursechapters": "Capítulos del curso",
                 "courses": "Cursos",
                 "dashboard": "Panel",
+                "folders": "Carpetas",
+                "media": "Archivos multimedia",
                 "organizations": "Organizaciones",
                 "roles": "Roles",
                 "usergroups": "Grupos de usuarios",
@@ -3454,7 +4252,7 @@
           },
           "delete": {
             "title": "¿Eliminar rol?",
-            "message": "Esta acción no se puede deshacer. Todos los usuarios con este rol perderán sus permisos. ¿Estás seguro de que quieres eliminar este rol?",
+            "message": "Esta acción no se puede deshacer. Todos los usuarios con este rol perderán sus permisos. ¿Seguro que quieres eliminar este rol?",
             "button": "Eliminar rol"
           },
           "view_rights": {
@@ -3473,12 +4271,46 @@
             "coursechapters": "Capítulos del curso",
             "courses": "Cursos",
             "dashboard": "Panel de control",
+            "folders": "Carpetas",
+            "media": "Archivos multimedia",
             "organizations": "Organizaciones",
             "roles": "Roles",
             "usergroups": "Grupos de usuarios",
             "users": "Usuarios"
           }
         }
+      },
+      "security": {
+        "two_factor_title": "Verificación en dos pasos"
+      },
+      "signup_fields": {
+        "no_rights": "No tienes permiso para cambiar los campos de registro.",
+        "label_required": "Cada campo necesita una etiqueta.",
+        "duplicate_key": "Dos campos tienen la misma clave. Ponles etiquetas diferentes.",
+        "options_required": "Los campos desplegables necesitan al menos una opción.",
+        "saving": "Guardando los campos de registro…",
+        "saved": "Campos de registro actualizados.",
+        "save_error": "No se pudieron guardar los campos de registro. Inténtalo de nuevo.",
+        "title": "Campos de registro personalizados",
+        "subtitle": "Preguntas adicionales que se hacen cuando alguien se registra. Las respuestas se guardan en cada miembro.",
+        "public_notice": "Las etiquetas, los textos de ayuda y las opciones aparecen en tu página pública de registro, donde cualquiera puede leerlos. No pongas aquí nada confidencial.",
+        "empty": "No hay campos personalizados. Tu formulario de registro solo hace las preguntas estándar.",
+        "label_placeholder": "Etiqueta de la pregunta",
+        "badge_saved": "en uso",
+        "badge_new": "nuevo",
+        "type": "Tipo de campo",
+        "required": "Obligatorio",
+        "delete_confirm": "Si quitas este campo, se abandonan las respuestas ya recogidas con su clave. Haz clic de nuevo en la papelera para confirmar.",
+        "key": "Clave",
+        "key_locked": "Bloqueada: cambiarla dejaría huérfanas las respuestas ya recogidas.",
+        "key_hint": "Se genera automáticamente a partir de la etiqueta.",
+        "help_text": "Texto de ayuda",
+        "max_length": "Longitud máxima",
+        "min_value": "Mín.",
+        "max_value": "Máx.",
+        "add": "Agregar campo",
+        "options": "Opciones (una por línea)",
+        "options_placeholder": "Primera opción\\nSegunda opción"
       }
     },
     "assignments": {
@@ -3528,9 +4360,9 @@
           "published": "Publicado",
           "unpublished": "No publicado",
           "edit_tooltip": "Editar detalles de la tarea",
-          "preview_tooltip": "Previsualizar la tarea como alumno",
-          "unpublish_tooltip": "Hacer que la tarea no esté disponible para los alumnos",
-          "publish_tooltip": "Hacer que la tarea sea pública y esté disponible para los alumnos",
+          "preview_tooltip": "Previsualizar la tarea como estudiante",
+          "unpublish_tooltip": "Hacer que la tarea no esté disponible para los estudiantes",
+          "publish_tooltip": "Hacer que la tarea sea pública y esté disponible para los estudiantes",
           "edit": "Editar",
           "preview": "Previsualizar",
           "unpublish": "Despublicar",
@@ -3561,7 +4393,7 @@
           },
           "file_submission": {
             "title": "Envío de archivos",
-            "description": "Los alumnos pueden subir archivos para esta tarea"
+            "description": "Los estudiantes pueden subir archivos para esta tarea"
           },
           "form": {
             "title": "Formulario",
@@ -3587,7 +4419,8 @@
           "task_updated": "Tarea actualizada con éxito",
           "task_update_error": "Error al actualizar la tarea, inténtalo de nuevo más tarde.",
           "reminder": "Al editar o añadir tareas, asegúrate de despublicar la actividad para evitar problemas, puedes publicarla de nuevo cuando esté lista.",
-          "no_submission_to_grade": "Este estudiante aún no ha enviado nada para esta tarea, no hay nada que calificar."
+          "no_submission_to_grade": "Este estudiante aún no ha enviado nada para esta tarea, no hay nada que calificar.",
+          "reorder_failed": "No se pudieron reordenar los ejercicios"
         },
         "task_editor": {
           "general": {
@@ -3676,7 +4509,8 @@
         "generate_ai_modal": {
           "description": "Describe lo que quieres y previsualiza tareas basadas en el contenido del curso antes de añadirlas.",
           "title": "Generar tareas con AI"
-        }
+        },
+        "drag_to_reorder": "Arrastra para reordenar"
       },
       "submissions": {
         "status": {
@@ -3740,7 +4574,11 @@
           "placeholder": "Escribe un comentario sobre la entrega. El estudiante lo verá junto a su nota.",
           "hint": "Déjalo vacío para mantener cualquier comentario anterior sin cambios."
         },
-        "truncated_warning": "Solo se muestran las primeras {{max}} entregas. Algunas entregas no aparecen aquí."
+        "truncated_warning": "Solo se muestran las primeras {{max}} entregas. Algunas entregas no aparecen aquí.",
+        "ungraded_title": "Formativa (sin calificación)",
+        "ungraded_description": "Esta tarea se entrega solo para revisión. No se registra ninguna nota.",
+        "download_to_grade": "Descarga el archivo, califícalo a mano y luego escribe la nota arriba",
+        "download_to_review": "Descarga el archivo para revisar lo que entregó el estudiante."
       },
       "analytics": {
         "loading": "Cargando analíticas...",
@@ -3805,6 +4643,8 @@
             "description_required": "Por favor, proporciona una descripción para la tarea",
             "due_date_label": "Fecha límite",
             "due_date_required": "Por favor, proporciona una fecha límite",
+            "due_date_hint": "Opcional: déjalo vacío para un curso a tu ritmo, sin fecha límite.",
+            "due_date_clear": "Sin fecha límite",
             "grading_type_label": "Tipo de calificación",
             "grading_type_required": "Por favor, proporciona un tipo de calificación",
             "grading_types": {
@@ -3817,6 +4657,25 @@
             "cancel": "Cancelar",
             "save": "Guardar cambios",
             "saving": "Guardando...",
+            "pass_threshold_label": "Nota mínima para aprobar",
+            "pass_threshold_description": "Puntaje mínimo para aprobar. Déjalo vacío para usar el predeterminado (50 %, o 60 % con notas en letras).",
+            "pass_threshold_placeholder": "Automático",
+            "ungraded_label": "Formativa (sin calificación)",
+            "ungraded_description": "Los estudiantes entregan su trabajo y nunca se califica. Sin nota, sin aprobado ni reprobado. Combínala con una respuesta modelo abajo para la autoevaluación.",
+            "solution_label": "Respuesta modelo",
+            "solution_hint": "Los estudiantes solo la ven cuando se desbloquea",
+            "solution_placeholder": "Escribe la solución desarrollada con la que los estudiantes deben comparar su trabajo…",
+            "solution_no_file": "No hay ningún documento adjunto",
+            "solution_remove_file": "Quitar",
+            "solution_upload_file": "Adjuntar",
+            "solution_reveal_label": "Desbloquear la respuesta modelo",
+            "solution_reveal_never": "Nunca",
+            "solution_reveal_never_hint": "Solo para ti",
+            "solution_reveal_on_submission": "Al entregar",
+            "solution_reveal_on_submission_hint": "Se desbloquea apenas la entregan",
+            "solution_reveal_after_grading": "Después de calificar",
+            "solution_reveal_after_grading_hint": "Se desbloquea al calificarla",
+            "allow_retries_description_ungraded": "Permite que los estudiantes reinicien la tarea y la vuelvan a entregar. Cada intento borra el trabajo anterior y vuelve a bloquear la respuesta modelo.",
             "grading_type_descriptions": {
               "alphabet": "Calificaciones con letras A, B, C, D, F",
               "numeric": "Puntuación de 0 a 100",
@@ -3844,7 +4703,8 @@
             "updating": "Actualizando tarea...",
             "success": "Tarea actualizada con éxito",
             "error": "Error al actualizar la tarea",
-            "error_detail": "Ocurrió un error al actualizar la tarea"
+            "error_detail": "Ocurrió un error al actualizar la tarea",
+            "solution_file_error": "No se pudo subir el documento de la respuesta modelo."
           }
         },
         "create": {
@@ -3855,6 +4715,8 @@
             "description_required": "Por favor, proporciona una descripción para la tarea",
             "due_date_label": "Fecha límite",
             "due_date_required": "Por favor, proporciona una fecha límite",
+            "due_date_hint": "Opcional: déjalo vacío para un curso a tu ritmo, sin fecha límite.",
+            "due_date_clear": "Sin fecha límite",
             "grading_type_label": "Tipo de calificación",
             "grading_type_required": "Por favor, proporciona un tipo de calificación",
             "grading_types": {
@@ -3865,6 +4727,7 @@
               "gpa_scale": "Escala GPA"
             },
             "submit": "Crear actividad",
+            "ungraded_description": "Los estudiantes entregan su trabajo y nunca se califica. Agrega una respuesta modelo en el editor de la tarea para que se desbloquee al entregar.",
             "grading_type_descriptions": {
               "alphabet": "Calificaciones con letras A, B, C, D, F",
               "numeric": "Puntuación de 0 a 100",
@@ -3915,8 +4778,8 @@
         "users": "Usuarios",
         "communities": "Comunidades",
         "discussions": "Discusiones",
-        "playgrounds": "Playgrounds",
-        "podcasts": "Podcasts"
+        "playgrounds": "Espacios interactivos",
+        "podcasts": "Pódcasts"
       },
       "entries": {
         "home": {
@@ -3944,7 +4807,7 @@
           "keywords": "kanban, proyecto, tareas, listas"
         },
         "playgrounds": {
-          "description": "Playgrounds de código",
+          "description": "Espacios interactivos de código",
           "keywords": "código, sandbox, repl, programación"
         },
         "analytics": {
@@ -3996,6 +4859,10 @@
         "users_audit_logs": {
           "description": "Registro de actividad de la organización",
           "keywords": "auditoría, registros, historial, seguridad, actividad"
+        },
+        "users_analytics": {
+          "description": "Actividad de aprendizaje y auditoría por estudiante",
+          "keywords": "analíticas, auditoría, estudiante, progreso, actividad, exportar, legal, cumplimiento"
         },
         "org_branding": {
           "description": "Logo, colores e identidad visual",
@@ -4151,7 +5018,7 @@
       "horizontal_rule": "Línea horizontal",
       "link": "Enlace",
       "image": "Imagen",
-      "video": "Vídeo",
+      "video": "Video",
       "table": "Tabla",
       "insert_table": "Insertar nueva tabla (3×3)",
       "add_row": "Añadir fila abajo",
@@ -4169,8 +5036,9 @@
       "info_callout": "Aviso informativo",
       "warning_callout": "Aviso de advertencia",
       "image": "Imagen",
-      "video": "Vídeo",
+      "video": "Video",
       "pdf": "Documento PDF",
+      "h5p": "Contenido interactivo H5P",
       "youtube": "Video de YouTube",
       "quiz": "Quiz interactivo",
       "math": "Ecuación matemática (LaTeX)",
@@ -4214,6 +5082,9 @@
         "suggestion_timeline": "Línea de tiempo",
         "suggestion_timeline_prompt": "Crear una línea de tiempo interactiva que muestre eventos históricos importantes con detalles expandibles"
       },
+      "library": "Biblioteca",
+      "flipcard_grid": "Cuadrícula de tarjetas",
+      "divider": "Separador",
       "magic_block_disabled": "Bloque mágico requiere plan Standard",
       "common": {
         "uploading": "Cargando...",
@@ -4258,7 +5129,42 @@
         "upload_pdf": "Cargar PDF",
         "document_title": "Documento PDF",
         "expand_pdf": "Expandir PDF",
-        "download_pdf": "Descargar PDF"
+        "download_pdf": "Descargar PDF",
+        "resize_pdf": "Arrastra para cambiar el tamaño"
+      },
+      "h5p_block": {
+        "default_title": "Contenido interactivo H5P",
+        "description": "Pega la URL de inserción de una actividad H5P para mostrarla aquí.",
+        "hosted_hint": "El contenido se queda en tu propio servidor H5P (H5P.com, Lumi, o un sitio Drupal, Moodle o WordPress propio). Puedes pegar la URL de inserción o el fragmento iframe completo que te da el servidor.",
+        "url_label": "URL de inserción H5P",
+        "url_placeholder": "https://your-team.h5p.com/content/123456/embed",
+        "title_label": "Título",
+        "title_placeholder": "Título (para accesibilidad y búsqueda)",
+        "edit_content": "Editar contenido H5P",
+        "remove_content": "Quitar contenido H5P",
+        "errors": {
+          "empty": "Escribe una URL de inserción H5P.",
+          "unparseable": "Eso no parece una URL válida. Pega la URL de inserción o el fragmento iframe de tu servidor H5P.",
+          "unsupported_protocol": "Solo se pueden insertar URLs http y https."
+        },
+        "size_label": "Tamaño",
+        "sizes": {
+          "auto": "Automático",
+          "auto_hint": "La actividad indica su propia altura.",
+          "widescreen": "16:9",
+          "widescreen_hint": "Panorámico, ideal para video interactivo.",
+          "classic": "4:3",
+          "classic_hint": "Clásico, ideal para presentaciones con diapositivas.",
+          "short": "Bajo",
+          "short_hint": "Un marco fijo de 320 píxeles.",
+          "medium": "Mediano",
+          "medium_hint": "Un marco fijo de 520 píxeles.",
+          "tall": "Alto",
+          "tall_hint": "Un marco fijo de 760 píxeles.",
+          "custom": "Personalizado ({{height}} px)",
+          "custom_hint": "Ajustado a mano a la altura que elegiste."
+        },
+        "resize_handle": "Cambiar el tamaño del marco H5P"
       },
       "quiz_block": {
         "all_correct": "¡Todas las respuestas son correctas!",
@@ -4271,7 +5177,16 @@
         "reset_answers": "Restablecer respuestas",
         "mark_correct": "Marcar como correcta",
         "mark_incorrect": "Marcar como incorrecta",
-        "delete_answer": "Eliminar respuesta"
+        "delete_answer": "Eliminar respuesta",
+        "question_label": "Pregunta",
+        "delete_question": "Eliminar pregunta",
+        "empty_editable": "Todavía no hay preguntas. Agrega la primera para empezar.",
+        "empty_readonly": "Este cuestionario todavía no tiene preguntas.",
+        "select_one": "Elige una respuesta",
+        "select_all_that_apply": "Elige todas las que correspondan",
+        "response_type_single": "Una respuesta",
+        "response_type_multiple": "Varias respuestas",
+        "no_correct_answer_warning": "Sin respuesta correcta: esta pregunta no se toma en cuenta"
       },
       "math_block": {
         "templates": "Plantillas",
@@ -4298,7 +5213,8 @@
         "paste_directly": "Pega directamente cualquier URL de inserción",
         "how_to_embed": "Cómo insertar {{name}}",
         "paste_code": "Pega código de inserción (iframe, script de inserción, etc.)",
-        "paste_iframe": "Pega iframe o código de inserción de cualquier plataforma"
+        "paste_iframe": "Pega iframe o código de inserción de cualquier plataforma",
+        "remove_embed": "Quitar contenido insertado"
       },
       "web_preview_block": {
         "website_preview": "Vista previa del sitio web",
@@ -4316,11 +5232,6 @@
         "alignment": "Alineación",
         "visit_site": "Visitar sitio",
         "align": "Alinear"
-      },
-      "flipcard_block": {
-        "front": "Frente",
-        "back": "Reverso",
-        "click_to_flip": "Haz clic para girar"
       },
       "user_block": {
         "enter_username": "Ingresa el nombre de usuario",
@@ -4603,7 +5514,7 @@
         "avg_per_learner": "Prom. por estudiante"
       },
       "type_labels": {
-        "video": "Vídeo",
+        "video": "Video",
         "document": "Documento",
         "quiz": "Cuestionario",
         "assignment": "Tarea",
@@ -4801,13 +5712,13 @@
       "set_to_public_confirm": "Todos los miembros de la organización que hayan iniciado sesión podrán acceder a este tablero.",
       "make_board_public": "Hacer tablero público",
       "set_to_private": "Establecer como privado",
-      "set_to_private_confirm": "Solo los miembros de los UserGroups vinculados podrán acceder a este tablero.",
+      "set_to_private_confirm": "Solo los miembros de los grupos de usuarios vinculados podrán acceder a este tablero.",
       "make_board_private": "Hacer tablero privado",
       "active": "Activo",
       "public_option": "Público",
       "public_description": "Todos los miembros de la organización que hayan iniciado sesión pueden acceder a este tablero",
       "private_option": "Solo usuarios",
-      "private_description": "Solo los UserGroups vinculados pueden acceder a este tablero",
+      "private_description": "Solo los grupos de usuarios vinculados pueden acceder a este tablero",
       "board_set_public": "Tablero establecido como público",
       "board_set_private": "Tablero establecido como privado",
       "access_update_error": "Error al actualizar el acceso",
@@ -4866,7 +5777,7 @@
       "note": "Nota",
       "sticker": "Sticker",
       "youtube": "YouTube",
-      "ai_playground": "AI Playground",
+      "ai_playground": "Espacio interactivo con IA",
       "activity": "Actividad",
       "embed": "Insertar",
       "webpage": "Página web",
@@ -4875,7 +5786,7 @@
       "thick": "Grueso",
       "undo": "Deshacer",
       "redo": "Rehacer",
-      "podcast": "Podcast",
+      "podcast": "Pódcast",
       "todo": "Tarea"
     },
     "zoom": {
@@ -4946,7 +5857,7 @@
       "open_in_new_tab": "Abrir en nueva pestaña"
     },
     "playground_block": {
-      "title": "AI Playground",
+      "title": "Espacio interactivo con IA",
       "description": "Genera elementos interactivos impulsados por IA",
       "generate": "Generar",
       "edit": "Editar",
@@ -4954,7 +5865,7 @@
       "generating": "Generando contenido interactivo...",
       "streaming": "Generando...",
       "empty_state": "Describe lo que quieres crear y observa cómo cobra vida",
-      "chat_header": "AI Playground",
+      "chat_header": "Espacio interactivo con IA",
       "prompt_text": "Describe un elemento interactivo para generar",
       "ai_content": "Contenido generado por IA",
       "check_preview": "Revisa la vista previa a la izquierda",
@@ -4983,6 +5894,13 @@
       "results": "{{count}} resultado para \"{{query}}\"",
       "results_plural": "{{count}} resultados para \"{{query}}\""
     },
+    "connection": {
+      "access_revoked_title": "Ya no tienes acceso a este tablero",
+      "access_revoked_description": "Te quitaron el acceso mientras el tablero estaba abierto. Recarga para volver a comprobarlo.",
+      "too_large_title": "Este tablero es demasiado grande para seguir sincronizándose",
+      "too_large_description": "Superó el límite de tamaño, así que la edición en vivo se detuvo. Es posible que tus cambios más recientes no se hayan guardado.",
+      "reload": "Recargar"
+    },
     "board_deleted_error": "Error al eliminar el tablero",
     "board_deleted_success": "Tablero eliminado",
     "board_duplicated_error": "Error al duplicar el tablero",
@@ -4991,11 +5909,11 @@
     "boards_deleted_success": "{{count}} tablero(s) eliminado(s)",
     "clear_selection": "Limpiar",
     "delete_board": "Eliminar tablero",
-    "delete_board_confirm": "¿Estás seguro de que deseas eliminar este tablero? Esta acción no se puede deshacer.",
+    "delete_board_confirm": "¿Seguro que quieres eliminar este tablero? Esta acción no se puede deshacer.",
     "delete_board_title": "Eliminar \"{{name}}\"",
     "delete_boards_title": "Eliminar tableros",
     "delete_selected": "Eliminar seleccionados",
-    "delete_selected_confirm": "¿Estás seguro de que deseas eliminar {{count}} tablero(s)? Esta acción no se puede deshacer.",
+    "delete_selected_confirm": "¿Seguro que quieres eliminar {{count}} tablero(s)? Esta acción no se puede deshacer.",
     "deleting_board": "Eliminando tablero...",
     "deleting_boards": "Eliminando {{count}} tablero(s)...",
     "duplicate_board": "Duplicar tablero",
@@ -5045,9 +5963,9 @@
         "interactive_blocks": "Bloques interactivos"
       },
       "try_playgrounds": {
-        "title": "Aprendizaje interactivo con Playgrounds",
+        "title": "Aprendizaje con espacios interactivos",
         "description": "Crea páginas interactivas para el aprendizaje autónomo.",
-        "action": "Probar Playgrounds"
+        "action": "Probar los espacios interactivos"
       },
       "invite_users": {
         "title": "Invita a tu equipo y estudiantes",
@@ -5069,7 +5987,7 @@
       },
       "add_content": {
         "title": "Una lección que valga la pena",
-        "description": "Añade un vídeo, una página o un cuestionario: dale a los estudiantes un motivo real para inscribirse.",
+        "description": "Añade un video, una página o un cuestionario: dale a los estudiantes un motivo real para inscribirse.",
         "action": "Añadir contenido"
       },
       "brand_school": {
@@ -5094,7 +6012,7 @@
       }
     },
     "welcome": {
-      "title": "Bienvenido a LearnHouse",
+      "title": "Te damos la bienvenida a Sanar y Criar",
       "subtitle": "Crea cursos, invita estudiantes y comparte conocimiento con el mundo.",
       "get_started": "Comenzar",
       "features_title": "Todo lo que necesitas",
@@ -5104,13 +6022,13 @@
         "teach": "Enseña cualquier cosa",
         "teach_desc": "Crea cursos estructurados con capítulos y contenido enriquecido",
         "interactive": "Hazlo interactivo",
-        "interactive_desc": "Crea playgrounds donde los estudiantes exploran a su propio ritmo",
+        "interactive_desc": "Crea espacios interactivos donde los estudiantes exploran a su propio ritmo",
         "community": "Construye una comunidad",
         "community_desc": "Crea espacios de discusión donde los estudiantes se ayudan mutuamente",
         "assess": "Evalúa el conocimiento",
         "assess_desc": "Crea tareas y haz seguimiento de las entregas de los estudiantes",
         "collaborate": "Colabora visualmente",
-        "collaborate_desc": "Da a los estudiantes pizarras compartidas para lluvia de ideas y trabajo en equipo",
+        "collaborate_desc": "Da a los estudiantes tableros compartidos para lluvias de ideas y trabajo en equipo",
         "voice": "Comparte tu voz",
         "voice_desc": "Lanza podcasts y distribuye episodios de audio a los estudiantes",
         "certify": "Certifica estudiantes",
@@ -5130,7 +6048,7 @@
     "up_next": "A continuación",
     "continue_setup": "Continuar configuración",
     "done_label": "Hecho",
-    "video_placeholder": "Vídeo guía próximamente",
+    "video_placeholder": "Video guía próximamente",
     "dismiss": "Lo terminaré más tarde",
     "steps_done": "pasos completados",
     "back_to_dashboard": "Volver al panel"
@@ -5194,7 +6112,7 @@
           "ai_desc": "Acelera la creación de contenido con herramientas de escritura con IA.",
           "analytics": "Análisis de estudiantes",
           "analytics_desc": "Rastrea el progreso y la participación para mejorar tus cursos.",
-          "playgrounds": "Playgrounds interactivos",
+          "playgrounds": "Espacios interactivos",
           "playgrounds_desc": "Permite a los estudiantes experimentar y practicar con ejercicios interactivos prácticos."
         }
       },
@@ -5252,6 +6170,9 @@
     "backToCourses": "Volver a Cursos",
     "loadError": "No se pudo encontrar este curso o hubo un error al cargarlo.",
     "noPermission": "No tienes permiso para ver este curso.",
+    "signInRequired": "Inicia sesión para ver este curso",
+    "signInRequiredDescription": "Este curso es para miembros. Inicia sesión y te traemos de vuelta aquí mismo.",
+    "signInToContinue": "Inicia sesión para continuar",
     "finish_course": "Finalizar curso"
   },
   "pagination": {
@@ -5262,20 +6183,20 @@
   "playgrounds": {
     "no_playgrounds_yet": "Aún no hay playgrounds",
     "playgrounds_description": "Crea experiencias interactivas generadas por IA para tus estudiantes.",
-    "new_playground": "New Playground",
-    "search_placeholder": "Search playgrounds...",
-    "no_results_for": "No results for",
-    "try_different_search": "Try a different search term",
-    "new_playground_modal_title": "New Playground",
-    "new_playground_modal_desc": "Give your playground a name to get started.",
-    "creating": "Creating...",
-    "create": "Create",
-    "failed_create": "Failed to create playground",
+    "new_playground": "Nuevo espacio interactivo",
+    "search_placeholder": "Buscar espacios interactivos...",
+    "no_results_for": "Sin resultados para",
+    "try_different_search": "Prueba con otro término de búsqueda",
+    "new_playground_modal_title": "Nuevo espacio interactivo",
+    "new_playground_modal_desc": "Ponle un nombre a tu espacio interactivo para empezar.",
+    "creating": "Creando...",
+    "create": "Crear",
+    "failed_create": "No se pudo crear el espacio interactivo",
     "view": {
       "open_editor_to_generate": "Abre el editor para generar contenido.",
       "check_back_later": "Vuelve más tarde.",
       "open_editor": "Abrir editor",
-      "breadcrumb": "Playgrounds",
+      "breadcrumb": "Espacios interactivos",
       "about": "Acerca de",
       "author": "Autor",
       "access": "Acceso",
@@ -5291,85 +6212,85 @@
     }
   },
   "library": {
-    "library": "Library",
-    "my_library": "My Library",
-    "new_folder": "New Folder",
+    "library": "Biblioteca",
+    "my_library": "Mi biblioteca",
+    "new_folder": "Nueva carpeta",
     "tabs": {
-      "courses": "Courses",
-      "podcasts": "Podcasts",
-      "communities": "Communities",
-      "boards": "Boards",
-      "playgrounds": "Playgrounds",
-      "media": "Media"
+      "courses": "Cursos",
+      "podcasts": "Pódcasts",
+      "communities": "Comunidades",
+      "boards": "Tableros",
+      "playgrounds": "Espacios interactivos",
+      "media": "Archivos"
     },
-    "add_content": "Add content",
-    "upload_media": "Upload media",
-    "empty_folder": "This folder is empty",
-    "error_loading": "Couldn't load the library. Please refresh to try again.",
-    "folder": "Folder",
-    "folders": "Folders",
-    "items": "items",
-    "move": "Move",
-    "rename": "Rename",
-    "manage_access": "Manage access",
-    "delete_folder": "Delete folder",
-    "delete_folder_confirm": "Are you sure you want to delete this folder and everything inside it?",
-    "folder_name": "Folder name",
-    "enter_folder_name": "Enter folder name",
-    "create_folder": "Create folder",
-    "description": "Description",
-    "add": "Add",
-    "added": "Added",
-    "content_add_error": "Failed to add content",
-    "content_added": "Content added",
-    "content_remove_error": "Failed to remove content",
-    "content_removed": "Content removed",
-    "creating_folder": "Creating folder…",
-    "deleting_folder": "Deleting folder…",
-    "empty_folder_description": "Add sub-folders or content to get started.",
-    "folder_created_error": "Failed to create folder",
-    "folder_created_success": "Folder created",
-    "folder_deleted_error": "Failed to delete folder",
-    "folder_deleted_success": "Folder deleted",
-    "folder_name_required": "Folder name is required",
-    "folder_not_found": "Folder not found",
-    "folder_updated_error": "Failed to update folder",
-    "folder_updated_success": "Folder updated",
-    "no_items": "Your library is empty",
-    "no_items_description": "Create a folder or upload media to organize your content.",
-    "no_resources": "No resources available",
-    "open": "Open",
-    "private": "Private",
-    "public": "Public",
-    "remove_from_folder": "Remove from folder",
-    "remove_from_folder_confirm": "Remove this item from the folder? The item itself won't be deleted.",
-    "removing_content": "Removing…",
-    "rename_folder": "Rename folder",
-    "save": "Save",
-    "saving_folder": "Saving…",
-    "search": "Search",
-    "untitled": "Untitled",
-    "visibility": "Visibility",
-    "resources_label": "Resources",
-    "no_results": "No results",
+    "add_content": "Agregar contenido",
+    "upload_media": "Subir archivos",
+    "empty_folder": "Esta carpeta está vacía",
+    "error_loading": "No se pudo cargar la biblioteca. Recarga la página para intentarlo de nuevo.",
+    "folder": "Carpeta",
+    "folders": "Carpetas",
+    "items": "elementos",
+    "move": "Mover",
+    "rename": "Renombrar",
+    "manage_access": "Administrar acceso",
+    "delete_folder": "Eliminar carpeta",
+    "delete_folder_confirm": "¿Seguro que quieres eliminar esta carpeta y todo lo que contiene?",
+    "folder_name": "Nombre de la carpeta",
+    "enter_folder_name": "Escribe el nombre de la carpeta",
+    "create_folder": "Crear carpeta",
+    "description": "Descripción",
+    "add": "Agregar",
+    "added": "Agregado",
+    "content_add_error": "No se pudo agregar el contenido",
+    "content_added": "Contenido agregado",
+    "content_remove_error": "No se pudo quitar el contenido",
+    "content_removed": "Contenido quitado",
+    "creating_folder": "Creando carpeta…",
+    "deleting_folder": "Eliminando carpeta…",
+    "empty_folder_description": "Agrega subcarpetas o contenido para empezar.",
+    "folder_created_error": "No se pudo crear la carpeta",
+    "folder_created_success": "Carpeta creada",
+    "folder_deleted_error": "No se pudo eliminar la carpeta",
+    "folder_deleted_success": "Carpeta eliminada",
+    "folder_name_required": "El nombre de la carpeta es obligatorio",
+    "folder_not_found": "No se encontró la carpeta",
+    "folder_updated_error": "No se pudo actualizar la carpeta",
+    "folder_updated_success": "Carpeta actualizada",
+    "no_items": "Tu biblioteca está vacía",
+    "no_items_description": "Crea una carpeta o sube archivos para organizar tu contenido.",
+    "no_resources": "No hay recursos disponibles",
+    "open": "Abrir",
+    "private": "Privado",
+    "public": "Público",
+    "remove_from_folder": "Quitar de la carpeta",
+    "remove_from_folder_confirm": "¿Quitar este elemento de la carpeta? El elemento en sí no se eliminará.",
+    "removing_content": "Quitando…",
+    "rename_folder": "Renombrar carpeta",
+    "save": "Guardar",
+    "saving_folder": "Guardando…",
+    "search": "Buscar",
+    "untitled": "Sin título",
+    "visibility": "Visibilidad",
+    "resources_label": "Recursos",
+    "no_results": "Sin resultados",
     "color": "Color",
-    "thumbnail": "Cover image",
-    "remove_thumbnail": "Remove cover",
+    "thumbnail": "Imagen de portada",
+    "remove_thumbnail": "Quitar portada",
     "filters": {
-      "all": "All",
-      "folders": "Folders",
-      "courses": "Courses",
-      "media": "Media"
+      "all": "Todo",
+      "folders": "Carpetas",
+      "courses": "Cursos",
+      "media": "Archivos"
     },
-    "edit": "Edit",
-    "edit_folder": "Edit folder",
-    "share": "Share",
-    "copy_link": "Copy link",
-    "link_copied": "Link copied to clipboard",
-    "link_copy_error": "Couldn't copy the link",
-    "thumbnail_error": "Couldn't upload the cover image",
-    "open_resource": "Open",
-    "replace_cover": "Replace",
+    "edit": "Editar",
+    "edit_folder": "Editar carpeta",
+    "share": "Compartir",
+    "copy_link": "Copiar enlace",
+    "link_copied": "Enlace copiado al portapapeles",
+    "link_copy_error": "No se pudo copiar el enlace",
+    "thumbnail_error": "No se pudo subir la imagen de portada",
+    "open_resource": "Abrir",
+    "replace_cover": "Reemplazar",
     "cover_hint": "PNG, JPG, WEBP",
     "sort": {
       "sort_by": "Ordenar por",
@@ -5381,77 +6302,88 @@
       "drag_to_reorder": "Arrastra para reordenar",
       "sort_error": "No se pudo actualizar el orden",
       "reorder_error": "No se pudo guardar el nuevo orden"
-    }
+    },
+    "preview": "Vista previa",
+    "no_access": "No tienes acceso a este archivo.",
+    "choose_from_library": "Elegir de la biblioteca",
+    "upload_to_library": "Subir",
+    "upload_to_library_hint": "Los archivos que subas se agregan a tu biblioteca, para que puedas reutilizarlos en otros lugares.",
+    "no_resource_selected": "No hay ningún elemento de la biblioteca seleccionado.",
+    "private_media_warning": "Privado: los estudiantes sin acceso no lo verán.",
+    "replace_resource": "Reemplazar",
+    "remove_resource": "Quitar",
+    "show_as_card": "Mostrar como tarjeta",
+    "show_inline": "Mostrar en el texto"
   },
   "media": {
-    "media": "Media",
-    "file": "File",
-    "embed": "Embed",
-    "download": "Download",
-    "add_media": "Add media",
-    "upload": "Upload",
-    "media_name": "Media name",
+    "media": "Archivos",
+    "file": "Archivo",
+    "embed": "Insertar",
+    "download": "Descargar",
+    "add_media": "Agregar archivo",
+    "upload": "Subir",
+    "media_name": "Nombre del archivo",
     "media_url": "URL",
-    "delete_media": "Delete media",
-    "delete_media_confirm": "Are you sure you want to delete this media?",
-    "choose_file": "Choose a file",
-    "deleting_media": "Deleting…",
-    "description": "Description",
-    "file_required": "A file is required",
-    "media_deleted_error": "Failed to delete media",
-    "media_deleted_success": "Media deleted",
-    "media_uploaded_error": "Failed to add media",
-    "media_uploaded_success": "Media added",
-    "name": "Name",
-    "name_required": "Name is required",
-    "public": "Public",
-    "upload_file": "Upload file",
-    "upload_media": "Upload media",
-    "uploading_media": "Uploading…",
+    "delete_media": "Eliminar archivo",
+    "delete_media_confirm": "¿Seguro que quieres eliminar este archivo?",
+    "choose_file": "Elige un archivo",
+    "deleting_media": "Eliminando…",
+    "description": "Descripción",
+    "file_required": "Se necesita un archivo",
+    "media_deleted_error": "No se pudo eliminar el archivo",
+    "media_deleted_success": "Archivo eliminado",
+    "media_uploaded_error": "No se pudo agregar el archivo",
+    "media_uploaded_success": "Archivo agregado",
+    "name": "Nombre",
+    "name_required": "El nombre es obligatorio",
+    "public": "Público",
+    "upload_file": "Subir archivo",
+    "upload_media": "Subir archivos",
+    "uploading_media": "Subiendo…",
     "url": "URL",
-    "url_required": "A URL is required",
-    "upload_hint": "Images, video, audio, PDF, Office docs & ZIP",
-    "remove": "Remove",
-    "open_pdf": "Open PDF"
+    "url_required": "Se necesita una URL",
+    "upload_hint": "Imágenes, video, audio, PDF, documentos de Office y ZIP",
+    "remove": "Quitar",
+    "open_pdf": "Abrir PDF"
   },
   "access": {
     "public": {
-      "title": "Public",
-      "description": "Anyone can view this.",
-      "confirmation_title": "Make public?",
-      "confirmation_message": "This will be visible to everyone.",
-      "confirmation_button": "Make public"
+      "title": "Público",
+      "description": "Cualquier persona puede verlo.",
+      "confirmation_title": "¿Hacerlo público?",
+      "confirmation_message": "Será visible para todos.",
+      "confirmation_button": "Hacer público"
     },
     "users_only": {
-      "title": "Users only",
-      "description": "Only signed-in members (and selected groups) can view this.",
-      "confirmation_title": "Restrict access?",
-      "confirmation_message": "Only authenticated users and linked groups will be able to view this.",
-      "confirmation_button": "Restrict access"
+      "title": "Solo usuarios",
+      "description": "Solo los miembros con sesión iniciada (y los grupos elegidos) pueden verlo.",
+      "confirmation_title": "¿Restringir el acceso?",
+      "confirmation_message": "Solo los usuarios con sesión iniciada y los grupos vinculados podrán verlo.",
+      "confirmation_button": "Restringir acceso"
     },
-    "active": "Active",
-    "visibility_update_error": "Failed to update visibility",
-    "visibility_updated": "Visibility updated",
+    "active": "Activo",
+    "visibility_update_error": "No se pudo actualizar la visibilidad",
+    "visibility_updated": "Visibilidad actualizada",
     "usergroups": {
-      "title": "User groups",
-      "subtitle": "Restrict access to specific user groups.",
-      "link_to_usergroup": "Link a user group",
-      "table_name": "Name",
-      "table_actions": "Actions",
-      "usergroup_name": "Group",
-      "delete_link": "Unlink",
-      "warning": "Members of linked groups will be able to access this resource.",
-      "no_usergroups": "No user groups linked yet.",
-      "create_usergroup": "Create a user group",
-      "link_button": "Link",
-      "link_title": "Link a user group",
-      "link_success": "User group linked",
-      "link_error": "Failed to link user group",
-      "unlink_button": "Unlink",
-      "unlink_title": "Unlink user group",
-      "unlink_message": "Remove this group's access?",
-      "unlink_success": "User group unlinked",
-      "unlink_error": "Failed to unlink user group"
+      "title": "Grupos de usuarios",
+      "subtitle": "Restringe el acceso a grupos de usuarios específicos.",
+      "link_to_usergroup": "Vincular un grupo de usuarios",
+      "table_name": "Nombre",
+      "table_actions": "Acciones",
+      "usergroup_name": "Grupo",
+      "delete_link": "Desvincular",
+      "warning": "Los miembros de los grupos vinculados podrán acceder a este recurso.",
+      "no_usergroups": "Todavía no hay grupos de usuarios vinculados.",
+      "create_usergroup": "Crear un grupo de usuarios",
+      "link_button": "Vincular",
+      "link_title": "Vincular un grupo de usuarios",
+      "link_success": "Grupo de usuarios vinculado",
+      "link_error": "No se pudo vincular el grupo de usuarios",
+      "unlink_button": "Desvincular",
+      "unlink_title": "Desvincular grupo de usuarios",
+      "unlink_message": "¿Quitarle el acceso a este grupo?",
+      "unlink_success": "Grupo de usuarios desvinculado",
+      "unlink_error": "No se pudo desvincular el grupo de usuarios"
     }
   },
   "plan": {
@@ -5493,6 +6425,7 @@
     "admin_seats": "Puestos de administrador",
     "ai_credits": "Créditos de IA",
     "addons": "Complementos",
+    "addons_subtitle": "Compra créditos de IA adicionales como suscripciones mensuales.",
     "active_subscriptions": "Suscripciones activas",
     "credits": "créditos",
     "seats": "puestos",
@@ -5553,7 +6486,7 @@
     "back_to_plan_usage": "Volver a Plan y uso",
     "back_to_orgs": "Volver a organizaciones",
     "pack_purchased": "Complemento comprado, tus límites se han actualizado.",
-    "checkout_success": "Suscripción actualizada, ¡bienvenido a tu nuevo plan!",
+    "checkout_success": "Suscripción actualizada. ¡Ya tienes tu nuevo plan!",
     "checkout_cancelled": "Compra cancelada, no se realizaron cambios.",
     "load_failed": "No pudimos cargar tus organizaciones.",
     "no_permission": "No tienes permiso para gestionar la facturación de esta organización.",
@@ -5565,7 +6498,32 @@
     "scheduled_desc": "Tu plan cambiará a {{plan}} al final de tu ciclo de facturación actual. Tendrás acceso completo a tu plan actual hasta entonces.",
     "plan_plus_purchased": "Plan: {{plan}} + Comprado: {{purchased}}",
     "base_plus_purchased": "Base: {{base}} + Comprado: {{purchased}}",
-    "pack_ai_desc": "{{quantity}} créditos de AI adicionales agregados a tu organización"
+    "pack_ai_desc": "{{quantity}} créditos de AI adicionales agregados a tu organización",
+    "unlimited_lower": "ilimitado",
+    "limit_reached_upgrade": "Llegaste al límite: cambia de plan para continuar",
+    "remaining": "Quedan {{n}}",
+    "remaining_nearing": "Quedan {{n}}, cerca del límite",
+    "usage_subtitle_free": "Los planes gratuitos tienen límites. Cambia de plan para superarlos.",
+    "usage_subtitle_paid": "Tu plan incluye estas cantidades. Superar el límite de miembros está permitido y se cobra; no se bloquea nada.",
+    "members_hint": "Todas las personas que se unieron a tu organización.",
+    "members_beyond_plan": "{{included}} incluidos · {{beyond}} por encima de tu plan",
+    "members_within_plan": "{{included}} incluidos en tu plan",
+    "active_members": "Miembros activos",
+    "active_members_short": "Miembros activos",
+    "active_members_hint": "Se cuenta cuando un miembro está activo 2 o más días en el mes. Los {{included}} puestos que incluye tu plan son gratis; se cobra $1 al mes por cada miembro activo adicional.",
+    "overage_this_month": "${{amount}} en lo que va de mes",
+    "no_extra_charges": "Sin cargos adicionales este mes",
+    "admin_seats_hint": "Miembros que pueden entrar al panel. Son parte de tus miembros.",
+    "credits_reset_on": "Se reinicia el {{date}}",
+    "next_invoice": "Próxima factura",
+    "due_on": "vence el {{date}}",
+    "line_subscription": "Suscripción",
+    "accruing_this_month": "Miembros activos este mes (se cobran en tu próxima renovación)",
+    "packs_billed_separately": "Los complementos son suscripciones aparte y se facturan según su propio calendario.",
+    "invoice_history": "Historial de facturas",
+    "view": "Ver",
+    "checkout_settling": "Recibimos el pago. Tu nuevo plan se está aplicando y aparecerá en breve.",
+    "checkout_settling_delayed": "Recibimos el pago, pero tu plan todavía no se actualizó. Recarga en un momento y, si sigue igual, contacta a soporte."
   },
   "hub_new": {
     "useType": {
@@ -5652,7 +6610,7 @@
         "slug": "Dirección"
       },
       "placeholders": {
-        "name": "Acme Academy",
+        "name": "Academia Acme",
         "description": "¿De qué trata tu organización?"
       },
       "submitting": "Creando…",
@@ -5720,6 +6678,35 @@
     "opening": "Abriendo…",
     "manage_billing": "Gestionar facturación"
   },
+  "mfa": {
+    "policy": {
+      "banner_message_overdue": "{{org}} exige la verificación en dos pasos y el plazo ya venció. Actívala abajo para recuperar el acceso.",
+      "banner_message_today": "{{org}} exige la verificación en dos pasos. Tienes que configurarla hoy.",
+      "banner_message_one_day": "{{org}} exige la verificación en dos pasos. Te queda 1 día para configurarla.",
+      "banner_message": "{{org}} exige la verificación en dos pasos. Te quedan {{days}} días para configurarla.",
+      "set_up_now": "Configurar ahora",
+      "blocked_title": "Se requiere la verificación en dos pasos",
+      "blocked_description": "Venció el plazo que {{org}} fijó para activar la verificación en dos pasos. Para seguir usando {{org}}, agrega un segundo paso a tu cuenta; solo toma un minuto.",
+      "blocked_scope_note": "Esto solo afecta a {{org}}. Tus otras organizaciones no cambian.",
+      "set_up_2fa": "Configurar la verificación en dos pasos",
+      "signed_in_as": "Sesión iniciada como {{email}}",
+      "sign_in_to_org": "Iniciar sesión en esta organización"
+    }
+  },
+  "landing": {
+    "countdown": {
+      "days": "Días",
+      "hours": "Horas",
+      "minutes": "Minutos",
+      "seconds": "Segundos"
+    },
+    "pricing": {
+      "from": "desde",
+      "subscription": "suscripción",
+      "per_month": "/ mes",
+      "per_year": "/ año"
+    }
+  },
   "folders": {
     "folder": "Carpeta",
     "folders": "Carpetas",
@@ -5727,5 +6714,832 @@
     "folder_count_one": "{{count}} carpeta",
     "item_count": "{{count}} elementos",
     "item_count_one": "{{count}} elemento"
+  },
+  "sc_commerce": {
+    "common": {
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "saving": "Guardando…",
+      "loading": "Cargando…",
+      "remove": "Quitar",
+      "optional": "opcional",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "show_more": "Ver más",
+      "show_less": "Ver menos"
+    },
+    "product": {
+      "course": "Curso",
+      "ebook": "Ebook"
+    },
+    "providers": {
+      "paypal": "PayPal",
+      "spidi": "Pago Móvil",
+      "manual": "Manual"
+    },
+    "status": {
+      "active": "Activo",
+      "completed": "Completado",
+      "paid": "Pagado",
+      "accredited": "Acreditado",
+      "succeeded": "Exitoso",
+      "pending": "Pendiente",
+      "created": "Iniciado",
+      "approved": "Aprobado",
+      "failed": "Fallido",
+      "expired": "Vencido",
+      "cancelled": "Cancelado",
+      "refunded": "Reembolsado"
+    },
+    "errors": {
+      "generic": "Algo salió mal. Intenta de nuevo en un momento.",
+      "already_owned": "Ya tienes este producto.",
+      "payment_required": "Necesitas comprar este contenido para verlo.",
+      "instrument_declined": "Tu método de pago fue rechazado. Intenta con otra tarjeta o con tu cuenta PayPal.",
+      "payment_pending": "Ya tienes un pago de esta oferta en revisión. Te mostramos su estado.",
+      "store_test_mode": "La tienda está en modo de pruebas. Vuelve pronto para hacer tu compra."
+    },
+    "dash": {
+      "breadcrumb": "Pagos",
+      "overview_title": "Resumen",
+      "overview_subtitle": "Ventas, clientes y transacciones",
+      "offers_title": "Ofertas",
+      "offers_subtitle": "Lo que vendes: cursos y ebooks con su precio",
+      "groups_title": "Grupos de pago",
+      "groups_subtitle": "Agrupa varios cursos o ebooks en una sola oferta",
+      "configuration_title": "Configuración de pagos",
+      "configuration_subtitle": "Conecta y administra tus métodos de cobro",
+      "payments_title": "Pagos",
+      "payments_subtitle": "Tus ventas y la configuración de cobros",
+      "tab_overview": "Resumen",
+      "tab_offers": "Ofertas",
+      "tab_groups": "Grupos de pago",
+      "tab_configuration": "Configuración",
+      "preview_store": "Ver tienda",
+      "provider_dashboard": "Panel de {{provider}}"
+    },
+    "config": {
+      "title": "Métodos de cobro",
+      "subtitle": "Conecta tu cuenta de PayPal para vender. Pago Móvil llegará pronto.",
+      "load_error": "No pudimos cargar la configuración de pagos.",
+      "paypal_tagline": "Cobra con PayPal o con tarjeta (sin que tu cliente necesite cuenta PayPal).",
+      "paypal_developer_link": "Abrir el panel de desarrolladores de PayPal",
+      "status_not_configured": "Sin configurar",
+      "status_connected": "Conectado",
+      "status_invalid": "Credenciales sin validar",
+      "env_sandbox": "Pruebas",
+      "env_live": "Producción",
+      "env_sandbox_long": "Pruebas (sandbox)",
+      "env_live_long": "Producción (live)",
+      "connect_paypal": "Conectar PayPal",
+      "edit_credentials": "Editar credenciales",
+      "remove": "Quitar",
+      "remove_title": "¿Quitar la configuración de PayPal?",
+      "remove_confirm": "Dejarás de poder cobrar con PayPal hasta que lo configures de nuevo. Las compras ya hechas no se ven afectadas.",
+      "removed": "Configuración de PayPal eliminada",
+      "remove_error": "No pudimos quitar la configuración.",
+      "field_client_id": "Client ID",
+      "field_secret": "Secret",
+      "field_environment": "Entorno",
+      "field_webhook_id": "Webhook ID",
+      "field_app_id": "ID de la app en PayPal",
+      "secret_stored": "Guardado de forma segura (no se muestra)",
+      "secret_missing": "Falta el secret",
+      "webhook_missing": "Sin webhook: los reembolsos no retiran el acceso",
+      "invalid_hint": "PayPal no aceptó estas credenciales. Revisa el Client ID, el Secret y el entorno, y guarda de nuevo.",
+      "form_intro": "Copia el Client ID y el Secret de tu app REST de PayPal.",
+      "client_id_placeholder": "Por ejemplo: AbC123…",
+      "secret_placeholder": "Pega aquí el Secret",
+      "secret_keep_placeholder": "Déjalo vacío para conservar el actual",
+      "optional_recommended": "obligatorio en producción",
+      "webhook_id_placeholder": "Por ejemplo: 1AB23456CD789012E",
+      "webhook_help_title": "Webhook de PayPal",
+      "webhook_help": "En tu app de PayPal, crea un webhook con esta URL y pega aquí su Webhook ID. Así confirmamos pagos aunque la persona cierre la ventana antes de volver.",
+      "webhook_events": "Eventos:",
+      "copy": "Copiar",
+      "copied": "Copiado",
+      "live_warning": "Estás usando credenciales de producción: los pagos serán reales.",
+      "client_id_required": "Escribe el Client ID.",
+      "secret_required": "Escribe el Secret.",
+      "save_and_validate": "Guardar y validar",
+      "validating": "Validando con PayPal…",
+      "saved": "PayPal quedó conectado",
+      "saved_not_validated": "Guardamos los datos, pero PayPal no aceptó las credenciales. Revísalas e intenta de nuevo.",
+      "save_error": "No pudimos guardar la configuración.",
+      "spidi_name": "Pago Móvil (SPIDI)",
+      "spidi_tagline": "Cobros en bolívares a tasa BCV desde cualquier banco venezolano.",
+      "coming_soon": "Próximamente"
+    },
+    "unconfigured": {
+      "title": "Aún no hay un método de cobro",
+      "description": "Conecta PayPal para empezar a vender tus cursos y ebooks.",
+      "step1_title": "Conecta PayPal",
+      "step1_description": "Pega las credenciales de tu app de PayPal en Configuración.",
+      "step2_title": "Crea tus ofertas",
+      "step2_description": "Ponle precio a cada curso o ebook, o agrúpalos en una oferta.",
+      "step3_title": "Vende con acceso inmediato",
+      "step3_description": "Tus estudiantes compran desde la tienda o la página del curso y entran al instante.",
+      "cta": "Ir a la configuración de pagos"
+    },
+    "customers": {
+      "tab_overview": "Resumen",
+      "tab_customers": "Clientes",
+      "tab_transactions": "Transacciones",
+      "metric_revenue": "Ingresos totales",
+      "metric_customers": "Clientes",
+      "recent_transactions": "Transacciones recientes",
+      "no_transactions": "Todavía no hay transacciones.",
+      "no_customers": "Todavía no hay clientes.",
+      "unknown_customer": "Cliente sin nombre",
+      "load_error": "No pudimos cargar los clientes.",
+      "unavailable": "No pudimos cargar los datos de ventas. Intenta de nuevo en un momento.",
+      "col_customer": "Cliente",
+      "col_offer": "Oferta",
+      "col_amount": "Monto",
+      "col_method": "Método",
+      "col_last_payment": "Último pago",
+      "col_status": "Estado",
+      "col_since": "Desde",
+      "col_date": "Fecha",
+      "col_refunded": "Reembolsado",
+      "col_description": "Descripción",
+      "view_receipt": "Ver comprobante",
+      "duplicate_charge": "Cobro duplicado: reembolsar",
+      "duplicate_charge_hint": "Esta persona pagó dos veces la misma oferta. Reembolsa este cobro desde PayPal: su acceso se mantiene con el otro pago.",
+      "duplicate_alert": "Hay cobros duplicados por reembolsar ({{count}}). Están marcados en Transacciones.",
+      "test_sale": "Prueba",
+      "test_sale_hint": "Venta hecha con PayPal sandbox: no movió dinero real y no cuenta en los ingresos."
+    },
+    "offers": {
+      "load_error": "No pudimos cargar las ofertas.",
+      "create_title": "Nueva oferta",
+      "create_description": "Ponle precio a uno o varios cursos o ebooks.",
+      "create_button": "Nueva oferta",
+      "empty": "Todavía no tienes ofertas. Crea la primera para empezar a vender.",
+      "type_one_time": "Pago único",
+      "type_subscription": "Suscripción",
+      "edit": "Editar",
+      "archive": "Archivar",
+      "archive_title": "¿Archivar «{{name}}»?",
+      "archive_confirm": "La oferta dejará de verse en la tienda y no se podrá comprar. Quienes ya la compraron conservan su acceso.",
+      "archived": "Oferta archivada",
+      "archive_error": "No pudimos archivar la oferta.",
+      "updated": "Oferta actualizada",
+      "update_error": "No pudimos actualizar la oferta.",
+      "benefits": "Beneficios",
+      "payment_group": "Grupo de pago #{{id}}",
+      "manage_resources": "Cursos y ebooks incluidos",
+      "view_in_store": "Ver en la tienda",
+      "price": "Precio",
+      "resources_title": "Contenido de «{{name}}»",
+      "resources_description": "Los cursos y ebooks que desbloquea esta oferta.",
+      "field_name": "Nombre",
+      "field_description": "Descripción",
+      "field_price": "Precio",
+      "field_currency": "Moneda",
+      "field_benefits": "Beneficios",
+      "field_benefits_placeholder": "Separados por comas, por ejemplo: Acceso de por vida, Material descargable",
+      "name_required": "Escribe un nombre.",
+      "description_required": "Escribe una descripción.",
+      "amount_required": "Escribe un precio.",
+      "amount_min": "El precio debe ser de al menos 1.",
+      "currency_required": "Elige una moneda."
+    },
+    "offer_form": {
+      "name_placeholder": "Por ejemplo: Sanar para Criar (curso completo)",
+      "description_placeholder": "Cuéntale a tu estudiante qué va a recibir.",
+      "one_time_note": "Pago único con acceso inmediato. Por ahora no hay suscripciones.",
+      "access_title": "Qué desbloquea",
+      "access_help": "Elige los cursos o ebooks que se entregan al pagar, o un grupo de pago.",
+      "courses_label": "Cursos y ebooks",
+      "add_course": "Agregar curso o ebook",
+      "published_note": "En la tienda solo se muestran los cursos publicados.",
+      "group_label": "Grupo de pago",
+      "group_optional": "opcional",
+      "group_placeholder": "Sin grupo",
+      "group_none": "Sin grupo",
+      "group_help": "Todo lo que esté en el grupo queda incluido en la oferta.",
+      "resource_required": "Elige al menos un curso, un ebook o un grupo de pago.",
+      "create": "Crear oferta",
+      "creating": "Creando…",
+      "created": "Oferta creada",
+      "create_error": "No pudimos crear la oferta."
+    },
+    "resources_panel": {
+      "intro": "Quien compre «{{name}}» recibe acceso a:",
+      "empty": "Esta oferta todavía no incluye cursos ni ebooks.",
+      "loading": "Cargando…",
+      "load_error": "No pudimos cargar el contenido de la oferta.",
+      "link_course": "Agregar curso o ebook",
+      "select_course": "Elige un curso o ebook",
+      "loading_courses": "Cargando cursos…",
+      "no_courses": "No hay cursos en tu organización.",
+      "all_linked": "Todos tus cursos ya están en esta oferta.",
+      "linked": "Agregado a la oferta",
+      "link_error": "No pudimos agregarlo a la oferta.",
+      "removed": "Quitado de la oferta",
+      "remove_error": "No pudimos quitarlo de la oferta."
+    },
+    "groups": {
+      "title": "Grupos de pago",
+      "subtitle": "Agrupa varios cursos o ebooks para venderlos juntos en una oferta.",
+      "new_group": "Nuevo grupo",
+      "load_error": "No pudimos cargar los grupos.",
+      "empty_title": "Todavía no hay grupos",
+      "empty_description": "Un grupo te permite incluir varios cursos o ebooks en una sola oferta, como un paquete.",
+      "create_first": "Crea tu primer grupo",
+      "create_title": "Nuevo grupo de pago",
+      "create_description": "Agrupa cursos o ebooks para venderlos juntos.",
+      "edit_title": "Editar grupo de pago",
+      "edit_description": "Cambia el nombre o la descripción del grupo.",
+      "edit": "Editar",
+      "delete": "Eliminar grupo",
+      "delete_title": "¿Eliminar «{{name}}»?",
+      "delete_confirm": "Se quitarán sus cursos y sincronizaciones. Las ofertas que usen este grupo quedarán sin grupo.",
+      "created": "Grupo creado",
+      "create_error": "No pudimos crear el grupo.",
+      "updated": "Grupo actualizado",
+      "update_error": "No pudimos actualizar el grupo.",
+      "deleted": "Grupo eliminado",
+      "delete_error": "No pudimos eliminar el grupo.",
+      "field_name": "Nombre del grupo",
+      "field_name_placeholder": "Por ejemplo: Paquete completo",
+      "field_description": "Descripción",
+      "field_description_placeholder": "¿Qué incluye este grupo?",
+      "name_required": "Escribe un nombre.",
+      "save_changes": "Guardar cambios",
+      "create": "Crear grupo",
+      "section_courses": "Cursos y ebooks",
+      "section_access": "Grupos de usuarios",
+      "no_courses": "Todavía no hay cursos. Agrega uno abajo.",
+      "add_course": "Agregar curso o ebook",
+      "select_course": "Elige un curso o ebook",
+      "all_courses_in_group": "Todos los cursos ya están en este grupo.",
+      "course_added": "Agregado al grupo",
+      "course_add_error": "No pudimos agregarlo al grupo.",
+      "course_removed": "Quitado del grupo",
+      "course_remove_error": "No pudimos quitarlo del grupo.",
+      "sync_help": "Quien compre se agrega automáticamente a estos grupos de usuarios, y se quita si la compra se reembolsa.",
+      "sync_added": "Grupo de usuarios vinculado",
+      "sync_add_error": "No pudimos vincular el grupo de usuarios.",
+      "sync_removed": "Vínculo eliminado",
+      "sync_remove_error": "No pudimos quitar el vínculo.",
+      "usergroup_fallback": "Grupo #{{id}}",
+      "remove_sync": "Quitar vínculo",
+      "link_usergroup": "+ Vincular un grupo de usuarios…",
+      "no_usergroups": "No hay grupos de usuarios para vincular."
+    },
+    "store": {
+      "title": "Tienda",
+      "subtitle": "Cursos y ebooks de {{name}}",
+      "count_one": "{{count}} producto disponible",
+      "count_other": "{{count}} productos disponibles",
+      "empty_title": "Pronto habrá novedades",
+      "empty_description": "Todavía no hay productos a la venta. Vuelve pronto.",
+      "unavailable_title": "La tienda no está disponible",
+      "unavailable_description": "Por ahora no hay ventas en línea. Vuelve pronto.",
+      "one_time_badge": "Pago único",
+      "see_details": "Ver detalles",
+      "more_included_one": "y {{count}} más",
+      "more_included_other": "y {{count}} más"
+    },
+    "offer_card": {
+      "one_time": "Pago único",
+      "subscription": "Suscripción",
+      "minimum": "mínimo",
+      "cta": "Obtener por {{price}}",
+      "more_benefits_one": "{{count}} beneficio más",
+      "more_benefits_other": "{{count}} beneficios más"
+    },
+    "offer_page": {
+      "back_to_store": "Volver a la tienda",
+      "not_found_title": "No encontramos este producto",
+      "not_found_description": "Puede que ya no esté disponible. Mira lo que hay en la tienda.",
+      "one_time_badge": "Pago único",
+      "included_heading_one": "Qué incluye · {{count}} producto",
+      "included_heading_other": "Qué incluye · {{count}} productos",
+      "benefits_title": "Lo que te llevas",
+      "price_label": "Pago único",
+      "price_label_minimum": "Monto mínimo",
+      "included_short": "Incluye",
+      "pay_with_paypal": "Pagar con PayPal",
+      "pay_with_card": "Pagar con tarjeta (vía PayPal)",
+      "pay_with_provider": "Pagar con {{provider}}",
+      "card_hint": "Para pagar con tarjeta no necesitas cuenta de PayPal.",
+      "redirecting": "Te llevamos a PayPal…",
+      "providers_loading": "Cargando métodos de pago…",
+      "no_providers": "Los pagos no están disponibles en este momento. Vuelve a intentarlo más tarde.",
+      "start_error": "No pudimos iniciar el pago. Intenta de nuevo en un momento.",
+      "session_expired": "Tu sesión expiró. Inicia sesión de nuevo para continuar con tu compra.",
+      "secure_checkout": "Pago seguro procesado por PayPal",
+      "instant_access": "Acceso inmediato después del pago",
+      "account_access": "Tu contenido queda en tu cuenta, en cualquier dispositivo",
+      "guest_title": "Crea tu cuenta para comprar",
+      "guest_description": "Tu cuenta es donde vas a ver tus cursos y ebooks. Al terminar volverás aquí para pagar.",
+      "guest_signup": "Crea tu cuenta",
+      "guest_login": "Inicia sesión",
+      "guest_have_account": "¿Ya tienes cuenta?",
+      "owned_title": "Ya tienes este producto",
+      "owned_description": "Está en tu cuenta. Entra cuando quieras.",
+      "go_to_course": "Ir al curso",
+      "read_ebook": "Leer ebook",
+      "my_purchases": "Ver mis compras",
+      "confirming_title": "Confirmando tu pago…",
+      "confirming_description": "Esto toma unos segundos. Por favor, no cierres esta página.",
+      "success_title": "¡Listo! Ya tienes acceso",
+      "success_description": "Gracias por tu compra. Te enviamos un correo de confirmación.",
+      "pending_title": "Tu pago está en revisión",
+      "pending_description": "PayPal está revisando tu pago. En cuanto se confirme tendrás acceso; esta página se actualiza sola.",
+      "pending_timeout": "Está tardando más de lo normal. Cuando se confirme te avisaremos por correo y lo verás en Mis compras.",
+      "cancelled_title": "Cancelaste el pago",
+      "cancelled_description": "No se hizo ningún cargo. Puedes intentarlo de nuevo cuando quieras.",
+      "failed_title": "No pudimos completar el pago",
+      "failed_description": "No se hizo ningún cargo. Intenta de nuevo o usa otro método de pago.",
+      "declined_title": "Tu método de pago fue rechazado",
+      "declined_description": "No se hizo ningún cargo. Intenta con otra tarjeta o con tu cuenta PayPal.",
+      "error_title": "No pudimos confirmar tu pago",
+      "order_not_found": "No encontramos este pago. Si se te hizo un cargo, escríbenos y lo resolvemos.",
+      "test_mode_banner": "Modo de pruebas: los pagos usan PayPal sandbox y no son reales. Solo el equipo puede comprar."
+    },
+    "course_actions": {
+      "owned_course_title": "Este curso es tuyo",
+      "owned_course_description": "Tienes acceso completo. Avanza a tu ritmo.",
+      "owned_ebook_title": "Este ebook es tuyo",
+      "owned_ebook_description": "Tienes acceso completo. Léelo cuando quieras.",
+      "staff_access_title": "Tienes acceso como parte del equipo",
+      "staff_access_description": "Puedes ver todo el contenido sin comprarlo.",
+      "start": "Empezar",
+      "continue": "Continuar",
+      "read_now": "Leer ahora",
+      "buy": "Comprar",
+      "paid_course_title": "Este curso es de pago",
+      "paid_ebook_title": "Este ebook es de pago",
+      "see_store": "Ver la tienda",
+      "options_available_one": "{{count}} opción disponible",
+      "options_available_other": "{{count}} opciones disponibles",
+      "already_bought": "¿Ya lo compraste?",
+      "login": "Inicia sesión",
+      "author": "Creado por",
+      "authors": "Creado por",
+      "and_more_one": "y {{count}} más",
+      "and_more_other": "y {{count}} más",
+      "payment_pending_title": "Tu pago está en revisión",
+      "payment_pending_description": "PayPal está revisando tu pago. En cuanto se confirme tendrás acceso y te avisaremos por correo."
+    },
+    "purchases": {
+      "title": "Mis compras",
+      "subtitle": "Tus cursos y ebooks comprados",
+      "load_error": "No pudimos cargar tus compras.",
+      "empty_title": "Todavía no tienes compras",
+      "empty_description": "Cuando compres un curso o ebook, lo verás aquí.",
+      "browse_store": "Ir a la tienda",
+      "one_time_purchase": "Compra única",
+      "status_active": "Activo",
+      "purchased_on": "Comprado el {{date}}",
+      "go_to_course": "Ir al curso",
+      "read_ebook": "Leer ebook",
+      "view_offer": "Ver la oferta",
+      "refunded_note": "Esta compra fue reembolsada y ya no da acceso al contenido.",
+      "receipts_note": "Los comprobantes de pago te llegan por correo desde PayPal."
+    },
+    "payment_wall": {
+      "description": "Este contenido es parte de «{{name}}» y requiere una compra para verlo.",
+      "get_access": "Obtener acceso"
+    }
+  },
+  "sc_learning": {
+    "resume": {
+      "toast": "Reanudando en {{time}}",
+      "restart": "Empezar desde el inicio",
+      "dismiss": "Cerrar aviso"
+    },
+    "continue": {
+      "eyebrow": "Continuar donde lo dejaste",
+      "next_eyebrow": "Sigue con la próxima lección",
+      "review_eyebrow": "Terminaste la última lección",
+      "chapter": "Capítulo {{number}} · {{name}}",
+      "position": "Vas en {{time}} de {{total}}",
+      "position_no_total": "Vas en {{time}}",
+      "page": "Página {{page}}",
+      "progress_label": "{{percent}}% visto",
+      "button": "Continuar",
+      "next_button": "Empezar lección",
+      "review_button": "Ver de nuevo"
+    },
+    "dropdown": {
+      "watched": "{{percent}}% visto",
+      "view_all": "Ver todas las lecciones"
+    },
+    "trail": {
+      "read_ebook": "Leer ebook",
+      "completed": "Completado"
+    },
+    "ebook": {
+      "eyebrow": "Ebook en PDF",
+      "cover_alt": "Portada de {{name}}",
+      "format": "Léelo aquí mismo, desde tu teléfono o computadora, o descárgalo para tenerlo siempre contigo.",
+      "read_now": "Leer ahora",
+      "continue_reading": "Seguir leyendo (pág. {{page}})",
+      "download": "Descargar PDF",
+      "locked_hint": "Cuando sea tuyo, podrás leerlo aquí mismo y descargarlo en PDF.",
+      "no_pdf": "Este ebook estará disponible muy pronto.",
+      "no_pdf_staff": "Este ebook todavía no tiene su PDF. Agrégalo como actividad de documento PDF desde el panel del curso."
+    },
+    "product_type": {
+      "label": "Tipo de producto",
+      "course": "Curso",
+      "ebook": "Ebook",
+      "help_course": "Curso con lecciones en video, progreso y \"Continuar donde lo dejaste\".",
+      "help_ebook": "La página muestra la portada, la descripción y los botones \"Leer ahora\" y \"Descargar PDF\" en lugar de la lista de lecciones. Agrega una actividad de documento PDF con el libro."
+    },
+    "pdf": {
+      "no_viewer": "Este navegador no puede mostrar el PDF dentro de la página. Descárgalo o ábrelo con tu lector de PDF para leerlo con comodidad.",
+      "open": "Abrir el PDF"
+    }
+  },
+  "sc_fixes": {
+    "course_actions": {
+      "continue": "Continuar",
+      "leave": "Salir del curso",
+      "leave_title": "¿Salir de este curso?",
+      "leave_description": "Si sales, se borra tu progreso en este curso: las lecciones que completaste y el punto donde ibas en cada video.",
+      "leave_hint": "Podrás volver a empezarlo cuando quieras.",
+      "leave_confirm": "Sí, salir y borrar mi progreso",
+      "leave_cancel": "Quedarme en el curso",
+      "leaving": "Saliendo del curso…",
+      "leave_success": "Saliste del curso.",
+      "leave_error": "No pudimos sacarte del curso. Inténtalo de nuevo."
+    },
+    "offers_archive": {
+      "checking": "Revisando qué cubre esta oferta…",
+      "free_title": "Esto quedará gratis para todas las personas",
+      "free_description_one": "Esta es la única oferta activa que cubre este contenido. Si la archivas, cualquier persona podrá verlo gratis:",
+      "free_description_other": "Esta es la única oferta activa que cubre estos {{count}} contenidos. Si la archivas, cualquier persona podrá verlos gratis:",
+      "free_hint_one": "Si quieres seguir vendiéndolo, primero agrégalo a otra oferta o crea una nueva, y después archiva esta.",
+      "free_hint_other": "Si quieres seguir vendiéndolos, primero agrégalos a otra oferta o crea una nueva, y después archiva esta.",
+      "check_failed": "No pudimos comprobar si algún curso o ebook quedaría gratis. Ten en cuenta que, si esta es la única oferta de un contenido, al archivarla quedará gratis para todas las personas.",
+      "type_course": "Curso",
+      "type_ebook": "Ebook",
+      "unknown_resource": "Contenido {{id}}",
+      "confirm_free_one": "Archivar y dejarlo gratis",
+      "confirm_free_other": "Archivar y dejarlos gratis",
+      "archiving": "Archivando…"
+    }
+  },
+  "sc_errors": {
+    "categories": {
+      "version_mismatch": {
+        "label": "actualización",
+        "title": "La plataforma se acaba de actualizar",
+        "description": "Publicamos una versión nueva de Sanar y Criar mientras tenías esta página abierta, y quedó desfasada por un momento. Al recargar verás la versión más reciente."
+      },
+      "chunk_load": {
+        "label": "carga",
+        "title": "Una parte de la página no cargó",
+        "description": "Tu navegador guardaba una copia antigua de la plataforma y no pudo cargar una parte. Casi siempre se arregla al recargar."
+      },
+      "auth_session": {
+        "label": "sesión",
+        "title": "Tu sesión expiró",
+        "description": "Se cerró tu sesión o hay que renovarla. Inicia sesión de nuevo para recuperar tu acceso."
+      },
+      "plan_limit": {
+        "label": "plan",
+        "title": "Esta función no está disponible",
+        "description": "La función que intentaste usar no está incluida en el plan actual o está desactivada. Para usarla, hay que activarla o mejorar el plan."
+      },
+      "permission": {
+        "label": "permisos",
+        "title": "No tienes acceso a esto",
+        "description": "Tu cuenta no tiene permiso para ver esta página o hacer esta acción. Si crees que es un error, escríbenos y lo revisamos."
+      },
+      "rate_limit": {
+        "label": "límite",
+        "title": "Vamos un poco más despacio",
+        "description": "Hiciste muchas solicitudes en poco tiempo, así que hicimos una pausa breve para proteger tu cuenta. En unos instantes podrás seguir."
+      },
+      "not_found": {
+        "label": "no encontrado",
+        "title": "No encontramos lo que buscas",
+        "description": "Puede que lo hayan movido o borrado, o que ya no esté disponible. No es algo que hayas hecho mal."
+      },
+      "conflict": {
+        "label": "duplicado",
+        "title": "Eso ya existe",
+        "description": "Choca con algo que ya está registrado: por ejemplo, ya hay una cuenta o un elemento con el mismo nombre o correo."
+      },
+      "validation": {
+        "label": "validación",
+        "title": "Falta corregir un detalle",
+        "description": "Un campo está vacío, fuera de rango o con un formato incorrecto. Corrige el campo marcado e inténtalo de nuevo."
+      },
+      "org_config": {
+        "label": "configuración",
+        "title": "Falta terminar la configuración",
+        "description": "Esta organización todavía no está configurada del todo. Hace falta terminar de configurarla para poder usarla."
+      },
+      "payment": {
+        "label": "pago",
+        "title": "No pudimos completar el pago",
+        "description": "Algo interrumpió el pago o el cambio de suscripción. Puedes intentarlo de nuevo con tranquilidad; si ves un cargo que no reconoces, escríbenos."
+      },
+      "upload": {
+        "label": "subida",
+        "title": "No se pudo subir el archivo",
+        "description": "Puede que el archivo sea muy grande o tenga un formato no compatible, o que la conexión se cortara a mitad de camino. Revisa el archivo e inténtalo otra vez."
+      },
+      "ai": {
+        "label": "IA",
+        "title": "El asistente de IA tuvo un problema",
+        "description": "Una solicitud a la IA se interrumpió o devolvió una respuesta incompleta. Suele ser algo pasajero, así que vale la pena intentarlo de nuevo."
+      },
+      "offline": {
+        "label": "sin conexión",
+        "title": "Parece que no tienes conexión",
+        "description": "No pudimos comunicarnos con nuestros servidores; casi siempre es un problema de red en el camino. Revisa tu conexión e inténtalo de nuevo."
+      },
+      "service_unavailable": {
+        "label": "servicio",
+        "title": "Un servicio no está disponible por ahora",
+        "description": "Una función de la que dependemos no responde o todavía no está configurada. El problema es de nuestro lado y suele resolverse solo."
+      },
+      "timeout": {
+        "label": "tiempo de espera",
+        "title": "Esto tardó demasiado",
+        "description": "La solicitud no terminó a tiempo. Puede que el servidor esté ocupado; volver a intentarlo suele funcionar."
+      },
+      "server": {
+        "label": "servidor",
+        "title": "Tuvimos un problema de nuestro lado",
+        "description": "Nuestros servidores dieron un error inesperado al procesar tu solicitud. No es culpa tuya; intentarlo de nuevo en un momento suele ayudar."
+      },
+      "unknown": {
+        "label": "desconocido",
+        "title": "Algo no salió como esperábamos",
+        "description": "Tuvimos un problema inesperado al completar tu solicitud. Quedó registrado y probablemente sea pasajero; volver a intentarlo suele resolverlo. Si sigue pasando, cuéntanos qué estabas haciendo."
+      }
+    },
+    "fallback_title": "Pasó algo inesperado",
+    "fallback_description": "Tuvimos un error y quedó registrado. Volver a intentarlo o ir al inicio suele ayudar.",
+    "actions": {
+      "retry": "Reintentar",
+      "try_again": "Intentar de nuevo",
+      "reload": "Recargar",
+      "login": "Iniciar sesión de nuevo",
+      "home": "Inicio",
+      "signout": "Cerrar sesión",
+      "signing_out": "Cerrando sesión…",
+      "report": "Reportar este problema",
+      "contact_support": "Escríbenos"
+    },
+    "details": {
+      "show": "Mostrar detalles técnicos",
+      "hide": "Ocultar detalles técnicos",
+      "cause": "causa",
+      "status": "estado",
+      "digest": "código",
+      "ref": "ref."
+    },
+    "report_dialog": {
+      "title": "Cuéntanos qué pasó",
+      "subtitle": "Tu reporte le llega directo a nuestro equipo para que podamos arreglarlo.",
+      "name": "Nombre",
+      "email": "Correo",
+      "comments": "¿Qué estabas haciendo cuando pasó?",
+      "submit": "Enviar reporte",
+      "close": "Cerrar",
+      "success": "Recibimos tu reporte. ¡Gracias!"
+    },
+    "not_found_page": {
+      "heading": "No encontramos esta página",
+      "description": "Puede que la hayan movido o que el enlace tenga un error. Desde el inicio puedes ver los cursos y ebooks.",
+      "home": "Volver al inicio"
+    },
+    "org_not_found": {
+      "title": "Escribe el nombre de tu organización",
+      "description": "Escribe el nombre de tu organización para ir a la página de inicio de sesión.",
+      "placeholder": "tu-organizacion",
+      "redirecting": "Redirigiendo…",
+      "continue": "Continuar",
+      "help": "¿No sabes el nombre de tu organización? Pregúntale a quien administra tu cuenta."
+    },
+    "org_inactive": {
+      "title": "Este espacio ya no está activo",
+      "description": "Este espacio está desactivado. Si crees que es un error, escríbenos."
+    }
+  },
+  "sc_brand": {
+    "auth_terms_prefix": "Al continuar, aceptas los",
+    "auth_terms": "Términos y condiciones",
+    "auth_and": "y la",
+    "auth_privacy": "Política de privacidad",
+    "auth_terms_suffix": " de Sanar y Criar.",
+    "powered_by": "Plataforma basada en LearnHouse (AGPL-3.0)",
+    "source_code": "Código fuente",
+    "copyright": "© {{year}} Sanar y Criar · Hilda Hernández",
+    "legal_nav_label": "Legal",
+    "legal": {
+      "terms": "Términos",
+      "privacy": "Privacidad",
+      "refunds": "Reembolsos"
+    },
+    "home": {
+      "courses_title": "Cursos en video",
+      "ebooks_title": "Ebooks",
+      "eyebrow": "Cursos y ebooks",
+      "title_start": "Aprende a criar",
+      "title_accent": "desde la calma",
+      "lead": "Cursos en video y ebooks de {{name}}, psicóloga clínica infanto-juvenil ({{license}}). Al comprar, el acceso es inmediato y queda en tu cuenta.",
+      "store_cta": "Ver la tienda",
+      "purchases_cta": "Mis compras",
+      "login_cta": "Ya compré: iniciar sesión",
+      "count_one": "1 disponible",
+      "count_other": "{{n}} disponibles",
+      "empty_eyebrow": "Muy pronto",
+      "empty_title": "Estamos preparando los primeros cursos y ebooks.",
+      "empty_text": "Si ya compraste, inicia sesión para ver tu contenido."
+    },
+    "nav_label": "Navegación principal",
+    "home_label": "Sanar y Criar, inicio",
+    "back_to_site": "Volver al sitio",
+    "close_menu": "Cerrar menú",
+    "open_menu": "Abrir menú",
+    "mobile_nav_label": "Menú móvil",
+    "card": {
+      "ebook_type": "Ebook · PDF",
+      "course_type": "Curso en video",
+      "view_ebook": "Ver ebook",
+      "view_course": "Ver curso"
+    }
+  },
+  "sc_ui": {
+    "common": {
+      "yes": "Sí",
+      "no": "No",
+      "not_available": "n/d",
+      "characters_left_one": "queda {{count}} carácter",
+      "characters_left_other": "quedan {{count}} caracteres",
+      "characters_over_one": "sobra {{count}} carácter",
+      "characters_over_other": "sobran {{count}} caracteres"
+    },
+    "ai": {
+      "generate_with_ai": "Generar con IA"
+    },
+    "org_users": {
+      "count_one": "{{count}} usuario",
+      "count_other": "{{count}} usuarios",
+      "export": "Exportar",
+      "exporting": "Exportando usuarios…",
+      "export_success": "Listo, exportamos los usuarios",
+      "export_error": "No pudimos exportar los usuarios",
+      "filters": "Filtros",
+      "all_roles": "Todos los roles",
+      "all_statuses": "Todos los estados",
+      "all_groups": "Todos los grupos",
+      "verified": "Verificado",
+      "unverified": "Sin verificar",
+      "email_verified": "Correo verificado",
+      "email_not_verified": "Correo sin verificar",
+      "signup_email": "Correo",
+      "clear_filters": "Quitar filtros",
+      "clear_all_filters": "Quitar todos los filtros",
+      "selected_one": "{{count}} usuario seleccionado",
+      "selected_other": "{{count}} usuarios seleccionados",
+      "clear_selection": "Quitar selección",
+      "remove_selected": "Quitar seleccionados",
+      "remove_selected_title": "Quitar usuarios seleccionados",
+      "remove_selected_button_one": "Quitar {{count}} usuario",
+      "remove_selected_button_other": "Quitar {{count}} usuarios",
+      "remove_selected_message_one": "¿Seguro que quieres quitar {{count}} usuario de la organización? Esta acción no se puede deshacer.",
+      "remove_selected_message_other": "¿Seguro que quieres quitar {{count}} usuarios de la organización? Esta acción no se puede deshacer.",
+      "removing_one": "Quitando {{count}} usuario…",
+      "removing_other": "Quitando {{count}} usuarios…",
+      "removed_one": "Quitamos {{count}} usuario",
+      "removed_other": "Quitamos {{count}} usuarios",
+      "remove_error": "No pudimos quitar a los usuarios",
+      "joined": "Ingreso",
+      "status": "Estado",
+      "last_login": "Último acceso: {{date}}",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "visit_days": "{{count}} d",
+      "seen_one": "Entró {{count}} día este mes",
+      "seen_other": "Entró {{count}} días este mes",
+      "seen_active_one": "Entró {{count}} día este mes (cuenta como usuario activo)",
+      "seen_active_other": "Entró {{count}} días este mes (cuenta como usuario activo)"
+    },
+    "org_general": {
+      "validation": {
+        "name_required": "El nombre es obligatorio",
+        "name_max": "El nombre de la organización puede tener hasta {{max}} caracteres",
+        "description_required": "La descripción corta es obligatoria",
+        "description_max": "La descripción corta puede tener hasta {{max}} caracteres",
+        "about_max": "El texto «Acerca de» puede tener hasta {{max}} caracteres",
+        "label_required": "Elige una etiqueta para la organización"
+      },
+      "labels": {
+        "languages": "Idiomas",
+        "business": "Negocios",
+        "ecommerce": "Comercio electrónico",
+        "gaming": "Videojuegos",
+        "music": "Música",
+        "sports": "Deportes",
+        "cars": "Autos",
+        "sales_marketing": "Ventas y marketing",
+        "tech": "Tecnología",
+        "photo_video": "Foto y video",
+        "pets": "Mascotas",
+        "personal_development": "Desarrollo personal",
+        "real_estate": "Bienes raíces",
+        "beauty_fashion": "Belleza y moda",
+        "travel": "Viajes",
+        "productivity": "Productividad",
+        "health_fitness": "Salud y ejercicio",
+        "finance": "Finanzas",
+        "arts_crafts": "Arte y manualidades",
+        "education": "Educación",
+        "stem": "Ciencia y tecnología (STEM)",
+        "humanities": "Humanidades",
+        "professional_skills": "Habilidades profesionales",
+        "digital_skills": "Habilidades digitales",
+        "creative_arts": "Artes creativas",
+        "social_sciences": "Ciencias sociales",
+        "test_prep": "Preparación de exámenes",
+        "vocational": "Formación técnica",
+        "early_education": "Educación inicial"
+      }
+    },
+    "org_seo": {
+      "saving": "Guardando la configuración SEO…",
+      "saved": "Guardamos la configuración SEO",
+      "sitemap": "Mapa del sitio:",
+      "robots": "Robots.txt:",
+      "copy_link": "Copiar enlace",
+      "open_link": "Abrir enlace",
+      "title_suffix_placeholder": " | Sanar y Criar",
+      "description_placeholder": "Una descripción breve de tu organización para los buscadores",
+      "og_preview_alt": "Vista previa de la imagen para redes sociales",
+      "remove_image": "Quitar imagen",
+      "change_image": "Cambiar imagen",
+      "upload_image": "Subir imagen",
+      "twitter_placeholder": "@tuusuario",
+      "google_placeholder": "Código de verificación de Google",
+      "saving_button": "Guardando…",
+      "save": "Guardar cambios"
+    },
+    "audit_export": {
+      "failed": "No pudimos exportar el informe. Inténtalo de nuevo.",
+      "report_title": "Informe de auditoría de estudiante",
+      "generated": "Generado el {{date}}",
+      "internal_note": "Incluye las respuestas correctas de los ejercicios (solo para uso interno).",
+      "summary": "Resumen",
+      "courses_enrolled": "Cursos inscritos: {{enrolled}} ({{completed}} completados)",
+      "avg_progress": "Progreso promedio: {{pct}}%",
+      "assignments_submitted": "Tareas entregadas: {{count}}",
+      "avg_grade": ", nota promedio {{pct}}%",
+      "certificates_earned": "Certificados obtenidos: {{count}}",
+      "connections_recorded": "Conexiones registradas: {{count}}, la última: {{date}}",
+      "account_security": "Cuenta y seguridad",
+      "email_verified": "Correo verificado: {{value}}   Método de registro: {{method}}",
+      "last_login": "Último acceso: {{date}}   IP: {{ip}}",
+      "connections": "Conexiones",
+      "none_recorded": "Sin registros.",
+      "course_progress": "Progreso en los cursos",
+      "untitled_course": "Curso sin título",
+      "no_enrollments": "Sin inscripciones.",
+      "assignments": "Tareas",
+      "attempt": "intento {{number}}",
+      "course": "Curso: {{name}}",
+      "not_submitted": "sin entregar",
+      "task": "Ejercicio {{index}}",
+      "manually_graded": ", calificado a mano",
+      "code": "Código",
+      "tests_passed": "{{language}}: {{passed}}/{{total}} pruebas superadas",
+      "question": "P: {{text}}",
+      "answer": "R: {{text}}",
+      "no_answer": "(sin respuesta)",
+      "correct": "[Correcta]",
+      "wrong": "[Incorrecta]",
+      "expected": "Esperada: {{text}}",
+      "omitted_one": "({{count}} respuesta más omitida; mírala en la exportación CSV o JSON)",
+      "omitted_other": "({{count}} respuestas más omitidas; míralas en la exportación CSV o JSON)",
+      "no_submissions": "Sin entregas.",
+      "code_exercises": "Ejercicios de código",
+      "untitled_activity": "Actividad sin título",
+      "passed": "Superado",
+      "failed_result": "No superado",
+      "tests": "{{summary}} pruebas",
+      "none": "Ninguno.",
+      "community": "Comunidad",
+      "discussion": "Debate: {{title}} ({{date}})",
+      "comment_in": "Comentario en «{{title}}»: {{text}}",
+      "untitled": "sin título",
+      "no_community": "Sin actividad en la comunidad.",
+      "certificates": "Certificados",
+      "credential": "ID de credencial {{id}}",
+      "behavior": "Comportamiento",
+      "total_time": "Tiempo total en actividades: {{time}}",
+      "searches": "Búsquedas: {{list}}"
+    }
   }
 }

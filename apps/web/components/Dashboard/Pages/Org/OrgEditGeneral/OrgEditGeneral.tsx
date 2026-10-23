@@ -22,56 +22,68 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 
+// Sanar y Criar: the text of each label comes from
+// sc_ui.org_general.labels.<value>; only the emoji lives here.
 const ORG_LABELS = [
-  { value: 'languages', label: '🌐 Languages' },
-  { value: 'business', label: '💰 Business' },
-  { value: 'ecommerce', label: '🛍 E-commerce' },
-  { value: 'gaming', label: '🎮 Gaming' },
-  { value: 'music', label: '🎸 Music' },
-  { value: 'sports', label: '⚽ Sports' },
-  { value: 'cars', label: '🚗 Cars' },
-  { value: 'sales_marketing', label: '🚀 Sales & Marketing' },
-  { value: 'tech', label: '💻 Tech' },
-  { value: 'photo_video', label: '📸 Photo & Video' },
-  { value: 'pets', label: '🐕 Pets' },
-  { value: 'personal_development', label: '📚 Personal Development' },
-  { value: 'real_estate', label: '🏠 Real Estate' },
-  { value: 'beauty_fashion', label: '👠 Beauty & Fashion' },
-  { value: 'travel', label: '✈️ Travel' },
-  { value: 'productivity', label: '⏳ Productivity' },
-  { value: 'health_fitness', label: '🍎 Health & Fitness' },
-  { value: 'finance', label: '📈 Finance' },
-  { value: 'arts_crafts', label: '🎨 Arts & Crafts' },
-  { value: 'education', label: '📚 Education' },
-  { value: 'stem', label: '🔬 STEM' },
-  { value: 'humanities', label: '📖 Humanities' },
-  { value: 'professional_skills', label: '💼 Professional Skills' },
-  { value: 'digital_skills', label: '💻 Digital Skills' },
-  { value: 'creative_arts', label: '🎨 Creative Arts' },
-  { value: 'social_sciences', label: '🌍 Social Sciences' },
-  { value: 'test_prep', label: '✍️ Test Preparation' },
-  { value: 'vocational', label: '🔧 Vocational Training' },
-  { value: 'early_education', label: '🎯 Early Education' },
+  { value: 'languages', emoji: '🌐' },
+  { value: 'business', emoji: '💰' },
+  { value: 'ecommerce', emoji: '🛍' },
+  { value: 'gaming', emoji: '🎮' },
+  { value: 'music', emoji: '🎸' },
+  { value: 'sports', emoji: '⚽' },
+  { value: 'cars', emoji: '🚗' },
+  { value: 'sales_marketing', emoji: '🚀' },
+  { value: 'tech', emoji: '💻' },
+  { value: 'photo_video', emoji: '📸' },
+  { value: 'pets', emoji: '🐕' },
+  { value: 'personal_development', emoji: '📚' },
+  { value: 'real_estate', emoji: '🏠' },
+  { value: 'beauty_fashion', emoji: '👠' },
+  { value: 'travel', emoji: '✈️' },
+  { value: 'productivity', emoji: '⏳' },
+  { value: 'health_fitness', emoji: '🍎' },
+  { value: 'finance', emoji: '📈' },
+  { value: 'arts_crafts', emoji: '🎨' },
+  { value: 'education', emoji: '📚' },
+  { value: 'stem', emoji: '🔬' },
+  { value: 'humanities', emoji: '📖' },
+  { value: 'professional_skills', emoji: '💼' },
+  { value: 'digital_skills', emoji: '💻' },
+  { value: 'creative_arts', emoji: '🎨' },
+  { value: 'social_sciences', emoji: '🌍' },
+  { value: 'test_prep', emoji: '✍️' },
+  { value: 'vocational', emoji: '🔧' },
+  { value: 'early_education', emoji: '🎯' },
 ] as const
 
 // Mirrors MAX_SENDER_NAME_LENGTH in apps/api/src/services/email/sender.py, which
 // re-validates (and sanitizes) every submitted value server-side.
 const MAX_EMAIL_SENDER_NAME_LENGTH = 64
 
-const validationSchema = Yup.object().shape({
-  name: Yup.string()
-    .required('Name is required')
-    .max(60, 'Organization name must be 60 characters or less'),
-  description: Yup.string()
-    .required('Short description is required')
-    .max(100, 'Short description must be 100 characters or less'),
-  about: Yup.string()
-    .optional()
-    .max(400, 'About text must be 400 characters or less'),
-  label: Yup.string().required('Organization label is required'),
-})
+const MAX_NAME_LENGTH = 60
+const MAX_DESCRIPTION_LENGTH = 100
+const MAX_ABOUT_LENGTH = 400
+const MAX_FOOTER_TEXT_LENGTH = 100
+
+// Sanar y Criar: built per render so the messages follow the UI language.
+function buildValidationSchema(t: TFunction) {
+  const v = (key: string, max?: number) => t(`sc_ui.org_general.validation.${key}`, { max })
+  return Yup.object().shape({
+    name: Yup.string()
+      .required(v('name_required'))
+      .max(MAX_NAME_LENGTH, v('name_max', MAX_NAME_LENGTH)),
+    description: Yup.string()
+      .required(v('description_required'))
+      .max(MAX_DESCRIPTION_LENGTH, v('description_max', MAX_DESCRIPTION_LENGTH)),
+    about: Yup.string()
+      .optional()
+      .max(MAX_ABOUT_LENGTH, v('about_max', MAX_ABOUT_LENGTH)),
+    label: Yup.string().required(v('label_required')),
+  })
+}
 
 interface OrganizationValues {
   name: string
@@ -82,6 +94,15 @@ interface OrganizationValues {
 
 const OrgEditGeneral: React.FC = () => {
   const { t } = useTranslation()
+  const validationSchema = React.useMemo(() => buildValidationSchema(t), [t])
+  // Sanar y Criar: "(N characters left)" next to each label, translated; a
+  // stored value already past the limit says so instead of a negative count.
+  const charsLeft = (max: number, value?: string) => {
+    const left = max - (value?.length || 0)
+    return left >= 0
+      ? `(${t('sc_ui.common.characters_left', { count: left })})`
+      : `(${t('sc_ui.common.characters_over', { count: -left })})`
+  }
   const _router = useRouter()
   const session = useLHSession() as any
   const access_token = session?.data?.tokens?.access_token
@@ -104,7 +125,8 @@ const OrgEditGeneral: React.FC = () => {
   const [defaultLanguage, setDefaultLanguage] = React.useState<string>(
     org?.config?.config?.customization?.general?.default_language ||
     org?.config?.config?.general?.default_language ||
-    'en'
+    // Sanar y Criar: same default as the API (organization_config.py).
+    'es'
   )
 
   const initialValues: OrganizationValues = {
@@ -166,7 +188,7 @@ const OrgEditGeneral: React.FC = () => {
                       <Label htmlFor="name">
                         {t('dashboard.organization.settings.name')}
                         <span className="text-gray-500 text-sm ms-2">
-                          ({60 - (values.name?.length || 0)} characters left)
+                          {charsLeft(MAX_NAME_LENGTH, values.name)}
                         </span>
                       </Label>
                       <Input
@@ -175,7 +197,7 @@ const OrgEditGeneral: React.FC = () => {
                         value={values.name}
                         onChange={handleChange}
                         placeholder={t('dashboard.organization.settings.name_placeholder')}
-                        maxLength={60}
+                        maxLength={MAX_NAME_LENGTH}
                       />
                       {touched.name && errors.name && (
                         <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -186,7 +208,7 @@ const OrgEditGeneral: React.FC = () => {
                       <Label htmlFor="description">
                         {t('dashboard.organization.settings.short_description')}
                         <span className="text-gray-500 text-sm ms-2">
-                          ({100 - (values.description?.length || 0)} characters left)
+                          {charsLeft(MAX_DESCRIPTION_LENGTH, values.description)}
                         </span>
                       </Label>
                       <Input
@@ -195,7 +217,7 @@ const OrgEditGeneral: React.FC = () => {
                         value={values.description}
                         onChange={handleChange}
                         placeholder={t('dashboard.organization.settings.short_description_placeholder')}
-                        maxLength={100}
+                        maxLength={MAX_DESCRIPTION_LENGTH}
                       />
                       {touched.description && errors.description && (
                         <p className="text-red-500 text-sm mt-1">{errors.description}</p>
@@ -214,7 +236,7 @@ const OrgEditGeneral: React.FC = () => {
                         <SelectContent>
                           {ORG_LABELS.map((type) => (
                             <SelectItem key={type.value} value={type.value}>
-                              {type.label}
+                              {type.emoji} {t(`sc_ui.org_general.labels.${type.value}`)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -228,7 +250,7 @@ const OrgEditGeneral: React.FC = () => {
                       <Label htmlFor="about">
                         {t('dashboard.organization.settings.about')}
                         <span className="text-gray-500 text-sm ms-2">
-                          ({400 - (values.about?.length || 0)} characters left)
+                          {charsLeft(MAX_ABOUT_LENGTH, values.about)}
                         </span>
                       </Label>
                       <Textarea
@@ -238,7 +260,7 @@ const OrgEditGeneral: React.FC = () => {
                         onChange={handleChange}
                         placeholder={t('dashboard.organization.settings.about_placeholder')}
                         className="min-h-[250px]"
-                        maxLength={400}
+                        maxLength={MAX_ABOUT_LENGTH}
                       />
                       {touched.about && errors.about && (
                         <p className="text-red-500 text-sm mt-1">{errors.about}</p>
@@ -249,7 +271,7 @@ const OrgEditGeneral: React.FC = () => {
                       <Label htmlFor="footerText">
                         {t('dashboard.organization.settings.footer_text')}
                         <span className="text-gray-500 text-sm ms-2">
-                          ({100 - (footerText?.length || 0)} characters left)
+                          {charsLeft(MAX_FOOTER_TEXT_LENGTH, footerText)}
                         </span>
                       </Label>
                       <Input
@@ -258,7 +280,7 @@ const OrgEditGeneral: React.FC = () => {
                         value={footerText}
                         onChange={(e) => setFooterText(e.target.value)}
                         placeholder={t('dashboard.organization.settings.footer_text_placeholder')}
-                        maxLength={100}
+                        maxLength={MAX_FOOTER_TEXT_LENGTH}
                       />
                       <p className="text-gray-500 text-sm mt-1">{t('dashboard.organization.settings.footer_text_desc')}</p>
                     </div>
@@ -267,7 +289,7 @@ const OrgEditGeneral: React.FC = () => {
                       <Label htmlFor="emailSenderName">
                         {t('dashboard.organization.settings.email_sender_name')}
                         <span className="text-gray-500 text-sm ms-2">
-                          ({MAX_EMAIL_SENDER_NAME_LENGTH - (emailSenderName?.length || 0)} characters left)
+                          {charsLeft(MAX_EMAIL_SENDER_NAME_LENGTH, emailSenderName)}
                         </span>
                       </Label>
                       <Input

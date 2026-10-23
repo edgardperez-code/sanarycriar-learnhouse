@@ -14,6 +14,8 @@ import { signIn } from '@components/Contexts/AuthContext'
 import { getLEARNHOUSE_TOP_DOMAIN_VAL, isOnCustomDomain } from '@services/config/config'
 import { getErrorMessage } from '@services/utils/ts/errorMessage'
 import { useTranslation } from 'react-i18next'
+// Sanar y Criar: keep ?redirect (back to an offer or course) on the login links.
+import { useAuthRedirectHref } from '@components/Payments/useAuthRedirect'
 import { PasswordStrengthIndicator, validatePasswordStrength } from '@components/Auth/PasswordStrengthIndicator'
 import TurnstileWidget, { useTurnstileRequired, type TurnstileWidgetHandle } from '@components/Auth/TurnstileWidget'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
@@ -22,6 +24,7 @@ import CustomSignupFields, {
   validateCustomFields,
 } from '@components/Auth/CustomSignupFields'
 import { readSignupFields, type SignupFieldItem } from '@services/settings/org'
+import { safeInternalPath } from '@services/security/url'
 
 const validate = (values: any, t: any, customFields: SignupFieldItem[]) => {
   const errors: any = {}
@@ -65,6 +68,7 @@ interface InviteOnlySignUpProps {
 
 function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
   const { t } = useTranslation()
+  const loginHref = useAuthRedirectHref('/login')
   const { track } = useLHAnalytics('public')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   // Prefer the client OrgContext, but fall back to the server-provided org so the
@@ -135,7 +139,9 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
   const buildCallbackUrl = () => {
     const params = new URLSearchParams(window.location.search)
     const raw = params.get('next') ?? params.get('redirect')
-    const dest = raw && /^\/(?!\/)/.test(raw) ? raw : '/home'
+    // Sanar y Criar: the shared guard also rejects dot-segment payloads such
+    // as "/..//evil.com", which the regex let through.
+    const dest = safeInternalPath(raw || null, '/home')
     return `${window.location.origin}/redirect_from_auth?next=${encodeURIComponent(dest)}`
   }
 
@@ -188,7 +194,7 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
               {t('auth.verification_email_sent_message')}
             </p>
             <hr className="border-green-100" />
-            <Link className="flex items-center gap-2 text-sm font-medium hover:underline" href="/login">
+            <Link className="flex items-center gap-2 text-sm font-medium hover:underline" href={loginHref}>
               <User size={14} />
               <span>{t('auth.login')}</span>
             </Link>
@@ -202,7 +208,7 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
               <div className="font-semibold text-sm">{t('auth.account_created_success')}</div>
             </div>
             <hr className="border-green-100" />
-            <Link className="flex items-center gap-2 text-sm font-medium hover:underline" href="/login">
+            <Link className="flex items-center gap-2 text-sm font-medium hover:underline" href={loginHref}>
               <User size={14} />
               <span>{t('auth.login')}</span>
             </Link>
@@ -384,7 +390,7 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
         {/* Login Link */}
         <p className="text-center text-sm text-black/35 mt-6">
           {t('auth.already_have_account')}{' '}
-          <Link href="/login" className="text-black font-semibold hover:underline">
+          <Link href={loginHref} className="text-black font-semibold hover:underline">
             {t('auth.login')}
           </Link>
         </p>

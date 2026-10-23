@@ -114,10 +114,21 @@ def get_cors_origin_regex() -> str:
 
 def configure_cors(app: FastAPI) -> None:
     """Register CORS middleware on ``app`` with tenancy-aware origin policy."""
+    origin_regex = get_cors_origin_regex()
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=get_cors_origin_regex(),
+        allow_origin_regex=origin_regex,
         allow_methods=["*"],
         allow_credentials=True,
         allow_headers=["*"],
     )
+    # Sanar y Criar: LEARNHOUSE_EXTRA_CORS_ORIGINS get read-only CORS without
+    # credentials (marketing site reading the public catalog). Added after the
+    # main middleware so it wraps it.
+    from src.core.middleware.extra_cors import ExtraOriginsCORSMiddleware, parse_extra_origins
+
+    extra_origins = parse_extra_origins()
+    if extra_origins:
+        app.add_middleware(
+            ExtraOriginsCORSMiddleware, origins=extra_origins, main_origin_regex=origin_regex
+        )

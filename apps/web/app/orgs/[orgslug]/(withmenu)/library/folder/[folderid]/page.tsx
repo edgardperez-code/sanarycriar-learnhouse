@@ -43,7 +43,7 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
   // Private / inaccessible folder: never index, never leak the folder name.
   if (!folder) {
     return {
-      title: buildPageTitle('Library', org.name, seoConfig),
+      title: buildPageTitle('Biblioteca', org.name, seoConfig), // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
       robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
     }
   }
@@ -53,7 +53,7 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
     : null
   const imageUrl = ogImageUrl || getOrgThumbnailMediaDirectory(org?.org_uuid, org?.thumbnail_image)
   const canonical = await getServerCanonicalUrl(params.orgslug, `/library/folder/${params.folderid}`)
-  const title = buildPageTitle(folder.name || 'Library', org.name, seoConfig)
+  const title = buildPageTitle(folder.name || 'Biblioteca', org.name, seoConfig)
   const description = folder.description || org.description || seoConfig.default_meta_description || ''
 
   return {

@@ -1,4 +1,5 @@
 import { ERROR_CATALOG, UNKNOWN_CATEGORY } from './catalog'
+import { categoryText, documentLanguage } from './messages'
 import type { ClassifiedError } from './types'
 
 // Turn whatever we were handed (an Error, a thrown backend payload, a fetch
@@ -63,7 +64,11 @@ export function classifyError(error: unknown): ClassifiedError {
   return { category: UNKNOWN_CATEGORY, detail: rawMessage || undefined, status, digest }
 }
 
-/** Convenience: just the human title for a quick inline message. */
-export function meaningfulMessage(error: unknown): string {
-  return classifyError(error).category.title
+/**
+ * Convenience: just the human title for a quick inline message.
+ *
+ * Sanar y Criar: localized (sc_errors), in `lng` or else the page language.
+ */
+export function meaningfulMessage(error: unknown, lng?: string): string {
+  return categoryText(classifyError(error).category.kind, 'title', lng ?? documentLanguage())
 }

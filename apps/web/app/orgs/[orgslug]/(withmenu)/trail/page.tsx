@@ -17,9 +17,10 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
     tags: ['organizations'],
   })
   return {
-    title: 'Trail | ' + org.name,
+    // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
+    title: 'Mi progreso | ' + org.name,
     description:
-      'Check your progress using trail and easily navigate through your courses.',
+      'Revisa tu progreso y retoma tus cursos donde los dejaste.',
   }
 }
 

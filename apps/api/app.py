@@ -73,9 +73,20 @@ class _SelectiveGZipResponder(GZipResponder):
     async def send_with_compression(self, message: Message) -> None:
         if message["type"] == "http.response.start":
             await super().send_with_compression(message)
-            if not self.content_type_is_excluded:
+            already_sent = (
+                self.content_encoding_set
+                or self.partial_response
+                or self.content_type_is_excluded
+            )
+            if not already_sent:
                 content_type = Headers(raw=message["headers"]).get("content-type", "")
-                self.content_type_is_excluded = not _is_compressible(content_type)
+                if not _is_compressible(content_type):
+                    # Sanar y Criar: Starlette >= 1.x holds the start message until
+                    # the first body chunk unless the response was excluded up front,
+                    # so flipping to pass-through here must also send it, otherwise
+                    # body chunks go out before the start message (500).
+                    self.content_type_is_excluded = True
+                    await self.send(self.initial_message)
             return
         await super().send_with_compression(message)
 

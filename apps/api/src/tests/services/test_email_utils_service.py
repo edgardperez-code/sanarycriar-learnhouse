@@ -757,7 +757,7 @@ class TestFormatSender:
         from src.services.email.sender import format_sender
 
         assert format_sender(display_name, "system@test.com") == (
-            "LearnHouse <system@test.com>"
+            "Sanar y Criar <system@test.com>"  # Sanar y Criar: platform name
         )
         assert format_sender(display_name, "system@test.com", "Acme Platform") == (
             "Acme Platform <system@test.com>"
@@ -901,5 +901,5 @@ class TestSendEmailSenderName:
 
         assert (
             mock_resend_send.call_args.args[0]["from"]
-            == "LearnHouse <system@test.com>"
+            == "Sanar y Criar <system@test.com>"  # Sanar y Criar: platform name
         )

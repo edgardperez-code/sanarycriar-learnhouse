@@ -67,7 +67,7 @@ def send_magic_login_email(
     email: str,
     base_url: str,
     token: str,
-    lang: str = "en",
+    lang: str = "es",  # Sanar y Criar: DEFAULT_LANGUAGE (was "en")
     org_name: str | None = None,
     sender_name: str | None = None,
     logo_url: str | None = None,
@@ -81,7 +81,7 @@ def send_magic_login_email(
     subject and copy, its logo (or name) in the header, its color on the
     button, its From display name. Without one it is a platform email.
     """
-    from src.services.email.translations import t
+    from src.services.email.translations import PLATFORM_NAME, t
     from src.services.users.emails import (
         LOGO_SVG,
         STYLES,
@@ -98,7 +98,8 @@ def send_magic_login_email(
     login_url = html.escape(f"{base_url.rstrip('/')}/auth/magic?token={safe_token}")
     safe_name = html.escape(email_user_name(user.username) if user.username else user.email)
     white_label = bool(org_name)
-    brand = html.escape(org_name) if org_name else "LearnHouse"
+    # Sanar y Criar: org-less mail names our platform, not LearnHouse.
+    brand = html.escape(org_name) if org_name else PLATFORM_NAME
 
     heading = t(lang, "magic_login.heading", brand=brand)
     body_text = t(lang, "magic_login.body", username=safe_name)
@@ -118,7 +119,7 @@ def send_magic_login_email(
     return send_email(
         to=email,
         # Plain-text subject: the org name must not arrive HTML-escaped.
-        subject=t(lang, "magic_login.subject", brand=org_name or "LearnHouse"),
+        subject=t(lang, "magic_login.subject", brand=org_name or PLATFORM_NAME),
         body=_email_layout(
             title=heading,
             body_content=body_content,

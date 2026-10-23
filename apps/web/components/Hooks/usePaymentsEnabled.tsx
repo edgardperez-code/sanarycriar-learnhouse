@@ -18,11 +18,14 @@ export function usePaymentsEnabled() {
   });
 
   // True if any payment provider is active, not tied to a specific provider
-  const isAnyProviderActive = paymentConfigs?.some((config: any) => config.active);
+  // Sanar y Criar: tolerate a non-array body.
+  const isAnyProviderActive = Array.isArray(paymentConfigs) && paymentConfigs.some((config: any) => config?.active);
 
   return {
     isEnabled: !!isAnyProviderActive,
-    isLoading,
+    // Sanar y Criar: the query waits for the session; don't flash the
+    // 'not configured' state meanwhile.
+    isLoading: isLoading || session?.status === 'loading',
     error
   };
 }

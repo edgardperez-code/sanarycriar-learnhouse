@@ -17,9 +17,11 @@ The pieces, and where each one comes from:
                       absolute URL.
 * ``brand_color``:    ``customization.general.color``; tints the CTA button.
 * ``powered_by``:     ``customization.general.watermark``; renders the small
-                      "Powered by LearnHouse" footer line. Always on for the
-                      open-source edition and for SaaS free-plan orgs; a paid
-                      SaaS plan or an Enterprise licence may turn it off.
+                      footer line (Sanar y Criar: our own brand line, see
+                      ``FOOTER_LINE`` in translations.py, instead of "Powered
+                      by LearnHouse"). Always on for the open-source edition
+                      and for SaaS free-plan orgs; a paid SaaS plan or an
+                      Enterprise licence may turn it off.
 """
 
 from __future__ import annotations
@@ -30,10 +32,13 @@ from typing import Any, Optional
 
 from fastapi import Request
 
+from src.services.email.translations import DEFAULT_LANGUAGE
+
 _HEX_COLOR_RE = re.compile(r"^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 # Site of the platform, for the "Powered by" footer link.
-POWERED_BY_URL = "https://www.learnhouse.io"
+# Sanar y Criar: the footer links to our site, not learnhouse.io.
+POWERED_BY_URL = "https://www.sanarycriarve.com"
 
 
 def normalize_brand_color(raw: Any) -> Optional[str]:
@@ -98,10 +103,11 @@ def resolve_org_brand_color(org_config) -> Optional[str]:
 
 
 def resolve_org_powered_by(org_config) -> bool:
-    """Whether this org's mail carries the "Powered by LearnHouse" line.
+    """Whether this org's mail carries the footer brand line.
 
-    Always shown on the open-source edition: attribution is part of the OSS
-    deal, whatever the stored ``watermark`` flag says. On SaaS it is always
+    Always shown on the open-source edition, whatever the stored ``watermark``
+    flag says (Sanar y Criar: the line is our own brand, see FOOTER_LINE in
+    translations.py). On SaaS it is always
     shown for a free-plan org (the write path refuses to persist ``false`` for
     them, but a plan downgrade leaves the old value in place). A paid SaaS
     plan or an Enterprise licence honours the org's ``watermark`` toggle.
@@ -127,7 +133,7 @@ class OrgEmailBranding:
     """Everything an email template needs to render as the org's own."""
 
     org_name: str
-    lang: str = "en"
+    lang: str = DEFAULT_LANGUAGE  # Sanar y Criar: "es" (was "en")
     sender_name: str = ""
     logo_url: Optional[str] = None
     brand_color: Optional[str] = None

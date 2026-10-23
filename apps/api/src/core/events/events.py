@@ -102,6 +102,11 @@ def startup_app(app: FastAPI) -> Callable:
         from src.services.backfill.scheduler import start_scheduler as start_backfill
         start_backfill()
 
+        # Sanar y Criar: every 5 minutes, reconcile open payment orders with
+        # the provider (lost webhooks, closed tabs). Never raises.
+        from src.services.payments.reconcile import start_scheduler as start_payments_reconcile
+        start_payments_reconcile()
+
         # Start Enterprise Edition Startup tasks if available
         run_ee_startup(app)
 
@@ -141,6 +146,9 @@ def shutdown_app(app: FastAPI) -> Callable:
         # Stop the demo refresh tick.
         from src.services.demo.scheduler import stop_scheduler as stop_demo_scheduler
         await stop_demo_scheduler()
+        # Sanar y Criar: stop the payments reconciliation tick.
+        from src.services.payments.reconcile import stop_scheduler as stop_payments_reconcile
+        await stop_payments_reconcile()
         await close_database(app)
 
     return close_app

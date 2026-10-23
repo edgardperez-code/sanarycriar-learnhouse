@@ -2,10 +2,12 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download, ChevronDown } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { getAPIUrl } from '@services/config/config'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
-import { fullName, fmtDateTime, fmtDate, fmtDuration } from './format'
+import { fullName, fmtDuration } from './format'
+import { formatDate, formatDateTime } from '@/lib/format'
 
 type Fmt = 'csv' | 'json' | 'pdf'
 
@@ -31,14 +33,43 @@ function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-/** Build a legal-style, multi-page text PDF from one or more dossiers. */
-async function buildPdf(dossiers: any[]) {
+type Translate = (_key: string, _options?: Record<string, unknown>) => string
+
+// Sanar y Criar: dates in the UI language (./format's helpers are en-US only).
+function safeFormat(value: string | null | undefined, fmt: (_d: Date) => string, fallback: string): string {
+  if (!value) return fallback
+  const d = new Date(value)
+  return isNaN(d.getTime()) ? fallback : fmt(d)
+}
+
+/**
+ * Build a legal-style, multi-page text PDF from one or more dossiers.
+ *
+ * Sanar y Criar: every fixed string is translated (sc_ui.audit_export.*, plus
+ * the dossier's own status / task-type labels).
+ */
+async function buildPdf(dossiers: any[], tr: Translate, lng: string) {
   const { default: jsPDF } = await import('jspdf')
   const pdf = new jsPDF('portrait', 'mm', 'a4')
   const margin = 14
   const pageWidth = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
   let y = margin
+
+  const ax = (key: string, options?: Record<string, unknown>) => tr(`sc_ui.audit_export.${key}`, options)
+  const na = tr('sc_ui.common.not_available')
+  const date = (v: string | null | undefined) => safeFormat(v, (d) => formatDate(d, lng), na)
+  const dateTime = (v: string | null | undefined) => safeFormat(v, (d) => formatDateTime(d, lng), na)
+  const yesNo = (value: boolean) => tr(value ? 'sc_ui.common.yes' : 'sc_ui.common.no')
+  // Same lookup as the dossier's StatusBadge ("STATUS_IN_PROGRESS" -> status.in_progress).
+  const statusLabel = (status?: string) => {
+    const key = status?.replace('STATUS_', '').toLowerCase()
+    return key ? tr(`dashboard.users.analytics.status.${key}`, { defaultValue: key.replace('_', ' ') }) : na
+  }
+  const taskTypeLabel = (tk: any) =>
+    tk.type
+      ? tr(`dashboard.users.analytics.task_types.${tk.type}`, { defaultValue: tk.type_label || tk.type })
+      : tk.type_label || ''
 
   const breakIfNeeded = (height: number) => {
     if (y + height > pageHeight - margin) {
@@ -73,98 +104,101 @@ async function buildPdf(dossiers: any[]) {
     const s = d.summary || {}
     const sec = d.security || {}
 
-    line('Student Audit Report', 18, true)
+    line(ax('report_title'), 18, true)
     line(fullName(u) + `  (@${u.username})`, 12)
     line(u.email || '', 10)
-    line('Generated ' + fmtDateTime(new Date().toISOString()), 9)
-    line('Contains teacher answer keys (internal use only).', 9)
+    line(ax('generated', { date: dateTime(new Date().toISOString()) }), 9)
+    line(ax('internal_note'), 9)
     gap(2)
 
-    heading('Summary')
-    line(`Courses enrolled: ${s.courses_enrolled ?? 0} (${s.courses_completed ?? 0} completed)`, 10)
-    line(`Average progress: ${s.avg_progress_pct ?? 0}%`, 10)
-    line(`Assignments submitted: ${s.assignments_submitted ?? 0}` + (s.avg_grade_pct != null ? `, average grade ${s.avg_grade_pct}%` : ''), 10)
-    line(`Certificates earned: ${s.certificates_earned ?? 0}`, 10)
-    line(`Connections recorded: ${s.connections ?? 0}, last ${fmtDate(s.last_connection)}`, 10)
+    heading(ax('summary'))
+    line(ax('courses_enrolled', { enrolled: s.courses_enrolled ?? 0, completed: s.courses_completed ?? 0 }), 10)
+    line(ax('avg_progress', { pct: s.avg_progress_pct ?? 0 }), 10)
+    line(ax('assignments_submitted', { count: s.assignments_submitted ?? 0 }) + (s.avg_grade_pct != null ? ax('avg_grade', { pct: s.avg_grade_pct }) : ''), 10)
+    line(ax('certificates_earned', { count: s.certificates_earned ?? 0 }), 10)
+    line(ax('connections_recorded', { count: s.connections ?? 0, date: date(s.last_connection) }), 10)
 
-    heading('Account & security')
-    line(`Email verified: ${sec.email_verified ? 'yes' : 'no'}   Signup method: ${sec.signup_method || 'n/a'}`, 10)
-    line(`Last login: ${fmtDateTime(sec.last_login_at)}   IP: ${sec.last_login_ip || 'n/a'}`, 10)
+    heading(ax('account_security'))
+    line(ax('email_verified', { value: yesNo(!!sec.email_verified), method: sec.signup_method || na }), 10)
+    line(ax('last_login', { date: dateTime(sec.last_login_at), ip: sec.last_login_ip || na }), 10)
 
-    heading('Connections')
+    heading(ax('connections'))
     ;(d.connections || []).slice(0, 100).forEach((c: any) => {
-      line(`${fmtDateTime(c.at)}  ${c.event_label || c.event_type}  ${c.ip || ''}  ${c.device || ''}  ${c.method || ''}`, 9)
+      line(`${dateTime(c.at)}  ${c.event_label || c.event_type}  ${c.ip || ''}  ${c.device || ''}  ${c.method || ''}`, 9)
     })
-    if ((d.connections || []).length === 0) line('None recorded.', 9)
+    if ((d.connections || []).length === 0) line(ax('none_recorded'), 9)
 
-    heading('Course progress')
+    heading(ax('course_progress'))
     ;(d.courses || []).forEach((c: any) => {
-      line(`${c.course_name || 'Untitled course'}: ${c.progress_pct}% (${c.activities_completed}/${c.activities_total}), ${c.status}`, 9)
+      line(`${c.course_name || ax('untitled_course')}: ${c.progress_pct}% (${c.activities_completed}/${c.activities_total}), ${statusLabel(c.status)}`, 9)
     })
-    if ((d.courses || []).length === 0) line('No enrollments.', 9)
+    if ((d.courses || []).length === 0) line(ax('no_enrollments'), 9)
 
-    heading('Assignments')
+    heading(ax('assignments'))
     ;(d.assignments || []).forEach((a: any) => {
-      const grade = a.grade_display || (a.grade != null ? String(a.grade) : 'n/a')
-      line(`${a.title || a.assignment_uuid}: ${grade}${a.points_summary ? ` (${a.points_summary})` : ''}, ${a.status}, attempt ${a.attempt_number}`, 9)
-      if (a.course_name) line(`Course: ${a.course_name}`, 8, false, 4)
+      const grade = a.grade_display || (a.grade != null ? String(a.grade) : na)
+      line(`${a.title || a.assignment_uuid}: ${grade}${a.points_summary ? ` (${a.points_summary})` : ''}, ${statusLabel(a.status)}, ${ax('attempt', { number: a.attempt_number })}`, 9)
+      if (a.course_name) line(ax('course', { name: a.course_name }), 8, false, 4)
       ;(a.tasks || []).forEach((tk: any) => {
-        const points = tk.submitted ? (tk.points_summary || `${tk.grade}`) : 'not submitted'
-        line(`Task ${tk.index} (${tk.type_label}${tk.title ? `: ${tk.title}` : ''}): ${points}${tk.manually_graded ? ', manually graded' : ''}`, 9, true, 4)
+        const points = tk.submitted ? (tk.points_summary || `${tk.grade}`) : ax('not_submitted')
+        const typeLabel = taskTypeLabel(tk)
+        line(`${ax('task', { index: tk.index })} (${typeLabel}${tk.title ? `: ${tk.title}` : ''}): ${points}${tk.manually_graded ? ax('manually_graded') : ''}`, 9, true, 4)
         const answer = tk.answer
         if (!answer) return
         if (answer.kind === 'code' && answer.code) {
           // Source code belongs in the JSON export, not in a printable report.
-          line(`${answer.code.language || 'Code'}: ${answer.code.passed_tests}/${answer.code.total_tests} tests passed`, 8, false, 8)
+          line(ax('tests_passed', { language: answer.code.language || ax('code'), passed: answer.code.passed_tests, total: answer.code.total_tests }), 8, false, 8)
           return
         }
         ;(answer.items || []).slice(0, MAX_PDF_ANSWERS_PER_TASK).forEach((item: any) => {
-          line(`Q: ${item.prompt}`, 8, false, 8)
-          const verdict = item.correct === true ? '  [Correct]' : item.correct === false ? '  [Wrong]' : ''
-          line(`A: ${item.answer_text || '(no answer)'}${verdict}`, 8, false, 8)
+          line(ax('question', { text: item.prompt }), 8, false, 8)
+          const verdict = item.correct === true ? `  ${ax('correct')}` : item.correct === false ? `  ${ax('wrong')}` : ''
+          line(`${ax('answer', { text: item.answer_text || ax('no_answer') })}${verdict}`, 8, false, 8)
           if (item.expected_text && item.expected_text !== item.answer_text) {
-            line(`Expected: ${item.expected_text}`, 8, false, 8)
+            line(ax('expected', { text: item.expected_text }), 8, false, 8)
           }
         })
         const hidden = (answer.items || []).length - MAX_PDF_ANSWERS_PER_TASK
-        if (hidden > 0) line(`(${hidden} more answers omitted; see the CSV or JSON export)`, 8, false, 8)
+        if (hidden > 0) line(ax('omitted', { count: hidden }), 8, false, 8)
       })
     })
-    if ((d.assignments || []).length === 0) line('No submissions.', 9)
+    if ((d.assignments || []).length === 0) line(ax('no_submissions'), 9)
 
-    heading('Code exercises')
+    heading(ax('code_exercises'))
     ;(d.code_submissions || []).slice(0, 100).forEach((cs: any) => {
-      line(`${cs.activity_name || 'Untitled activity'}${cs.course_name ? ` (${cs.course_name})` : ''}: ${cs.language || 'n/a'}, ${cs.result_label || (cs.passed ? 'Passed' : 'Failed')}, ${cs.tests_summary || `${cs.passed_tests}/${cs.total_tests}`} tests, ${fmtDateTime(cs.created_at)}`, 9)
+      const result = cs.result_label || (cs.passed ? ax('passed') : ax('failed_result'))
+      const tests = ax('tests', { summary: cs.tests_summary || `${cs.passed_tests}/${cs.total_tests}` })
+      line(`${cs.activity_name || ax('untitled_activity')}${cs.course_name ? ` (${cs.course_name})` : ''}: ${cs.language || na}, ${result}, ${tests}, ${dateTime(cs.created_at)}`, 9)
     })
-    if ((d.code_submissions || []).length === 0) line('None.', 9)
+    if ((d.code_submissions || []).length === 0) line(ax('none'), 9)
 
-    heading('Community')
+    heading(ax('community'))
     const discussions = d.community?.discussions || []
     const comments = d.community?.comments || []
     discussions.slice(0, 100).forEach((disc: any) => {
-      line(`Discussion: ${disc.title} (${fmtDate(disc.created_at)})`, 9)
+      line(ax('discussion', { title: disc.title, date: date(disc.created_at) }), 9)
     })
     comments.slice(0, 100).forEach((c: any) => {
-      line(`Comment in "${c.discussion_title || 'untitled'}": ${c.excerpt || c.content || ''}`, 9)
+      line(ax('comment_in', { title: c.discussion_title || ax('untitled'), text: c.excerpt || c.content || '' }), 9)
     })
-    if (discussions.length === 0 && comments.length === 0) line('No community activity.', 9)
+    if (discussions.length === 0 && comments.length === 0) line(ax('no_community'), 9)
 
-    heading('Certificates')
+    heading(ax('certificates'))
     ;(d.certificates || []).forEach((c: any) => {
-      line(`${c.course_name} (${fmtDate(c.created_at)})`, 9)
-      line(`Credential ID ${c.credential_id || c.user_certification_uuid}`, 8, false, 4)
+      line(`${c.course_name} (${date(c.created_at)})`, 9)
+      line(ax('credential', { id: c.credential_id || c.user_certification_uuid }), 8, false, 4)
     })
-    if ((d.certificates || []).length === 0) line('None.', 9)
+    if ((d.certificates || []).length === 0) line(ax('none'), 9)
 
     const totalSeconds = Number(d.behavior?.user_time_total?.[0]?.total_seconds || 0)
-    heading('Behavior')
-    line(`Total time on activities: ${fmtDuration(totalSeconds)}`, 9)
+    heading(ax('behavior'))
+    line(ax('total_time', { time: fmtDuration(totalSeconds) }), 9)
     ;(d.behavior?.user_time_by_course || []).slice(0, 50).forEach((b: any) => {
-      line(`${b.course_name || 'Untitled course'}: ${fmtDuration(b.total_seconds)}`, 9, false, 4)
+      line(`${b.course_name || ax('untitled_course')}: ${fmtDuration(b.total_seconds)}`, 9, false, 4)
     })
     const searches = (d.behavior?.user_searches || []).slice(0, 20)
     if (searches.length > 0) {
-      line(`Searches: ${searches.map((s: any) => `${s.query} (${s.count})`).join(', ')}`, 9)
+      line(ax('searches', { list: searches.map((q: any) => `${q.query} (${q.count})`).join(', ') }), 9)
     }
   })
 
@@ -175,7 +209,7 @@ async function buildPdf(dossiers: any[]) {
 }
 
 export default function UserAuditExport({ userIds, days = 365, defaultDossier, label }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const session = useLHSession() as any
   const org = useOrg() as any
   const token = session?.data?.tokens?.access_token
@@ -239,10 +273,12 @@ export default function UserAuditExport({ userIds, days = 365, defaultDossier, l
           ids.length === 1 ? `audit-user-${ids[0]}.json` : `audit-${ids.length}-users.json`
         )
       } else {
-        await buildPdf(dossiers)
+        await buildPdf(dossiers, (key, options) => String(t(key, options)), i18n?.language || 'es')
       }
     } catch (err) {
       console.error('Audit export failed:', err)
+      // Sanar y Criar: tell the admin instead of failing silently.
+      toast.error(t('sc_ui.audit_export.failed'))
     } finally {
       setBusy(false)
     }

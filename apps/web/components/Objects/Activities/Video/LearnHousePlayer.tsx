@@ -3,7 +3,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import '@videojs/react/video/skin.css'
 import './player.css'
-import { I18nProvider } from '@videojs/react/i18n'
+// Sanar y Criar: bundle the Spanish label pack instead of relying on the
+// provider's lazy pack load, which never resolved under Next (the controls
+// stayed in English on `lang="es"` pages). Registering a locale also turns
+// off that lazy load for it, so this is the only `es` source.
+import '@videojs/react/i18n/locales/es/register'
+import { I18nProvider, registerI18n } from '@videojs/react/i18n'
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'
 import { usePlayer, Video, VideoPlayer, VideoSkin } from '@videojs/react/video'
 import { PauseIcon, PlayIcon } from '@videojs/react/icons'
@@ -89,6 +94,10 @@ const HLS_ENGINE = {
     },
   },
 }
+
+// Sanar y Criar: the pack names the time slider "Buscar" (search), which
+// reads wrong to a screen-reader user; say what the slider is instead.
+registerI18n('es', { slider: { seek: 'Posición del video' } })
 
 // Fill the aspect-video parent with 20px corners (the skin's default is 28px).
 // `contain` letterboxes non-16:9 uploads instead of cropping them (the skin's

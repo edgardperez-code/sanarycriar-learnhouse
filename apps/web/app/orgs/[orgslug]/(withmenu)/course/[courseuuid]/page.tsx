@@ -36,8 +36,9 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
 
   if (!courseResult) {
     return {
-      title: `Course | ${org?.name || 'LearnHouse'}`,
-      description: 'View this course on LearnHouse',
+      // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
+      title: `Curso | ${org?.name || 'Sanar y Criar'}`,
+      description: 'Mira este curso en Sanar y Criar',
     }
   }
   const course_meta = courseResult

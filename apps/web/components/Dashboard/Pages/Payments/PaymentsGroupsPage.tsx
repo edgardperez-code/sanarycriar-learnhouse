@@ -30,6 +30,8 @@ import toast from 'react-hot-toast';
 import { getOrgCourses } from '@services/courses/courses';
 import { usePaymentsEnabled } from '@hooks/usePaymentsEnabled';
 import UnconfiguredPaymentsDisclaimer from '@components/Pages/Payments/UnconfiguredPaymentsDisclaimer';
+import { useScT } from '@components/Payments/useScT';
+import { describePaymentError } from '@components/Payments/commerce';
 
 // ---------------------------------------------------------------------------
 // Group Resources Panel
@@ -38,6 +40,7 @@ import UnconfiguredPaymentsDisclaimer from '@components/Pages/Payments/Unconfigu
 function GroupResourcePanel({ group, orgId, token }: { group: any; orgId: number; token: string }) {
   const org = useOrg() as any;
   const queryClient = useQueryClient();
+  const { sc } = useScT();
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const resourceQueryKey = ['payments', orgId, 'groups', group.id, 'resources'];
@@ -72,23 +75,36 @@ function GroupResourcePanel({ group, orgId, token }: { group: any; orgId: number
     return !linkedSet.has(uuid);
   });
 
+  // Sanar y Criar: getResponseMetadata never throws; report the real outcome.
   const handleAdd = async (resourceUuid: string) => {
-    await addGroupResource(orgId, group.id, resourceUuid, token);
+    const res = await addGroupResource(orgId, group.id, resourceUuid, token);
+    if (!res.success) {
+      toast.error(describePaymentError(res.data, sc, 'groups.course_add_error'));
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: resourceQueryKey });
+    queryClient.invalidateQueries({ queryKey: ['offers', 'by-resource'] });
+    queryClient.invalidateQueries({ queryKey: ['payments', orgId, 'access'] });
     setPickerOpen(false);
-    toast.success('Course added to group');
+    toast.success(sc('groups.course_added'));
   };
 
   const handleRemove = async (resourceUuid: string) => {
-    await removeGroupResource(orgId, group.id, resourceUuid, token);
+    const res = await removeGroupResource(orgId, group.id, resourceUuid, token);
+    if (!res.success) {
+      toast.error(describePaymentError(res.data, sc, 'groups.course_remove_error'));
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: resourceQueryKey });
-    toast.success('Course removed');
+    queryClient.invalidateQueries({ queryKey: ['offers', 'by-resource'] });
+    queryClient.invalidateQueries({ queryKey: ['payments', orgId, 'access'] });
+    toast.success(sc('groups.course_removed'));
   };
 
   return (
     <div className="space-y-2">
       {rawList.length === 0 ? (
-        <p className="text-xs text-gray-400 italic py-1">No courses yet. Add one below.</p>
+        <p className="text-xs text-gray-400 italic py-1">{sc('groups.no_courses')}</p>
       ) : (
         <ul className="space-y-1">
           {rawList.map((uuid: string) => (
@@ -102,7 +118,7 @@ function GroupResourcePanel({ group, orgId, token }: { group: any; orgId: number
               <button
                 onClick={() => handleRemove(uuid)}
                 className="text-gray-300 hover:text-red-500 transition-colors ms-2 shrink-0"
-                title="Remove"
+                title={sc('common.remove')}
               >
                 <X size={13} />
               </button>
@@ -117,20 +133,20 @@ function GroupResourcePanel({ group, orgId, token }: { group: any; orgId: number
           onClick={() => setPickerOpen(true)}
           className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors py-1"
         >
-          <Plus size={12} /> Add course
+          <Plus size={12} /> {sc('groups.add_course')}
         </button>
       ) : (
         <div className="border border-gray-200 rounded-lg bg-white shadow-sm">
           <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-            <span className="text-xs font-semibold text-gray-600">Select a course to add</span>
+            <span className="text-xs font-semibold text-gray-600">{sc('groups.select_course')}</span>
             <button onClick={() => setPickerOpen(false)} className="text-gray-400 hover:text-gray-600">
               <X size={13} />
             </button>
           </div>
           {!coursesData ? (
-            <p className="text-xs text-gray-400 px-3 py-2">Loading…</p>
+            <p className="text-xs text-gray-400 px-3 py-2">{sc('common.loading')}</p>
           ) : available.length === 0 ? (
-            <p className="text-xs text-gray-400 px-3 py-2 italic">All courses are already in this group.</p>
+            <p className="text-xs text-gray-400 px-3 py-2 italic">{sc('groups.all_courses_in_group')}</p>
           ) : (
             <ul className="max-h-40 overflow-y-auto divide-y divide-gray-50">
               {available.map((c: any) => {
@@ -161,6 +177,7 @@ function GroupResourcePanel({ group, orgId, token }: { group: any; orgId: number
 
 function GroupSyncPanel({ group, orgId, token }: { group: any; orgId: number; token: string }) {
   const queryClient = useQueryClient();
+  const { sc } = useScT();
 
   const syncQueryKey = ['payments', orgId, 'groups', group.id, 'sync'];
 
@@ -187,21 +204,29 @@ function GroupSyncPanel({ group, orgId, token }: { group: any; orgId: number; to
   const available = (usergroups ?? []).filter((ug: any) => !syncedIds.has(ug.id));
 
   const handleAdd = async (ugId: number) => {
-    await addGroupSync(orgId, group.id, ugId, token);
+    const res = await addGroupSync(orgId, group.id, ugId, token);
+    if (!res.success) {
+      toast.error(describePaymentError(res.data, sc, 'groups.sync_add_error'));
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: syncQueryKey });
-    toast.success('UserGroup synced. Enrolled users will be auto-added');
+    toast.success(sc('groups.sync_added'));
   };
 
   const handleRemove = async (ugId: number) => {
-    await removeGroupSync(orgId, group.id, ugId, token);
+    const res = await removeGroupSync(orgId, group.id, ugId, token);
+    if (!res.success) {
+      toast.error(describePaymentError(res.data, sc, 'groups.sync_remove_error'));
+      return;
+    }
     queryClient.invalidateQueries({ queryKey: syncQueryKey });
-    toast.success('Sync removed');
+    toast.success(sc('groups.sync_removed'));
   };
 
   return (
     <div className="space-y-2">
       <p className="text-xs text-gray-400 leading-relaxed">
-        When a user enrolls, they're automatically added to these groups. When cancelled, they're removed.
+        {sc('groups.sync_help')}
       </p>
 
       {syncList.length > 0 && (
@@ -210,12 +235,12 @@ function GroupSyncPanel({ group, orgId, token }: { group: any; orgId: number; to
             <li key={s.usergroup_id} className="flex items-center justify-between bg-orange-50 rounded-lg px-3 py-2">
               <div className="flex items-center gap-2">
                 <Users size={13} className="text-orange-500 shrink-0" />
-                <span className="text-sm font-medium text-gray-800">{s.usergroup_name ?? `Group #${s.usergroup_id}`}</span>
+                <span className="text-sm font-medium text-gray-800">{s.usergroup_name ?? sc('groups.usergroup_fallback', { id: s.usergroup_id })}</span>
               </div>
               <button
                 onClick={() => handleRemove(s.usergroup_id)}
                 className="text-gray-300 hover:text-red-500 transition-colors ms-2 shrink-0"
-                title="Remove sync"
+                title={sc('groups.remove_sync')}
               >
                 <X size={13} />
               </button>
@@ -231,7 +256,7 @@ function GroupSyncPanel({ group, orgId, token }: { group: any; orgId: number; to
             value=""
             onChange={(e) => { if (e.target.value) handleAdd(Number(e.target.value)); }}
           >
-            <option value="">+ Link a UserGroup…</option>
+            <option value="">{sc('groups.link_usergroup')}</option>
             {available.map((ug: any) => (
               <option key={ug.id} value={ug.id}>{ug.name}</option>
             ))}
@@ -239,7 +264,7 @@ function GroupSyncPanel({ group, orgId, token }: { group: any; orgId: number; to
           <ChevronDown size={12} className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
         </div>
       ) : syncList.length === 0 ? (
-        <p className="text-xs text-gray-400 italic">No UserGroups available to link.</p>
+        <p className="text-xs text-gray-400 italic">{sc('groups.no_usergroups')}</p>
       ) : null}
     </div>
   );
@@ -254,6 +279,7 @@ function GroupCard({ group, orgId, token, onEdit, onDelete }: {
   onEdit: (g: any) => void;
   onDelete: (id: number) => void;
 }) {
+  const { sc } = useScT();
   return (
     <div className="bg-white rounded-xl border border-gray-100 nice-shadow overflow-hidden flex flex-col">
       {/* Card header */}
@@ -273,16 +299,16 @@ function GroupCard({ group, orgId, token, onEdit, onDelete }: {
           <button
             onClick={() => onEdit(group)}
             className="p-1.5 rounded-md text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
-            title="Edit"
+            title={sc('groups.edit')}
           >
             <Pencil size={13} />
           </button>
           <ConfirmationModal
-            confirmationButtonText="Delete Group"
-            confirmationMessage="All resources and syncs will be removed. Active offers linked to this group will lose their group."
-            dialogTitle={`Delete "${group.name}"?`}
+            confirmationButtonText={sc('groups.delete')}
+            confirmationMessage={sc('groups.delete_confirm')}
+            dialogTitle={sc('groups.delete_title', { name: group.name })}
             dialogTrigger={
-              <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Delete">
+              <button className="p-1.5 rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" title={sc('groups.delete')}>
                 <Trash2 size={13} />
               </button>
             }
@@ -297,7 +323,7 @@ function GroupCard({ group, orgId, token, onEdit, onDelete }: {
         <div className="px-4 py-3">
           <div className="flex items-center gap-1.5 mb-2.5">
             <BookOpen size={12} className="text-indigo-400" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Courses</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{sc('groups.section_courses')}</span>
           </div>
           <GroupResourcePanel group={group} orgId={orgId} token={token} />
         </div>
@@ -306,7 +332,7 @@ function GroupCard({ group, orgId, token, onEdit, onDelete }: {
         <div className="px-4 py-3">
           <div className="flex items-center gap-1.5 mb-2.5">
             <RefreshCcw size={12} className="text-orange-400" />
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Access Groups</span>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{sc('groups.section_access')}</span>
           </div>
           <GroupSyncPanel group={group} orgId={orgId} token={token} />
         </div>
@@ -324,13 +350,14 @@ function GroupForm({ initial, onSubmit, onCancel }: {
   onSubmit: (data: { name: string; description: string }) => Promise<void>;
   onCancel: () => void;
 }) {
+  const { sc } = useScT();
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) { toast.error('Name is required'); return; }
+    if (!name.trim()) { toast.error(sc('groups.name_required')); return; }
     setLoading(true);
     try {
       await onSubmit({ name: name.trim(), description: description.trim() });
@@ -342,28 +369,28 @@ function GroupForm({ initial, onSubmit, onCancel }: {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 px-1.5 py-2">
       <div>
-        <Label htmlFor="pg-name">Group Name</Label>
+        <Label htmlFor="pg-name">{sc('groups.field_name')}</Label>
         <Input
           id="pg-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. Full Access Bundle, Premium Subscription"
+          placeholder={sc('groups.field_name_placeholder')}
         />
       </div>
       <div>
-        <Label htmlFor="pg-desc">Description <span className="text-gray-400">(optional)</span></Label>
+        <Label htmlFor="pg-desc">{sc('groups.field_description')} <span className="text-gray-400">({sc('common.optional')})</span></Label>
         <Textarea
           id="pg-desc"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="What resources are included in this group?"
+          placeholder={sc('groups.field_description_placeholder')}
           rows={3}
         />
       </div>
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Saving…' : initial ? 'Save Changes' : 'Create Group'}
+        <Button type="button" variant="outline" className="rounded-full" onClick={onCancel}>{sc('common.cancel')}</Button>
+        <Button type="submit" className="rounded-full bg-[#190933] text-white hover:bg-[#41375B]" disabled={loading}>
+          {loading ? sc('common.saving') : initial ? sc('groups.save_changes') : sc('groups.create')}
         </Button>
       </div>
     </form>
@@ -380,6 +407,7 @@ export default function PaymentsGroupsPage() {
   const token = session?.data?.tokens?.access_token;
   const { isEnabled, isLoading } = usePaymentsEnabled();
   const queryClient = useQueryClient();
+  const { sc } = useScT();
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<any>(null);
@@ -392,9 +420,9 @@ export default function PaymentsGroupsPage() {
   });
 
   if (!isEnabled && !isLoading) return <UnconfiguredPaymentsDisclaimer />;
-  if (error) return <div className="p-8 text-sm text-red-500">Failed to load groups.</div>;
+  if (error) return <div className="p-8 text-sm text-red-500">{sc('groups.load_error')}</div>;
   if (!groups) return (
-    <div className="ms-10 me-10 mx-auto bg-white rounded-xl nice-shadow px-4 py-4 animate-pulse">
+    <div className="ms-4 me-4 sm:ms-10 sm:me-10 mx-auto bg-white rounded-xl nice-shadow px-4 py-4 animate-pulse">
       <div className="flex items-center justify-between bg-gray-50 px-5 py-3 rounded-md mb-5">
         <div className="space-y-1.5">
           <div className="h-5 bg-gray-200 rounded w-36" />
@@ -419,11 +447,11 @@ export default function PaymentsGroupsPage() {
   const handleCreate = async (data: { name: string; description: string }) => {
     const res = await createPaymentsGroup(org.id, data, token);
     if (res.success) {
-      toast.success('Group created');
+      toast.success(sc('groups.created'));
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.groups(org.id) });
       setIsCreateOpen(false);
     } else {
-      toast.error(res.data?.detail || 'Failed to create group');
+      toast.error(describePaymentError(res.data, sc, 'groups.create_error'));
     }
   };
 
@@ -431,31 +459,32 @@ export default function PaymentsGroupsPage() {
     if (!editingGroup) return;
     const res = await updatePaymentsGroup(org.id, editingGroup.id, data, token);
     if (res.success) {
-      toast.success('Group updated');
+      toast.success(sc('groups.updated'));
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.groups(org.id) });
       setEditingGroup(null);
     } else {
-      toast.error(res.data?.detail || 'Failed to update group');
+      toast.error(describePaymentError(res.data, sc, 'groups.update_error'));
     }
   };
 
   const handleDelete = async (groupId: number) => {
     const res = await deletePaymentsGroup(org.id, groupId, token);
     if (res.success || res.status === 200) {
-      toast.success('Group deleted');
+      toast.success(sc('groups.deleted'));
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.groups(org.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.payments.offers(org.id) });
     } else {
-      toast.error(res.data?.detail || 'Failed to delete group');
+      toast.error(describePaymentError(res.data, sc, 'groups.delete_error'));
     }
   };
 
   return (
-    <div className="ms-10 me-10 mx-auto bg-white rounded-xl nice-shadow px-4 py-4">
+    <div className="ms-4 me-4 sm:ms-10 sm:me-10 mx-auto bg-white rounded-xl nice-shadow px-4 py-4">
       <Modal
         isDialogOpen={isCreateOpen}
         onOpenChange={setIsCreateOpen}
-        dialogTitle="Create Payment Group"
-        dialogDescription="Group courses together for subscriptions or bundles"
+        dialogTitle={sc('groups.create_title')}
+        dialogDescription={sc('groups.create_description')}
         dialogContent={
           <GroupForm onSubmit={handleCreate} onCancel={() => setIsCreateOpen(false)} />
         }
@@ -463,8 +492,8 @@ export default function PaymentsGroupsPage() {
       <Modal
         isDialogOpen={!!editingGroup}
         onOpenChange={(open) => { if (!open) setEditingGroup(null); }}
-        dialogTitle="Edit Payment Group"
-        dialogDescription="Update group name and description"
+        dialogTitle={sc('groups.edit_title')}
+        dialogDescription={sc('groups.edit_description')}
         dialogContent={
           editingGroup ? (
             <GroupForm
@@ -477,13 +506,13 @@ export default function PaymentsGroupsPage() {
       />
 
       {/* Page header */}
-      <div className="flex items-center justify-between bg-gray-50 px-5 py-3 rounded-md mb-5">
+      <div className="flex flex-wrap gap-2 items-center justify-between bg-[#EEEDFF]/60 px-5 py-3 rounded-md mb-5">
         <div className="-space-y-0.5">
-          <h1 className="font-bold text-xl text-gray-800">Payment Groups</h1>
-          <p className="text-gray-500 text-sm">Bundle courses together for subscriptions or multi-course offers.</p>
+          <h1 className="font-bold text-xl text-[#190933]">{sc('groups.title')}</h1>
+          <p className="text-[#584F72] text-sm">{sc('groups.subtitle')}</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} size="sm">
-          <Plus size={14} className="me-1.5" /> New Group
+        <Button onClick={() => setIsCreateOpen(true)} size="sm" className="rounded-full bg-[#190933] text-white hover:bg-[#41375B]">
+          <Plus size={14} className="me-1.5" /> {sc('groups.new_group')}
         </Button>
       </div>
 
@@ -492,12 +521,12 @@ export default function PaymentsGroupsPage() {
           <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center mx-auto mb-3">
             <Layers size={22} className="text-indigo-300" />
           </div>
-          <p className="font-semibold text-gray-600 mb-1">No groups yet</p>
+          <p className="font-semibold text-gray-600 mb-1">{sc('groups.empty_title')}</p>
           <p className="text-sm text-gray-400 mb-4 max-w-xs mx-auto">
-            Groups let you attach multiple courses to a single offer, perfect for subscriptions or bundles.
+            {sc('groups.empty_description')}
           </p>
-          <Button onClick={() => setIsCreateOpen(true)} variant="outline" size="sm">
-            <Plus size={13} className="me-1.5" /> Create your first group
+          <Button onClick={() => setIsCreateOpen(true)} variant="outline" size="sm" className="rounded-full">
+            <Plus size={13} className="me-1.5" /> {sc('groups.create_first')}
           </Button>
         </div>
       ) : (

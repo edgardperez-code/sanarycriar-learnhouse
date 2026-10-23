@@ -4,12 +4,13 @@ import LoginClient from './login'
 import { Metadata } from 'next'
 import OrgNotFound from '@components/Objects/StyledElements/Error/OrgNotFound'
 
+// Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
 export async function generateMetadata(): Promise<Metadata> {
   const orgslug = await getAuthOrgSlug()
 
   if (!orgslug) {
     // Apex (org-less) login.
-    return { title: 'Login | LearnHouse', robots: { index: false, follow: false } }
+    return { title: 'Iniciar sesión | Sanar y Criar', robots: { index: false, follow: false } }
   }
 
   let org: any = null
@@ -23,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Login' + ` | ${org?.name || 'LearnHouse'}`,
+    title: 'Iniciar sesión' + ` | ${org?.name || 'Sanar y Criar'}`,
     robots: { index: false, follow: false },
   }
 }

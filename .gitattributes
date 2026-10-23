@@ -1,0 +1,8 @@
+# Sanar y Criar: files that run inside the Linux image must keep LF line
+# endings, even in a Windows checkout with core.autocrlf=true. CRLF breaks
+# /bin/sh ("start.sh: syntax error"). The Dockerfile still strips CR from these
+# files as a fallback for working copies checked out before this file existed.
+*.sh                        text eol=lf
+docker/nginx.conf           text eol=lf
+apps/web/server-wrapper.js  text eol=lf
+Dockerfile                  text eol=lf

@@ -599,11 +599,12 @@ function ActivityClient(props: ActivityClientProps) {
                                 strokeWidth="3"
                                 fill="none"
                               />
+                              {/* Sanar y Criar: progress in lavanda-600 */}
                               <circle
                                 cx="16"
                                 cy="16"
                                 r="14"
-                                stroke="#10b981"
+                                stroke="#6559CA"
                                 strokeWidth="3"
                                 fill="none"
                                 strokeLinecap="round"

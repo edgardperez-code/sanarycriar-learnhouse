@@ -10,8 +10,9 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   const { orgslug } = await params
   const org = await getOrganizationContextInfo(orgslug, { revalidate: 120, tags: ['organizations'] })
   return {
-    title: `Playgrounds | ${org?.name || 'Organization'}`,
-    description: `Interactive AI-generated experiences from ${org?.name || 'this organization'}`,
+    // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
+    title: `Espacios interactivos | ${org?.name || 'Sanar y Criar'}`,
+    description: `Experiencias interactivas creadas con IA por ${org?.name || 'Sanar y Criar'}`,
   }
 }
 

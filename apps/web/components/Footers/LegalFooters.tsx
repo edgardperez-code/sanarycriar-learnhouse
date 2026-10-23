@@ -3,43 +3,54 @@
 //
 // AuthFooter:    the "By continuing, you agree to … Terms of Service and
 //                Privacy Policy." line shown under the auth forms.
-// CopyrightFooter: the "© {year} LearnHouse, Inc." line for app surfaces
-//                (the apex /home hub, the onboarding page, …).
+// CopyrightFooter: the "© {year} Sanar y Criar · Hilda Hernández" line for app
+//                surfaces (the apex /home hub, the onboarding page, …).
 //
-// Legal pages live on the marketing/platform site, so links resolve via
-// getPlatformUrl() with a sensible public fallback.
+// Sanar y Criar: legal pages live on our marketing site (getScSiteUrl(),
+// https://www.sanarycriarve.com by default), never on LearnHouse's.
 import React from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
-import { getPlatformUrl } from '@services/config/config'
+import { getScSiteUrl, getScSourceUrl } from '@components/Objects/Menus/scBrand'
 
-const TERMS_URL = getPlatformUrl('/terms') || 'https://www.learnhouse.io/terms'
-const PRIVACY_URL = getPlatformUrl('/privacy') || 'https://www.learnhouse.io/privacy'
-
+// Sanar y Criar: the auth forms point at our own legal pages on the
+// marketing site (not LearnHouse's), plus the AGPL-3.0 source offer.
 export function AuthFooter({ className = '' }: { className?: string }) {
   const { t } = useTranslation()
   return (
-    <div className={`pb-8 pt-6 text-center px-6 ${className}`}>
-      <p className="text-[13px] text-black/30 font-medium">
-        {t('auth.terms_text', { defaultValue: "By continuing, you agree to LearnHouse's" })}{' '}
-        <Link
-          href={TERMS_URL}
+    <div className={`pb-8 pt-6 text-center px-6 space-y-1.5 ${className}`}>
+      <p className="text-[13px] text-violeta-500">
+        {t('sc_brand.auth_terms_prefix', { defaultValue: 'Al continuar, aceptas los' })}{' '}
+        <a
+          href={getScSiteUrl('/terminos')}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-black/50 hover:text-black/70 transition-colors"
+          className="font-medium text-violeta-600 underline underline-offset-4 decoration-rosa-300 hover:text-violeta"
         >
-          {t('auth.terms_of_service', { defaultValue: 'Terms of Service' })}
-        </Link>{' '}
-        {t('auth.and', { defaultValue: 'and' })}{' '}
-        <Link
-          href={PRIVACY_URL}
+          {t('sc_brand.auth_terms', { defaultValue: 'Términos y condiciones' })}
+        </a>{' '}
+        {t('sc_brand.auth_and', { defaultValue: 'y la' })}{' '}
+        <a
+          href={getScSiteUrl('/privacidad')}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-black/50 hover:text-black/70 transition-colors"
+          className="font-medium text-violeta-600 underline underline-offset-4 decoration-rosa-300 hover:text-violeta"
         >
-          {t('auth.privacy_policy', { defaultValue: 'Privacy Policy' })}
-        </Link>
-        .
+          {t('sc_brand.auth_privacy', { defaultValue: 'Política de privacidad' })}
+        </a>
+        {t('sc_brand.auth_terms_suffix', { defaultValue: ' de Sanar y Criar.' })}
+      </p>
+      <p className="text-[12px] text-violeta-400">
+        {t('sc_brand.powered_by', { defaultValue: 'Plataforma basada en LearnHouse (AGPL-3.0)' })}
+        {' · '}
+        <a
+          href={getScSourceUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-4 decoration-borde hover:text-violeta-600"
+        >
+          {t('sc_brand.source_code', { defaultValue: 'Código fuente' })}
+        </a>
       </p>
     </div>
   )
@@ -62,24 +73,24 @@ export function CopyrightFooter({
     <footer className={`w-full py-6 px-6 ${className}`}>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-x-5 gap-y-2 text-[13px] font-medium">
         <p className={base}>
-          {t('common.copyright', { defaultValue: '© {{year}} LearnHouse, Inc.', year })}
+          {t('sc_brand.copyright', { defaultValue: '© {{year}} Sanar y Criar · Hilda Hernández', year })}
         </p>
-        <nav className="flex items-center gap-x-5">
+        <nav className="flex items-center gap-x-5" aria-label={t('sc_brand.legal_nav_label', { defaultValue: 'Legal' })}>
           <Link
-            href={TERMS_URL}
+            href={getScSiteUrl('/terminos')}
             target="_blank"
             rel="noopener noreferrer"
             className={`${link} transition-colors`}
           >
-            {t('auth.terms_of_service', { defaultValue: 'Terms of Service' })}
+            {t('sc_brand.legal.terms', { defaultValue: 'Términos' })}
           </Link>
           <Link
-            href={PRIVACY_URL}
+            href={getScSiteUrl('/privacidad')}
             target="_blank"
             rel="noopener noreferrer"
             className={`${link} transition-colors`}
           >
-            {t('auth.privacy_policy', { defaultValue: 'Privacy Policy' })}
+            {t('sc_brand.legal.privacy', { defaultValue: 'Privacidad' })}
           </Link>
         </nav>
       </div>

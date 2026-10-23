@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useOnboarding } from '@components/Hooks/useOnboarding'
+import { useOrg } from '@components/Contexts/OrgContext'
 import {
   ArrowRight,
   BookOpen,
@@ -20,7 +21,9 @@ import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 
 const ease = [0.16, 1, 0.3, 1] as const
 
-const FEATURES = [
+// Sanar y Criar: `feature` names the org feature a tile advertises; tiles for
+// features the org has turned off are not shown.
+const FEATURES: { icon: React.ElementType; labelKey: string; descKey: string; gradient: string; iconColor: string; pattern: string; patternSize?: string; feature?: string }[] = [
   {
     icon: BookOpen,
     labelKey: 'onboarding.welcome.features.teach',
@@ -33,6 +36,7 @@ const FEATURES = [
   {
     icon: Lightning,
     labelKey: 'onboarding.welcome.features.interactive',
+    feature: 'playgrounds',
     descKey: 'onboarding.welcome.features.interactive_desc',
     gradient: 'from-amber-50/40 to-amber-50/10',
     iconColor: 'text-amber-500',
@@ -41,6 +45,7 @@ const FEATURES = [
   {
     icon: ChatsCircle,
     labelKey: 'onboarding.welcome.features.community',
+    feature: 'communities',
     descKey: 'onboarding.welcome.features.community_desc',
     gradient: 'from-emerald-50/40 to-emerald-50/10',
     iconColor: 'text-emerald-500',
@@ -58,6 +63,7 @@ const FEATURES = [
   {
     icon: ChalkboardSimple,
     labelKey: 'onboarding.welcome.features.collaborate',
+    feature: 'boards',
     descKey: 'onboarding.welcome.features.collaborate_desc',
     gradient: 'from-rose-50/40 to-rose-50/10',
     iconColor: 'text-rose-500',
@@ -66,6 +72,7 @@ const FEATURES = [
   {
     icon: Microphone,
     labelKey: 'onboarding.welcome.features.voice',
+    feature: 'podcasts',
     descKey: 'onboarding.welcome.features.voice_desc',
     gradient: 'from-purple-50/40 to-purple-50/10',
     iconColor: 'text-purple-500',
@@ -83,6 +90,7 @@ const FEATURES = [
   {
     icon: ChartBar,
     labelKey: 'onboarding.welcome.features.impact',
+    feature: 'analytics',
     descKey: 'onboarding.welcome.features.impact_desc',
     gradient: 'from-indigo-50/40 to-indigo-50/10',
     iconColor: 'text-indigo-500',
@@ -103,6 +111,11 @@ export default function WelcomeModal() {
   const { welcomeSeen, markWelcomeSeen, dismissed } = useOnboarding()
   const { t } = useTranslation()
   const { track } = useLHAnalytics('dashboard')
+  const org = useOrg() as any
+  const resolvedFeatures = org?.config?.config?.resolved_features
+  const features = FEATURES.filter(
+    (f) => !f.feature || resolvedFeatures?.[f.feature]?.enabled !== false
+  )
   const [step, setStep] = useState<'welcome' | 'features'>('welcome')
   const [isMobile, setIsMobile] = useState(false)
 
@@ -136,7 +149,8 @@ export default function WelcomeModal() {
           transition={{ duration: 0.5, ease }}
           className="relative w-full max-w-3xl mx-4"
         >
-          <div className="bg-white rounded-2xl nice-shadow relative overflow-hidden">
+          {/* Sanar y Criar: scrolls inside itself on short screens. */}
+          <div className="bg-white rounded-2xl nice-shadow relative overflow-x-hidden overflow-y-auto max-h-[calc(100dvh-2rem)]">
             {/* Top content */}
             <AnimatePresence mode="wait">
               {!showFeatures ? (
@@ -148,7 +162,7 @@ export default function WelcomeModal() {
                   <div className="px-10 pt-10 pb-2 text-center">
                     <motion.img
                       src="/lrn-dash.svg"
-                      alt="LearnHouse"
+                      alt="Sanar y Criar"
                       className="h-12 w-12 mx-auto mb-5"
                       style={{ filter: 'brightness(0)' }}
                       initial={{ opacity: 0, y: 10 }}
@@ -189,16 +203,17 @@ export default function WelcomeModal() {
                     </p>
                   </div>
 
-                  {/* Feature grid */}
+                  {/* Feature grid. Sanar y Criar: three per row, an incomplete
+                      last row centred (only the org's enabled features show). */}
                   <div className="px-6 pb-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      {FEATURES.map((f, i) => (
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {features.map((f, i) => (
                         <motion.div
                           key={f.labelKey}
                           initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.1 + i * 0.04, duration: 0.4, ease }}
-                          className={`relative flex flex-col items-center gap-2.5 p-5 rounded-xl overflow-hidden nice-shadow bg-gradient-to-br ${f.gradient}`}
+                          className={`relative w-[calc((100%-1rem)/3)] flex flex-col items-center gap-2.5 p-5 rounded-xl overflow-hidden nice-shadow bg-gradient-to-br ${f.gradient}`}
                         >
                           {/* Pattern overlay */}
                           <div
@@ -223,19 +238,28 @@ export default function WelcomeModal() {
               )}
             </AnimatePresence>
 
-            {/* Globe */}
+            {/* Globe. Sanar y Criar: it gets its own band (the top of the
+                globe, fading out at a horizon line) and the button sits below
+                it; upstream pulled the button 140px up over the illustration.
+                The feature grid replaces it on the second step, so the modal
+                still fits a laptop screen. */}
             <motion.div
-              className="flex justify-center -mb-[140px]"
-              animate={{ marginTop: showFeatures ? -20 : 0 }}
+              className="relative flex items-start justify-center overflow-hidden"
+              initial={false}
+              animate={{ height: showFeatures ? 0 : 190 }}
               transition={{ duration: 0.6, ease }}
             >
-              <div className="w-[280px]">
+              <div className="w-[280px] shrink-0 pt-3">
                 <WelcomeGlobe />
               </div>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white to-transparent"
+              />
             </motion.div>
 
             {/* Button */}
-            <div className="relative z-10 px-6 pb-6">
+            <div className={`relative z-10 px-6 pt-4 pb-6 ${showFeatures ? '' : 'border-t border-[#EAE8F2]'}`}>
               {!showFeatures ? (
                 <motion.button
                   onClick={() => setStep('features')}

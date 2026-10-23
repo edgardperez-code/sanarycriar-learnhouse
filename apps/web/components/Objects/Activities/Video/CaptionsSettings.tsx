@@ -3,6 +3,7 @@ import React from 'react'
 import { ClosedCaptioning, Plus, X } from '@phosphor-icons/react'
 import { AVAILABLE_LANGUAGES } from '@/lib/languages'
 import toast from 'react-hot-toast'
+import { Trans } from 'react-i18next' // Sanar y Criar: "Generate with AI" label
 
 export interface CaptionsValue {
   enabled: boolean
@@ -61,7 +62,7 @@ export default function CaptionsSettings({
             onChange={(e) => onChange({ ...value, enabled: e.target.checked })}
             className="rounded border-gray-300 text-black focus:ring-black"
           />
-          <span className="text-sm text-gray-600">Generate with AI</span>
+          <span className="text-sm text-gray-600"><Trans i18nKey="sc_ui.ai.generate_with_ai">Generar con IA</Trans></span>
         </label>
       </div>
       <p className="text-xs text-gray-400 -mt-1">

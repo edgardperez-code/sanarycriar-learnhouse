@@ -559,6 +559,20 @@ def _gzip_test_app() -> FastAPI:
 
         return StreamingResponse(_events(), media_type="text/event-stream")
 
+    # Sanar y Criar: types Starlette does not exclude by default but
+    # _is_compressible() rejects (PDF ebooks, generic downloads).
+    @application.get("/pdf")
+    async def _pdf():
+        return Response(content=b"%PDF-" + b"\x00" * 5000, media_type="application/pdf")
+
+    @application.get("/download-stream")
+    async def _download_stream():
+        async def _chunks():
+            for _ in range(5):
+                yield b"\x01" * 2000
+
+        return StreamingResponse(_chunks(), media_type="application/octet-stream")
+
     return application
 
 
@@ -597,6 +611,30 @@ class TestSelectiveGZip:
 
         assert stream_resp.headers.get("content-encoding") is None
         assert stream_resp.content == b"\x00" * 10000
+
+    async def test_non_compressible_types_outside_starlette_defaults_pass_through(self):
+        """Sanar y Criar: regression for the 500 served to every browser on PDFs.
+
+        These types are not in Starlette's own exclusion list, so the start
+        message is held back; the selective responder must still send it
+        before the body when it opts out of compression.
+        """
+        application = _gzip_test_app()
+        async with AsyncClient(
+            transport=ASGITransport(app=application), base_url="http://test"
+        ) as client:
+            pdf_resp = await client.get("/pdf", headers={"Accept-Encoding": "gzip"})
+            stream_resp = await client.get(
+                "/download-stream", headers={"Accept-Encoding": "gzip"}
+            )
+
+        assert pdf_resp.status_code == 200
+        assert pdf_resp.headers.get("content-encoding") is None
+        assert pdf_resp.content == b"%PDF-" + b"\x00" * 5000
+
+        assert stream_resp.status_code == 200
+        assert stream_resp.headers.get("content-encoding") is None
+        assert stream_resp.content == b"\x01" * 10000
 
     async def test_identity_path_is_untouched_without_accept_encoding(self):
         application = _gzip_test_app()

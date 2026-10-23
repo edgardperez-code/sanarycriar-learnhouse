@@ -23,20 +23,21 @@ export async function generateMetadata({ params }: UserPageProps): Promise<Metad
 
     // If no session, return basic metadata (SEO will show generic title)
     if (!access_token) {
+      // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
       return {
-        title: 'User Profile',
-        description: 'View user profile',
+        title: 'Perfil | Sanar y Criar',
+        description: 'Perfil en Sanar y Criar',
       }
     }
 
     const userData = await getUserByUsername(resolvedParams.username, access_token)
     return {
-      title: `${userData.first_name} ${userData.last_name} | Profile`,
-      description: userData.bio || `Profile page of ${userData.first_name} ${userData.last_name}`,
+      title: `${userData.first_name} ${userData.last_name} | Perfil`,
+      description: userData.bio || `Perfil de ${userData.first_name} ${userData.last_name}`,
     }
   } catch {
     return {
-      title: 'User Profile',
+      title: 'Perfil | Sanar y Criar',
     }
   }
 }

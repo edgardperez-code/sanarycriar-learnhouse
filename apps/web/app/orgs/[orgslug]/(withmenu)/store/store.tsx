@@ -1,4 +1,5 @@
 'use client'
+// Sanar y Criar: translated, on-brand storefront with course/ebook labels.
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/lib/format'
@@ -7,10 +8,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
 import { getUriWithOrg } from '@services/config/config'
-import { getCourseThumbnailMediaDirectory } from '@services/media/media'
-import { ShoppingBag, RefreshCcw, SquareCheck, ArrowRight, Sparkles, BookOpen, Mic, Puzzle } from 'lucide-react'
+import { ShoppingBag, RefreshCcw, SquareCheck, ArrowRight, Sparkles, BookOpen, BookMarked, Mic, Puzzle } from 'lucide-react'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useLHAnalytics, useTrackView, AnalyticsEvent } from '@services/analytics'
+import { useScT } from '@components/Payments/useScT'
+import { cssUrl, normalizeProductType, resourceThumbnail } from '@components/Payments/commerce'
 
 interface Resource {
   resource_uuid: string
@@ -19,6 +21,10 @@ interface Resource {
   description: string
   thumbnail_image: string
   org_uuid: string
+  // Sanar y Criar additions to PublicOffer.included_resources
+  product_type?: 'course' | 'ebook'
+  course_uuid?: string
+  thumbnail_url?: string | null
 }
 
 interface Offer {
@@ -55,9 +61,12 @@ function getResourceUrl(orgslug: string, resource: Resource): string | null {
   }
 }
 
-function resourceIcon(type: string) {
-  switch (type) {
-    case 'course': return <BookOpen size={12} className="text-indigo-400" />
+function resourceIcon(resource: Resource) {
+  switch (resource.resource_type) {
+    case 'course':
+      return normalizeProductType(resource.product_type) === 'ebook'
+        ? <BookMarked size={12} className="text-[#AC4691]" />
+        : <BookOpen size={12} className="text-[#6559CA]" />
     case 'podcast': return <Mic size={12} className="text-pink-400" />
     default: return <Puzzle size={12} className="text-gray-300" />
   }
@@ -69,23 +78,21 @@ function CourseBoxes({ resources, orgUuid }: { resources: Resource[]; orgUuid: s
   return (
     <div className="flex -space-x-8 items-center justify-center w-full">
       {items.map((r, index) => {
-        const src = r.thumbnail_image && r.resource_type === 'course'
-          ? getCourseThumbnailMediaDirectory(r.org_uuid || orgUuid, r.resource_uuid, r.thumbnail_image)
-          : null
+        const src = resourceThumbnail(r, orgUuid)
         return (
           <div
             key={r.resource_uuid}
-            className="relative h-20 w-32 overflow-hidden rounded-lg border-2 border-white shadow-lg shrink-0 bg-gray-200"
+            className="relative h-20 w-32 overflow-hidden rounded-lg border-2 border-white shadow-lg shrink-0 bg-[#EEEDFF]"
             style={{
-              backgroundImage: src ? `url(${src})` : undefined,
+              backgroundImage: src ? cssUrl(src) : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               zIndex: 3 - index,
             }}
           >
             {!src && (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                {resourceIcon(r.resource_type)}
+              <div className="w-full h-full flex items-center justify-center">
+                {resourceIcon(r)}
               </div>
             )}
           </div>
@@ -96,41 +103,42 @@ function CourseBoxes({ resources, orgUuid }: { resources: Resource[]; orgUuid: s
 }
 
 function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslug: string; orgUuid: string; position: number }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { sc, lng } = useScT()
   const isSubscription = offer.offer_type === 'subscription'
   const benefits = offer.benefits ? offer.benefits.split(',').map(b => b.trim()).filter(Boolean) : []
   const resources = offer.included_resources ?? []
   const { track } = useLHAnalytics('learner')
   const router = useRouter()
+  const onlyEbooks = resources.length > 0 && resources.every((r) => normalizeProductType(r.product_type) === 'ebook')
 
   return (
     <Link
       href={getUriWithOrg(orgslug, `/store/offers/${offer.offer_uuid}`)}
       onClick={() => track(AnalyticsEvent.StoreOfferCardClicked, { offer_type: offer.offer_type, amount: offer.amount, position })}
     >
-      <div className="group bg-white rounded-xl nice-shadow overflow-hidden flex flex-col h-full cursor-pointer transition-all duration-200 hover:scale-[1.01]">
+      <div className="group bg-white rounded-[20px] nice-shadow overflow-hidden flex flex-col h-full cursor-pointer transition-all duration-200 hover:scale-[1.01] border border-[#EAE8F2]">
 
         {/* Thumbnail area */}
-        <div className={`relative aspect-video overflow-hidden flex items-center justify-center ${
-          isSubscription ? 'bg-gradient-to-br from-indigo-50 to-purple-50' : 'bg-gray-50'
-        }`}>
+        <div className="relative aspect-video overflow-hidden flex items-center justify-center bg-[#EEEDFF]">
           {resources.length > 0 ? (
             <div className="p-4 w-full">
               <CourseBoxes resources={resources} orgUuid={orgUuid} />
             </div>
           ) : (
-            <ShoppingBag size={28} className="text-gray-200" strokeWidth={1.5} />
+            <ShoppingBag size={28} className="text-[#BBBBFF]" strokeWidth={1.5} />
           )}
 
           {/* Type badge */}
           <div className="absolute top-2.5 start-2.5">
             {isSubscription ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-indigo-600/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                <RefreshCcw size={10} /> Subscription
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-[#190933]/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+                <RefreshCcw size={10} /> {sc('offer_card.subscription')}
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                <SquareCheck size={10} /> One-time
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#190933] bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+                {onlyEbooks ? <BookMarked size={10} /> : <SquareCheck size={10} />}
+                {onlyEbooks ? sc('product.ebook') : sc('store.one_time_badge')}
               </span>
             )}
           </div>
@@ -138,10 +146,10 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
 
         {/* Body */}
         <div className="p-4 flex flex-col flex-1 gap-2">
-          <h2 className="font-bold text-base text-gray-900 leading-snug group-hover:text-indigo-700 transition-colors">
+          <h2 className="font-bold text-base text-[#190933] leading-snug group-hover:text-[#4F43A4] transition-colors">
             {offer.name}
           </h2>
-          <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{offer.description}</p>
+          <p className="text-sm text-[#584F72] line-clamp-2 leading-relaxed">{offer.description}</p>
 
           {/* Included resources list */}
           {resources.length > 0 && (
@@ -150,7 +158,7 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
                 const url = getResourceUrl(orgslug, r)
                 const inner = (
                   <>
-                    {resourceIcon(r.resource_type)}
+                    {resourceIcon(r)}
                     <span className="truncate">{r.name}</span>
                   </>
                 )
@@ -168,18 +176,18 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
                     tabIndex={0}
                     onClick={openResource}
                     onKeyDown={e => { if (e.key === 'Enter') openResource(e) }}
-                    className="flex items-center gap-2 text-xs text-gray-500 hover:text-indigo-600 transition-colors"
+                    className="flex items-center gap-2 text-xs text-[#584F72] hover:text-[#4F43A4] transition-colors"
                   >
                     {inner}
                   </span>
                 ) : (
-                  <div key={r.resource_uuid} className="flex items-center gap-2 text-xs text-gray-500">
+                  <div key={r.resource_uuid} className="flex items-center gap-2 text-xs text-[#584F72]">
                     {inner}
                   </div>
                 )
               })}
               {resources.length > 2 && (
-                <p className="text-xs text-gray-400">+{resources.length - 2} more included</p>
+                <p className="text-xs text-gray-400">{sc('store.more_included', { count: resources.length - 2 })}</p>
               )}
             </div>
           )}
@@ -187,8 +195,8 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
           {benefits.length > 0 && (
             <div className="space-y-1">
               {benefits.slice(0, 2).map((b, i) => (
-                <div key={i} className="flex items-start gap-1.5 text-xs text-gray-400">
-                  <Sparkles size={10} className="text-indigo-300 mt-0.5 shrink-0" />
+                <div key={i} className="flex items-start gap-1.5 text-xs text-gray-500">
+                  <Sparkles size={10} className="text-[#7D75E2] mt-0.5 shrink-0" />
                   <span className="truncate">{b}</span>
                 </div>
               ))}
@@ -196,24 +204,20 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
           )}
 
           {/* Price + CTA */}
-          <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+          <div className="mt-auto pt-3 border-t border-[#EAE8F2] flex items-center justify-between">
             <div>
-              <div className={`text-xl font-black ${isSubscription ? 'text-indigo-700' : 'text-gray-900'}`}>
-                {formatCurrency(offer.amount, offer.currency, i18n.language)}
+              <div className="text-xl font-black text-[#190933]">
+                {formatCurrency(Number(offer.amount), offer.currency, lng)}
               </div>
               {offer.price_type === 'customer_choice' && (
-                <p className="text-xs text-gray-400 leading-none">min.</p>
+                <p className="text-xs text-gray-400 leading-none">{sc('offer_card.minimum')}</p>
               )}
               {isSubscription && (
-                <p className="text-xs text-indigo-400 leading-none font-medium">{billingIntervalLabel(offer.billing_interval, t)}</p>
+                <p className="text-xs text-[#6559CA] leading-none font-medium">{billingIntervalLabel(offer.billing_interval, t)}</p>
               )}
             </div>
-            <div className={`flex items-center gap-1.5 text-sm font-semibold px-3.5 py-2 rounded-xl transition-colors ${
-              isSubscription
-                ? 'bg-indigo-600 text-white group-hover:bg-indigo-700'
-                : 'bg-gray-900 text-white group-hover:bg-gray-800'
-            }`}>
-              {isSubscription ? 'Subscribe' : 'Get access'}
+            <div className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-colors bg-[#190933] text-white group-hover:bg-[#41375B]">
+              {sc('store.see_details')}
               <ArrowRight size={13} />
             </div>
           </div>
@@ -225,6 +229,7 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
 
 function Store({ orgslug, offers }: StoreProps) {
   const org = useOrg() as any
+  const { sc } = useScT()
 
   useTrackView(AnalyticsEvent.StoreViewed, { offers_count: offers.length, is_empty: offers.length === 0 }, true, 'learner')
 
@@ -232,35 +237,35 @@ function Store({ orgslug, offers }: StoreProps) {
     <div className="w-full">
       <GeneralWrapperStyled>
         <div className="flex items-center gap-3 my-6">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white nice-shadow">
-            <ShoppingBag size={18} className="text-gray-800" />
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#EEEDFF]">
+            <ShoppingBag size={18} className="text-[#190933]" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Store</h1>
+            <h1 className="text-2xl font-black text-[#190933] tracking-tight">{sc('store.title')}</h1>
             {org?.name && (
-              <p className="text-sm text-gray-400 mt-0.5">Unlock premium content from {org.name}</p>
+              <p className="text-sm text-[#584F72] mt-0.5">{sc('store.subtitle', { name: org.name })}</p>
             )}
           </div>
         </div>
 
         {offers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-4 nice-shadow">
-              <ShoppingBag size={28} className="text-gray-300" strokeWidth={1.5} />
+            <div className="w-16 h-16 rounded-2xl bg-[#EEEDFF] flex items-center justify-center mb-4">
+              <ShoppingBag size={28} className="text-[#6559CA]" strokeWidth={1.5} />
             </div>
-            <h2 className="text-xl font-bold text-gray-600 mb-2">No offers available yet</h2>
-            <p className="text-gray-400 text-sm max-w-sm">
-              Check back soon; offers and subscriptions will appear here when they become available.
+            <h2 className="text-xl font-bold text-[#190933] mb-2">{sc('store.empty_title')}</h2>
+            <p className="text-[#584F72] text-sm max-w-sm">
+              {sc('store.empty_description')}
             </p>
           </div>
         ) : (
           <>
             <p className="text-sm text-gray-400 mb-5">
-              {offers.length} {offers.length === 1 ? 'offer' : 'offers'} available
+              {sc('store.count', { count: offers.length })}
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {offers.map((offer, index) => (
-                <OfferCard key={offer.id} offer={offer} orgslug={orgslug} orgUuid={org?.org_uuid ?? ''} position={index} />
+                <OfferCard key={offer.id ?? offer.offer_uuid} offer={offer} orgslug={orgslug} orgUuid={org?.org_uuid ?? ''} position={index} />
               ))}
             </div>
           </>

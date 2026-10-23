@@ -6,11 +6,12 @@ import { Suspense } from 'react'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import OrgNotFound from '@components/Objects/StyledElements/Error/OrgNotFound'
 
+// Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
 export async function generateMetadata(): Promise<Metadata> {
   const orgslug = await getAuthOrgSlug()
 
   if (!orgslug) {
-    return { title: 'Sign up | LearnHouse' }
+    return { title: 'Crear cuenta | Sanar y Criar' }
   }
 
   let org: any = null
@@ -21,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: 'Sign up' + ` | ${org?.name || 'LearnHouse'}`,
+    title: 'Crear cuenta' + ` | ${org?.name || 'Sanar y Criar'}`,
     robots: { index: false, follow: false },
   }
 }

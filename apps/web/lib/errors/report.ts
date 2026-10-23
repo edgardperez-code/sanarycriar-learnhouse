@@ -1,5 +1,6 @@
 'use client'
 import * as Sentry from '@sentry/nextjs'
+import { documentLanguage, reportDialogLabels } from './messages'
 
 // Thin wrappers around the Sentry SDK so error UIs can (a) capture an exception
 // and get back the event id, and (b) open Sentry's built-in user-feedback
@@ -37,7 +38,12 @@ export function isReportingAvailable(): boolean {
  * (or a recent one exists via `lastEventId()`) the report is associated with
  * that event so we get the user's words next to the stack trace.
  */
-export function openFeedbackDialog(opts?: { eventId?: string; user?: { name?: string; email?: string } }): void {
+export function openFeedbackDialog(opts?: {
+  eventId?: string
+  user?: { name?: string; email?: string }
+  /** Sanar y Criar: dialog language (defaults to the page language). */
+  lng?: string
+}): void {
   try {
     if (!Sentry.isInitialized()) {
       console.warn('Feedback unavailable: Sentry not initialized')
@@ -47,11 +53,8 @@ export function openFeedbackDialog(opts?: { eventId?: string; user?: { name?: st
     Sentry.showReportDialog({
       ...(eventId ? { eventId } : {}),
       ...(opts?.user ? { user: opts.user } : {}),
-      title: 'Tell us what happened',
-      subtitle: 'Your report goes straight to our team so we can fix it.',
-      subtitle2: '',
-      labelComments: 'What were you doing when this happened?',
-      labelSubmit: 'Send report',
+      // Sanar y Criar: localized labels (sc_errors.report_dialog).
+      ...reportDialogLabels(opts?.lng ?? documentLanguage()),
     })
   } catch (e) {
     console.error('Failed to open feedback dialog:', e)

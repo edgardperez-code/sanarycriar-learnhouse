@@ -1,6 +1,8 @@
 'use client'
-import { getPlatformUrl, getUriWithoutOrg } from '@services/config/config'
+import { getUriWithoutOrg } from '@services/config/config'
 import { signOut } from '@components/Contexts/AuthContext'
+import { getScSiteUrl } from '@components/Objects/Menus/scBrand'
+import { errorText } from '@lib/errors/messages'
 import { openFeedbackDialog, isReportingAvailable } from '@lib/errors/report'
 import type { ResolutionKind } from '@lib/errors/types'
 import {
@@ -13,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type Variant = 'primary' | 'neutral' | 'danger' | 'ghost'
 
@@ -75,6 +78,10 @@ export interface ErrorActionsProps {
 export default function ErrorActions({ resolutions, reset, eventId, loginNext }: ErrorActionsProps) {
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
+  const { t, i18n } = useTranslation()
+  // Sanar y Criar: button labels from sc_errors.actions.
+  const label = (key: string) =>
+    t(`sc_errors.actions.${key}`, { defaultValue: errorText(`actions.${key}`, i18n?.language) })
 
   // Dedupe while preserving order.
   const kinds = Array.from(new Set(resolutions))
@@ -100,7 +107,9 @@ export default function ErrorActions({ resolutions, reset, eventId, loginNext }:
   const loginHref = loginNext
     ? `/login?next=${encodeURIComponent(loginNext)}`
     : '/login'
-  const supportHref = getPlatformUrl('/contact') || 'mailto:support@learnhouse.io'
+  // Sanar y Criar: support is the marketing site (contact details in its
+  // header and footer), never LearnHouse's platform contact page.
+  const supportHref = getScSiteUrl()
 
   return (
     <div className="flex flex-wrap justify-center gap-3">
@@ -108,38 +117,38 @@ export default function ErrorActions({ resolutions, reset, eventId, loginNext }:
         switch (kind) {
           case 'retry':
             return (
-              <ActionButton key={kind} onClick={retry} variant="primary" label="Retry"
+              <ActionButton key={kind} onClick={retry} variant="primary" label={label('retry')}
                 icon={<RefreshCcw size={16} />} />
             )
           case 'reload':
             return (
-              <ActionButton key={kind} onClick={() => window.location.reload()} variant="primary" label="Reload"
+              <ActionButton key={kind} onClick={() => window.location.reload()} variant="primary" label={label('reload')}
                 icon={<RefreshCcw size={16} />} />
             )
           case 'login':
             return (
-              <ActionButton key={kind} href={loginHref} variant="primary" label="Log back in"
+              <ActionButton key={kind} href={loginHref} variant="primary" label={label('login')}
                 icon={<LogIn size={16} />} />
             )
           case 'home':
             return (
-              <ActionButton key={kind} href={getUriWithoutOrg('/home')} variant="neutral" label="Home"
+              <ActionButton key={kind} href={getUriWithoutOrg('/home')} variant="neutral" label={label('home')}
                 icon={<HomeIcon size={16} />} />
             )
           case 'signout':
             return (
               <ActionButton key={kind} onClick={doSignOut} disabled={signingOut} variant="ghost"
-                label={signingOut ? 'Signing out…' : 'Sign out'} icon={<LogOut size={16} />} />
+                label={signingOut ? label('signing_out') : label('signout')} icon={<LogOut size={16} />} />
             )
           case 'report':
             if (!isReportingAvailable()) return null
             return (
-              <ActionButton key={kind} onClick={() => openFeedbackDialog({ eventId })} variant="danger"
-                label="Report this problem" icon={<MessageSquareWarning size={16} />} />
+              <ActionButton key={kind} onClick={() => openFeedbackDialog({ eventId, lng: i18n?.language })} variant="danger"
+                label={label('report')} icon={<MessageSquareWarning size={16} />} />
             )
           case 'contact_support':
             return (
-              <ActionButton key={kind} href={supportHref} variant="ghost" label="Contact support"
+              <ActionButton key={kind} href={supportHref} variant="ghost" label={label('contact_support')}
                 icon={<LifeBuoy size={16} />} />
             )
           case 'wait':

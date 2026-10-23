@@ -16,6 +16,9 @@ from src.routers import nudges as nudges_router_module
 from src.routers import stream
 from src.routers import api_tokens
 from src.routers import webhooks
+# Sanar y Criar: our own payments (PayPal) and playback progress modules.
+from src.routers import payments as payments_router_module
+from src.routers import progress as progress_router_module
 from src.routers.integrations import zapier as zapier_integration
 from src.routers.ai import ai, magicblocks, courseplanning, rag, images, quiz, assignment_gen, scenario, audio
 from src.routers.boards import boards_playground
@@ -269,6 +272,13 @@ v1_router.include_router(
     tags=["trail"],
     dependencies=[Depends(require_authenticated_user)]
 )
+# Sanar y Criar: playback/reading positions (resume where you left off).
+v1_router.include_router(
+    progress_router_module.router,
+    prefix="/progress",
+    tags=["progress"],
+    dependencies=[Depends(require_authenticated_user)]
+)
 v1_router.include_router(
     ai.router,
     prefix="/ai",
@@ -391,6 +401,11 @@ v1_router.include_router(plans.router, prefix="/plans", tags=["plans"])
 
 # Register EE Routers if available
 register_ee_routers(v1_router)
+
+# Sanar y Criar: payments. No router-level auth: the storefront reads, the
+# return-page capture and the provider webhooks are public; every handler
+# declares its own auth level.
+v1_router.include_router(payments_router_module.router, prefix="/payments", tags=["payments"])
 
 v1_router.include_router(
     health.router,

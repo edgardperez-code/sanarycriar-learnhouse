@@ -24,6 +24,9 @@ from src.services.webhooks.dispatch import dispatch_webhooks
 from src.security.rbac import check_resource_access, AccessAction
 from src.security.org_auth import require_org_membership
 from src.services.courses.activities.access import verify_activity_reader_access
+# Sanar y Criar: paid courses and saved playback positions.
+from src.services.payments.access import require_paid_access_for_course
+from src.services.progress.cleanup import clear_progress
 
 
 async def _build_trail_read(
@@ -453,6 +456,10 @@ async def remove_activity_from_trail(
     )
     trail_step = (await db_session.execute(statement)).scalars().first()
 
+    # Sanar y Criar: forget the saved position, or the next progress save
+    # (still past 90%) would mark the activity complete again.
+    await clear_progress(db_session, user.id, activity_id=activity.id, commit=not trail_step)
+
     if trail_step:
         await db_session.delete(trail_step)
         await db_session.commit()
@@ -491,6 +498,9 @@ async def add_course_to_trail(
     await check_resource_access(
         request, db_session, user, course.course_uuid, AccessAction.READ
     )
+
+    # Sanar y Criar: a course for sale is started by buyers only (402).
+    await require_paid_access_for_course(request, user, course, db_session)
 
     # check if run already exists
     statement = select(TrailRun).where(
@@ -608,6 +618,7 @@ async def remove_course_from_trail(
             TrailStep.user_id == user.id,
         )
     )
+    await clear_progress(db_session, user.id, course_id=course.id)  # Sanar y Criar
     await db_session.commit()
 
     statement = select(TrailRun).where(TrailRun.trail_id == trail.id, TrailRun.user_id == user.id)

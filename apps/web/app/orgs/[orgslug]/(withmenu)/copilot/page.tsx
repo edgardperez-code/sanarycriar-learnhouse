@@ -18,8 +18,9 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
     tags: ['organizations'],
   }, access_token)
   return {
-    title: 'Copilot | ' + org.name,
-    description: 'Chat with AI about your courses using LearnHouse Copilot.',
+    // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
+    title: 'Copiloto | ' + org.name,
+    description: 'Conversa con la IA sobre tus cursos.',
   }
 }
 

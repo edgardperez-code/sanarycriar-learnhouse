@@ -93,8 +93,21 @@ def _install_stub_modules(monkeypatch: pytest.MonkeyPatch) -> None:
         "stream",
         "api_tokens",
         "webhooks",
+        # Modules src/router.py imports that the original list predates.
+        "audit",
+        "demo",
+        "mfa",
+        # Sanar y Criar: payments and playback progress.
+        "payments",
+        "progress",
     ]:
         install_router_module(f"src.routers.{name}", f"src.routers.{name}")
+    install_router_module(
+        "src.routers.nudges",
+        "src.routers.nudges",
+        public_router=_named_router("src.routers.nudges.public_router"),
+        internal_router=_named_router("src.routers.nudges.internal_router"),
+    )
 
     install_router_module("src.routers.utils", "src.routers.utils")
 
@@ -117,6 +130,8 @@ def _install_stub_modules(monkeypatch: pytest.MonkeyPatch) -> None:
         "src.routers.ai.assignment_gen", "src.routers.ai.assignment_gen"
     )
     install_router_module("src.routers.ai.scenario", "src.routers.ai.scenario")
+    install_router_module("src.routers.ai.audio", "src.routers.ai.audio")
+    sys.modules["src.routers.ai"].audio = sys.modules["src.routers.ai.audio"]
     sys.modules["src.routers.ai"].ai = sys.modules["src.routers.ai.ai"]
     sys.modules["src.routers.ai"].magicblocks = sys.modules[
         "src.routers.ai.magicblocks"
@@ -260,6 +275,7 @@ def _install_stub_modules(monkeypatch: pytest.MonkeyPatch) -> None:
         "src.core.ee_hooks",
         register_ee_routers=lambda _router: None,
     )
+    install("src.core.deployment_mode", get_deployment_mode=lambda: "oss")
     install(
         "src.services.dev.dev",
         isDevModeEnabledOrRaise=_dependency("isDevModeEnabledOrRaise"),
@@ -417,6 +433,16 @@ class TestRootRouter:
         assert health["prefix"] == "/health"
         assert health["tags"] == ["health"]
         assert _dependency_names(health) == ["get_non_api_token_user"]
+
+        # Sanar y Criar: payments has public endpoints (storefront, webhooks),
+        # so no router-level auth; progress always needs a session.
+        payments = next(call for call in calls if call["router_name"] == "src.routers.payments")
+        assert payments["prefix"] == "/payments"
+        assert payments["tags"] == ["payments"]
+        assert _dependency_names(payments) == []
+        progress = next(call for call in calls if call["router_name"] == "src.routers.progress")
+        assert progress["prefix"] == "/progress"
+        assert _dependency_names(progress) == ["get_authenticated_non_api_token_user"]
 
     async def test_get_non_api_token_user_delegates(self, root_router):
         with patch.object(

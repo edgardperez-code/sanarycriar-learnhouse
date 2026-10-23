@@ -1,0 +1,144 @@
+{
+  "sc_errors": {
+    "categories": {
+      "version_mismatch": {
+        "label": "actualización",
+        "title": "La plataforma se acaba de actualizar",
+        "description": "Publicamos una versión nueva de Sanar y Criar mientras tenías esta página abierta, y quedó desfasada por un momento. Al recargar verás la versión más reciente."
+      },
+      "chunk_load": {
+        "label": "carga",
+        "title": "Una parte de la página no cargó",
+        "description": "Tu navegador guardaba una copia antigua de la plataforma y no pudo cargar una parte. Casi siempre se arregla al recargar."
+      },
+      "auth_session": {
+        "label": "sesión",
+        "title": "Tu sesión expiró",
+        "description": "Se cerró tu sesión o hay que renovarla. Inicia sesión de nuevo para recuperar tu acceso."
+      },
+      "plan_limit": {
+        "label": "plan",
+        "title": "Esta función no está disponible",
+        "description": "La función que intentaste usar no está incluida en el plan actual o está desactivada. Para usarla, hay que activarla o mejorar el plan."
+      },
+      "permission": {
+        "label": "permisos",
+        "title": "No tienes acceso a esto",
+        "description": "Tu cuenta no tiene permiso para ver esta página o hacer esta acción. Si crees que es un error, escríbenos y lo revisamos."
+      },
+      "rate_limit": {
+        "label": "límite",
+        "title": "Vamos un poco más despacio",
+        "description": "Hiciste muchas solicitudes en poco tiempo, así que hicimos una pausa breve para proteger tu cuenta. En unos instantes podrás seguir."
+      },
+      "not_found": {
+        "label": "no encontrado",
+        "title": "No encontramos lo que buscas",
+        "description": "Puede que lo hayan movido o borrado, o que ya no esté disponible. No es algo que hayas hecho mal."
+      },
+      "conflict": {
+        "label": "duplicado",
+        "title": "Eso ya existe",
+        "description": "Choca con algo que ya está registrado: por ejemplo, ya hay una cuenta o un elemento con el mismo nombre o correo."
+      },
+      "validation": {
+        "label": "validación",
+        "title": "Falta corregir un detalle",
+        "description": "Un campo está vacío, fuera de rango o con un formato incorrecto. Corrige el campo marcado e inténtalo de nuevo."
+      },
+      "org_config": {
+        "label": "configuración",
+        "title": "Falta terminar la configuración",
+        "description": "Esta organización todavía no está configurada del todo. Hace falta terminar de configurarla para poder usarla."
+      },
+      "payment": {
+        "label": "pago",
+        "title": "No pudimos completar el pago",
+        "description": "Algo interrumpió el pago o el cambio de suscripción. Puedes intentarlo de nuevo con tranquilidad; si ves un cargo que no reconoces, escríbenos."
+      },
+      "upload": {
+        "label": "subida",
+        "title": "No se pudo subir el archivo",
+        "description": "Puede que el archivo sea muy grande o tenga un formato no compatible, o que la conexión se cortara a mitad de camino. Revisa el archivo e inténtalo otra vez."
+      },
+      "ai": {
+        "label": "IA",
+        "title": "El asistente de IA tuvo un problema",
+        "description": "Una solicitud a la IA se interrumpió o devolvió una respuesta incompleta. Suele ser algo pasajero, así que vale la pena intentarlo de nuevo."
+      },
+      "offline": {
+        "label": "sin conexión",
+        "title": "Parece que no tienes conexión",
+        "description": "No pudimos comunicarnos con nuestros servidores; casi siempre es un problema de red en el camino. Revisa tu conexión e inténtalo de nuevo."
+      },
+      "service_unavailable": {
+        "label": "servicio",
+        "title": "Un servicio no está disponible por ahora",
+        "description": "Una función de la que dependemos no responde o todavía no está configurada. El problema es de nuestro lado y suele resolverse solo."
+      },
+      "timeout": {
+        "label": "tiempo de espera",
+        "title": "Esto tardó demasiado",
+        "description": "La solicitud no terminó a tiempo. Puede que el servidor esté ocupado; volver a intentarlo suele funcionar."
+      },
+      "server": {
+        "label": "servidor",
+        "title": "Tuvimos un problema de nuestro lado",
+        "description": "Nuestros servidores dieron un error inesperado al procesar tu solicitud. No es culpa tuya; intentarlo de nuevo en un momento suele ayudar."
+      },
+      "unknown": {
+        "label": "desconocido",
+        "title": "Algo no salió como esperábamos",
+        "description": "Tuvimos un problema inesperado al completar tu solicitud. Quedó registrado y probablemente sea pasajero; volver a intentarlo suele resolverlo. Si sigue pasando, cuéntanos qué estabas haciendo."
+      }
+    },
+    "fallback_title": "Pasó algo inesperado",
+    "fallback_description": "Tuvimos un error y quedó registrado. Volver a intentarlo o ir al inicio suele ayudar.",
+    "actions": {
+      "retry": "Reintentar",
+      "try_again": "Intentar de nuevo",
+      "reload": "Recargar",
+      "login": "Iniciar sesión de nuevo",
+      "home": "Inicio",
+      "signout": "Cerrar sesión",
+      "signing_out": "Cerrando sesión…",
+      "report": "Reportar este problema",
+      "contact_support": "Escríbenos"
+    },
+    "details": {
+      "show": "Mostrar detalles técnicos",
+      "hide": "Ocultar detalles técnicos",
+      "cause": "causa",
+      "status": "estado",
+      "digest": "código",
+      "ref": "ref."
+    },
+    "report_dialog": {
+      "title": "Cuéntanos qué pasó",
+      "subtitle": "Tu reporte le llega directo a nuestro equipo para que podamos arreglarlo.",
+      "name": "Nombre",
+      "email": "Correo",
+      "comments": "¿Qué estabas haciendo cuando pasó?",
+      "submit": "Enviar reporte",
+      "close": "Cerrar",
+      "success": "Recibimos tu reporte. ¡Gracias!"
+    },
+    "not_found_page": {
+      "heading": "No encontramos esta página",
+      "description": "Puede que la hayan movido o que el enlace tenga un error. Desde el inicio puedes ver los cursos y ebooks.",
+      "home": "Volver al inicio"
+    },
+    "org_not_found": {
+      "title": "Escribe el nombre de tu organización",
+      "description": "Escribe el nombre de tu organización para ir a la página de inicio de sesión.",
+      "placeholder": "tu-organizacion",
+      "redirecting": "Redirigiendo…",
+      "continue": "Continuar",
+      "help": "¿No sabes el nombre de tu organización? Pregúntale a quien administra tu cuenta."
+    },
+    "org_inactive": {
+      "title": "Este espacio ya no está activo",
+      "description": "Este espacio está desactivado. Si crees que es un error, escríbenos."
+    }
+  }
+}

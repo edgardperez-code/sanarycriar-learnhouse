@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 
@@ -301,10 +302,15 @@ async def test_check_ee_activity_paid_access(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_check_ee_activity_paid_access_defaults_to_free(monkeypatch):
+    # Sanar y Criar: without EE the decision is delegated to our payments
+    # module (which answers True for a course with no offer).
     monkeypatch.setattr(ee_hooks, "get_ee_hooks", lambda: None)
+    delegate = AsyncMock(return_value=True)
+    monkeypatch.setattr("src.services.payments.access.check_activity_paid_access", delegate)
 
     result = await ee_hooks.check_ee_activity_paid_access("req", 7, "user", "db")
     assert result is True
+    delegate.assert_awaited_once_with("req", 7, "user", "db")
 
 
 @pytest.mark.asyncio

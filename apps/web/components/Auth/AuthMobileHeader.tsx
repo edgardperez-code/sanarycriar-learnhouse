@@ -1,11 +1,9 @@
 'use client'
 import React from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
-import learnhouseIcon from 'public/learnhouse_bigicon_1.png'
 import { getOrgAuthBackgroundMediaDirectory } from '@services/media/media'
-import OrgSquareLogo from '@components/Objects/Org/OrgSquareLogo'
 import { getUriWithOrg } from '@services/config/config'
+import ScWordmark from '@components/Objects/Menus/ScWordmark'
 
 interface AuthMobileHeaderProps {
   org: any
@@ -23,11 +21,11 @@ export default function AuthMobileHeader({ org }: AuthMobileHeaderProps) {
   const UNSPLASH_UTM = '?utm_source=LearnHouse&utm_medium=referral'
   const withUtm = (url: string) => (url ? `${url}${UNSPLASH_UTM}` : '')
 
+  // Sanar y Criar: a light brand bar (nube, borde) with the text wordmark;
+  // an admin-chosen photo background still applies.
   const getBackgroundStyle = (): React.CSSProperties => {
     if (background_type === 'gradient' || !background_image) {
-      return {
-        background: 'linear-gradient(041.61deg, #202020 7.15%, #000000 90.96%)',
-      }
+      return {}
     }
     if (background_type === 'custom' && background_image) {
       return {
@@ -43,44 +41,23 @@ export default function AuthMobileHeader({ org }: AuthMobileHeaderProps) {
         backgroundPosition: 'center',
       }
     }
-    return {
-      background: 'linear-gradient(041.61deg, #202020 7.15%, #000000 90.96%)',
-    }
+    return {}
   }
 
   const hasCustomBackground = background_type !== 'gradient' && background_image
 
   return (
     <div
-      className="relative flex items-center gap-4 px-5 py-4 rounded-b-2xl overflow-hidden"
+      className={`relative flex items-center gap-4 px-5 py-4 overflow-hidden ${hasCustomBackground ? 'rounded-b-[20px]' : 'border-b border-borde bg-nube/90'}`}
       style={getBackgroundStyle()}
     >
       {hasCustomBackground && (
         <div className="absolute inset-0 bg-black/30" />
       )}
 
-      <Link prefetch href={getUriWithOrg(org?.slug, '/')} className="relative z-10">
-        <div className="w-10 h-10 rounded-lg ring-1 ring-inset ring-white/10 bg-white flex items-center justify-center overflow-hidden shrink-0">
-          <OrgSquareLogo
-            org={org}
-            wideInsetClassName="p-1.5"
-            fallback={
-              <Image
-                quality={100}
-                width={40}
-                height={40}
-                src={learnhouseIcon}
-                alt="LearnHouse"
-                className="object-contain"
-              />
-            }
-          />
-        </div>
+      <Link prefetch href={getUriWithOrg(org?.slug, '/')} className="relative z-10 rounded-md">
+        <ScWordmark tone={hasCustomBackground ? 'light' : 'dark'} />
       </Link>
-
-      <span className="relative z-10 font-semibold text-white text-lg truncate">
-        {org?.name || 'LearnHouse'}
-      </span>
 
       {/* Unsplash attribution (required by Unsplash API guidelines) */}
       {background_type === 'unsplash' && background_image && unsplash_photographer_name && (

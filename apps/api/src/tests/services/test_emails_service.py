@@ -7,7 +7,10 @@ import pytest
 
 from src.db.organizations import OrganizationRead
 from src.db.users import UserRead
+from src.services.email.translations import ACADEMY_LINK_TEXT, FOOTER_LINE
 from src.services.users.emails import (
+    ACADEMY_URL,
+    PLATFORM_LOGO_HTML,
     send_account_creation_email,
     send_account_deleted_email,
     send_email_verification_email,
@@ -65,11 +68,13 @@ class TestEmailsService:
             assert "https://learnhouse.io/home" in created.kwargs["body"]  # CTA link
             assert "Org &amp; Co" in created.kwargs["subject"]
 
+            # Sanar y Criar: Spanish is the default language.
             assert send_org_deleted_email("a@test.com", "Org & Co") is True
-            assert "deleted" in send_email.call_args.kwargs["subject"].lower()
+            assert "eliminó" in send_email.call_args.kwargs["subject"].lower()
 
             assert send_account_deleted_email("a@test.com", "user<script>") is True
-            assert "deleted" in send_email.call_args.kwargs["subject"].lower()
+            assert "eliminó" in send_email.call_args.kwargs["subject"].lower()
+            assert "Sanar y Criar" in send_email.call_args.kwargs["subject"]
 
     def test_send_account_creation_email_escapes_username(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
@@ -78,18 +83,24 @@ class TestEmailsService:
         assert result is True
         body = send_email.call_args.kwargs["body"]
         assert "user&lt;script&gt;" in body
-        assert "Get Started" in body
+        assert "Empezar" in body  # Sanar y Criar: Spanish by default
 
-    def test_orgless_welcome_uses_cta_url_and_learnhouse_branding(self):
+    def test_orgless_welcome_uses_cta_url_and_platform_branding(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
             send_account_creation_email(
                 _user(), "user@test.com", cta_url="https://platform.test/organizations"
             )
         call = send_email.call_args.kwargs
         assert "https://platform.test/organizations" in call["body"]
-        # Org-less keeps the LearnHouse-branded subject + Academy footer, no org logo.
-        assert "Welcome to LearnHouse" in call["subject"]
-        assert "LearnHouse Academy" in call["body"]
+        # Org-less keeps the platform-branded subject + site footer, no org logo.
+        # Sanar y Criar: the platform is named Sanar y Criar, in Spanish, and the
+        # footer links to our site (was "LearnHouse Academy").
+        assert "Te damos la bienvenida a Sanar y Criar" in call["subject"]
+        assert f'href="{ACADEMY_URL}"' in call["body"]
+        assert f">{ACADEMY_LINK_TEXT}</a>" in call["body"]
+        assert "encuentras cómo escribirnos" in call["body"]
+        assert "LearnHouse" not in call["body"]
+        assert "learnhouse.io" not in call["body"]
         assert "<img" not in call["body"]
 
     def test_welcome_is_whitelabeled_when_org_supplied(self):
@@ -106,10 +117,12 @@ class TestEmailsService:
         assert "Acme &amp; Co" in call["subject"]
         assert "Welcome to LearnHouse" not in call["subject"]
         assert "Acme &amp; Co" in call["body"]
-        # Org logo replaces the mark; Academy link is gone; powered-by remains.
+        # Org logo replaces the mark; site footer note is gone; powered-by remains.
         assert '<img src="https://api.test/content/orgs/org_uuid/logos/logo.png"' in call["body"]
-        assert "LearnHouse Academy" not in call["body"]
-        assert "Powered by LearnHouse" in call["body"]
+        assert "encuentras cómo escribirnos" not in call["body"]
+        assert PLATFORM_LOGO_HTML not in call["body"]
+        assert "LearnHouse" not in call["body"]
+        assert FOOTER_LINE["es"] in call["body"]  # Sanar y Criar footer line
         assert "https://acme.test/home" in call["body"]
 
     def test_whitelabel_without_logo_uses_the_org_name_as_wordmark(self):
@@ -123,7 +136,7 @@ class TestEmailsService:
         assert "<svg" not in call["body"]
         assert _wordmark("Acme &amp; Co") in call["body"]
         assert "Acme &amp; Co" in call["subject"]
-        assert "Powered by LearnHouse" in call["body"]
+        assert FOOTER_LINE["es"] in call["body"]  # Sanar y Criar footer line
 
     def test_role_changed_email_links_back_to_the_org(self):
         """Telling someone their permissions changed is useless without a way
@@ -149,11 +162,11 @@ class TestEmailsService:
                 new_role_name="Admin",
             )
         body = send_email.call_args.kwargs["body"]
-        assert "Go to Acme" not in body
+        assert "Ir a Acme" not in body  # Sanar y Criar: Spanish CTA text
         assert 'href="/"' not in body
         # The only link left is the footer attribution, never a CTA.
         assert body.count("<a href") == 1
-        assert "Powered by LearnHouse" in body
+        assert FOOTER_LINE["es"] in body
 
     def test_org_join_email_is_whitelabeled_and_links_to_the_org(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
@@ -261,7 +274,7 @@ class TestEmailsService:
                 "https://app.test/signup",
             )
         invite_body = send_email.call_args.kwargs["body"]
-        assert "Click the button below" in invite_body
+        assert "Haz clic en el botón de abajo" in invite_body  # Sanar y Criar: es default
 
     def test_send_emails_in_french_when_lang_is_fr(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
@@ -299,7 +312,8 @@ class TestEmailsService:
         assert "Réinitialisez votre mot de passe" == reset_call["subject"]
         assert "Votre rôle a été mis à jour" in role_call["body"]
 
-    def test_send_emails_falls_back_to_english_for_unknown_lang(self):
+    def test_send_emails_falls_back_to_spanish_for_unknown_lang(self):
+        # Sanar y Criar: unknown languages fall back to Spanish (was English).
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
             send_invitation_email(
                 "invitee@test.com",
@@ -309,7 +323,7 @@ class TestEmailsService:
                 lang="xx",
             )
         body = send_email.call_args.kwargs["body"]
-        assert "You've been invited" in body
+        assert "Tienes una invitación" in body
 
 
 class TestNotificationEmailResilience:
@@ -578,12 +592,21 @@ class TestWhiteLabel:
             assert "color: #000000; text-decoration: none" in call["body"]
 
     def test_watermark_on_adds_exactly_one_powered_by_line(self):
+        # Sanar y Criar: the footer line is our own brand, LearnHouse never shows.
         branding = dict(self.BRANDING, powered_by=True)
         for call in self._all_org_scoped_sends(**branding):
-            assert call["body"].count("Powered by LearnHouse") == 1, call["subject"]
-            # ...and that line is the only place the platform appears.
-            assert call["body"].count("LearnHouse") == 1
+            assert call["body"].count(FOOTER_LINE["en"]) == 1, call["subject"]
+            assert 'href="https://www.sanarycriarve.com"' in call["body"]
+            assert "LearnHouse" not in call["body"]
             assert "LearnHouse" not in call["subject"]
+
+    def test_spanish_footer_line_by_default(self):
+        """Sanar y Criar: without a language the footer line is the Spanish one."""
+        branding = dict(self.BRANDING, powered_by=True)
+        del branding["lang"]
+        for call in self._all_org_scoped_sends(**branding):
+            assert call["body"].count(FOOTER_LINE["es"]) == 1, call["subject"]
+            assert "Powered by" not in call["body"]
 
     def test_square_logo_renders_as_a_square_box_and_wide_logo_letterboxed(self):
         square = "https://api.test/content/orgs/org_uuid/square_logos/sq.png"
@@ -637,11 +660,12 @@ class TestWhiteLabel:
                 powered_by=False,
             )
         body = sent.call_args.kwargs["body"]
-        assert "welcome to Acme &amp; Co!" in body
-        assert "create a Acme &amp; Co account" in body or "Acme &amp; Co account" in body
+        # Sanar y Criar: Spanish copy by default.
+        assert "te damos la bienvenida a Acme &amp; Co!" in body
+        assert "cuenta en Acme &amp; Co" in body
         assert "LearnHouse" not in body
 
-    def test_platform_mails_keep_the_learnhouse_mark_and_no_powered_by(self):
+    def test_platform_mails_carry_the_sanar_y_criar_wordmark_and_no_powered_by(self):
         with patch("src.services.users.emails.send_email", return_value=True) as sent:
             send_password_reset_email_platform(
                 generated_reset_code="code",
@@ -662,11 +686,15 @@ class TestWhiteLabel:
             send_account_deleted_email("user@test.com", "user")
         for call in sent.call_args_list:
             body = call.kwargs["body"]
-            assert "<svg" in body, call.kwargs["subject"]
-            assert "Powered by LearnHouse" not in body
+            # Sanar y Criar: our text wordmark replaces the LearnHouse SVG.
+            assert PLATFORM_LOGO_HTML in body, call.kwargs["subject"]
+            assert "<svg" not in body, call.kwargs["subject"]
+            assert "LearnHouse" not in body, call.kwargs["subject"]
+            assert FOOTER_LINE["es"] not in body
             assert "#ff5500" not in body
         verification_body = sent.call_args_list[1].kwargs["body"]
-        assert "welcome to LearnHouse!" in verification_body
+        # Sanar y Criar: org-less mail names our platform, in Spanish.
+        assert "te damos la bienvenida a Sanar y Criar!" in verification_body
 
     def test_translated_whitelabel_copy_has_no_unfilled_placeholders(self):
         from src.services.auth.magic_login import send_magic_login_email

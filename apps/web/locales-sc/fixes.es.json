@@ -1,0 +1,31 @@
+{
+  "sc_fixes": {
+    "course_actions": {
+      "continue": "Continuar",
+      "leave": "Salir del curso",
+      "leave_title": "¿Salir de este curso?",
+      "leave_description": "Si sales, se borra tu progreso en este curso: las lecciones que completaste y el punto donde ibas en cada video.",
+      "leave_hint": "Podrás volver a empezarlo cuando quieras.",
+      "leave_confirm": "Sí, salir y borrar mi progreso",
+      "leave_cancel": "Quedarme en el curso",
+      "leaving": "Saliendo del curso…",
+      "leave_success": "Saliste del curso.",
+      "leave_error": "No pudimos sacarte del curso. Inténtalo de nuevo."
+    },
+    "offers_archive": {
+      "checking": "Revisando qué cubre esta oferta…",
+      "free_title": "Esto quedará gratis para todas las personas",
+      "free_description_one": "Esta es la única oferta activa que cubre este contenido. Si la archivas, cualquier persona podrá verlo gratis:",
+      "free_description_other": "Esta es la única oferta activa que cubre estos {{count}} contenidos. Si la archivas, cualquier persona podrá verlos gratis:",
+      "free_hint_one": "Si quieres seguir vendiéndolo, primero agrégalo a otra oferta o crea una nueva, y después archiva esta.",
+      "free_hint_other": "Si quieres seguir vendiéndolos, primero agrégalos a otra oferta o crea una nueva, y después archiva esta.",
+      "check_failed": "No pudimos comprobar si algún curso o ebook quedaría gratis. Ten en cuenta que, si esta es la única oferta de un contenido, al archivarla quedará gratis para todas las personas.",
+      "type_course": "Curso",
+      "type_ebook": "Ebook",
+      "unknown_resource": "Contenido {{id}}",
+      "confirm_free_one": "Archivar y dejarlo gratis",
+      "confirm_free_other": "Archivar y dejarlos gratis",
+      "archiving": "Archivando…"
+    }
+  }
+}

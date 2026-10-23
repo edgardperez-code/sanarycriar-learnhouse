@@ -1,7 +1,6 @@
 'use client';
 import { use, useEffect, type ReactNode } from "react";
 import '@styles/globals.css'
-import Watermark from '@components/Objects/Watermark'
 import { SessionGate } from '@components/Contexts/LHSessionContext'
 import { OrgMenu } from '@components/Objects/Menus/OrgMenu'
 import { useOrg } from '@components/Contexts/OrgContext'
@@ -10,55 +9,18 @@ import { OrgMFAPolicyGate } from '@components/Objects/Banners/OrgMFAPolicyGate'
 import { PodcastPlayerProvider } from '@components/Contexts/PodcastPlayerContext'
 import dynamic from 'next/dynamic'
 const PodcastPlayer = dynamic(() => import('@components/Objects/Podcasts/PodcastPlayer'), { ssr: false })
-import Image from 'next/image'
-import Link from 'next/link'
 import { PageViewTracker } from '@components/Analytics/PageViewTracker'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { usePlan } from '@components/Hooks/usePlan'
 import { getGoogleFontUrl, DEFAULT_FONT } from '@/lib/fonts'
-
-// Helper to convert hex to rgba
-const hexToRgba = (hex: string, alpha: number): string => {
-  if (!hex || hex.length < 7) return 'transparent'
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-function OrgFooter() {
-  const org = useOrg() as any
-  const footerText = org?.config?.config?.customization?.general?.footer_text || org?.config?.config?.general?.footer_text || ''
-  const plan = usePlan()
-  const watermarkConfig = org?.config?.config?.customization?.general?.watermark ?? org?.config?.config?.general?.watermark
-  const isFree = plan === 'free'
-  const showWatermark = isFree || watermarkConfig !== false
-
-  return (
-    <footer className="w-full py-8 mt-12">
-      <div className="flex flex-col items-center justify-center space-y-4">
-        {footerText && <p className="text-sm text-gray-500">{footerText}</p>}
-        {showWatermark && (
-          <Link href="https://learnhouse.app" target="_blank" rel="noopener noreferrer">
-            <Image
-              src="/lrn.svg"
-              alt="LearnHouse"
-              width={24}
-              height={24}
-              style={{ height: 'auto' }}
-              className="opacity-15 hover:opacity-40 transition-opacity duration-300 cursor-pointer"
-            />
-          </Link>
-        )}
-      </div>
-    </footer>
-  )
-}
+import ScOrgFooter from '@components/Footers/ScOrgFooter'
 
 function LayoutContent({ children, orgslug }: { children: ReactNode; orgslug: string }) {
   const org = useOrg() as any
-  const primaryColor = org?.config?.config?.customization?.general?.color || org?.config?.config?.general?.color || ''
-  const customFont = org?.config?.config?.customization?.general?.font || org?.config?.config?.general?.font || ''
+  // Sanar y Criar: the brand fonts (Poppins + Playfair, app/layout.tsx) and the
+  // nube background win. An org font only applies if an admin picks one other
+  // than the upstream default, and the org colour no longer tints the page.
+  const orgFont = org?.config?.config?.customization?.general?.font || org?.config?.config?.general?.font || ''
+  const customFont = orgFont === DEFAULT_FONT ? '' : orgFont
   const pathname = usePathname()
   const searchParams = useSearchParams()
   // chrome=none strips the org navigation/footer so this route can be embedded
@@ -113,7 +75,6 @@ function LayoutContent({ children, orgslug }: { children: ReactNode; orgslug: st
       // target this element specifically.
       className="lh-org-font-root flex flex-col min-h-screen"
       style={{
-        backgroundColor: primaryColor ? hexToRgba(primaryColor, 0.05) : 'transparent',
         ...(customFont ? { fontFamily: `'${customFont}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif` } : {}),
       }}
     >
@@ -125,8 +86,7 @@ function LayoutContent({ children, orgslug }: { children: ReactNode; orgslug: st
       <div className="flex-1 relative" style={{ zIndex: 'var(--z-content)' }}>
         {children}
       </div>
-      {!isFullBleedPage && !chromeless && <OrgFooter />}
-      {!isFullBleedPage && !chromeless && <Watermark />}
+      {!isFullBleedPage && !chromeless && <ScOrgFooter />}
     </div>
   )
 }

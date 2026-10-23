@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { isLocalhost as isLocalhostCheck } from './services/utils/ts/hostUtils'
 import { isThirdPartyRelayPath, withoutCredentialHeaders } from './lib/thirdPartyRelay'
+// Sanar y Criar: sanitize the ?redirect a signed-in visitor is bounced to.
+import { safeInternalPath } from './services/security/url'
 
 // =============================================================================
 // Tenancy
@@ -174,6 +176,39 @@ function setInstanceCookies(response: NextResponse, info: InstanceInfo) {
   response.cookies.set({ name: 'LH_frontend_domain', value: info.frontend_domain, path: '/' })
   response.cookies.set({ name: 'LH_top_domain', value: info.top_domain, path: '/' })
   response.cookies.set({ name: 'LH_mode', value: info.mode, path: '/' })
+  return response
+}
+
+// Sanar y Criar: where a signed-in visitor bounced off /login or /signup goes.
+// Honors a sanitized ?redirect / ?next (same-origin path only, like the login
+// page's own client-side bounce) instead of always the hub. The LH_session
+// marker can outlive a usable session while pages that need one redirect to
+// /login?redirect=<self>, so a short-lived cookie makes a second bounce in a
+// row fall back to /home: the two redirects can never loop.
+const SC_AUTH_BOUNCE_COOKIE = 'sc_auth_bounce'
+const SC_AUTH_BOUNCE_SKIP = new Set(['/login', '/signup', '/auth/login', '/auth/signup'])
+
+function signedInAuthRedirect(req: NextRequest): NextResponse {
+  const params = req.nextUrl.searchParams
+  let target = safeInternalPath(params.get('redirect') || params.get('next'), '/home')
+  if (
+    req.cookies.get(SC_AUTH_BOUNCE_COOKIE)?.value
+    || SC_AUTH_BOUNCE_SKIP.has(new URL(target, req.url).pathname)
+  ) {
+    target = '/home'
+  }
+  const response = NextResponse.redirect(new URL(target, req.url))
+  if (target !== '/home') {
+    response.cookies.set({
+      name: SC_AUTH_BOUNCE_COOKIE,
+      value: '1',
+      path: '/',
+      maxAge: 10,
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: req.nextUrl.protocol === 'https:',
+    })
+  }
   return response
 }
 
@@ -366,7 +401,8 @@ export default async function proxy(req: NextRequest) {
     // they arrive with a pending second factor: a sign-in link for another
     // account hands its 2FA step over here, and bouncing would drop it.
     if (pathname === '/login' && hasSession && !req.nextUrl.searchParams.has('mfa_token')) {
-      return NextResponse.redirect(new URL('/home', req.url))
+      // Sanar y Criar: back to ?redirect / ?next when given, not a bare /home.
+      return signedInAuthRedirect(req)
     }
 
     const resolved = await resolveTenant(req, instance)
@@ -384,7 +420,8 @@ export default async function proxy(req: NextRequest) {
         || resolved.source === 'custom-domain'
       const hasInviteCode = !!req.nextUrl.searchParams.get('inviteCode')
       if (!onOrgHost && !hasInviteCode) {
-        return NextResponse.redirect(new URL('/home', req.url))
+        // Sanar y Criar: back to ?redirect / ?next when given, not a bare /home.
+        return signedInAuthRedirect(req)
       }
     }
 
@@ -490,7 +527,9 @@ export default async function proxy(req: NextRequest) {
     if (rawNext) {
       try {
         const candidate = new URL(rawNext, baseOrigin)
-        if (candidate.origin === baseOrigin) {
+        // Sanar y Criar: a normalized path starting with "//" ("/..//evil")
+        // would be read as a protocol-relative URL to another host.
+        if (candidate.origin === baseOrigin && !candidate.pathname.startsWith('//')) {
           dest = `${candidate.pathname}${candidate.search}${candidate.hash}`
         }
       } catch {

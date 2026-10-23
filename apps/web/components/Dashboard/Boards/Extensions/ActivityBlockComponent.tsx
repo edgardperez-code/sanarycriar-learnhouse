@@ -265,7 +265,8 @@ export default function ActivityBlockComponent({ node, updateAttributes, selecte
       case 'TYPE_VIDEO':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <VideoActivity course={courseObj} activity={activity} orgUuid={orgUuid} />
+            {/* Sanar y Criar: watching inside a board is not learner progress. */}
+            <VideoActivity course={courseObj} activity={activity} orgUuid={orgUuid} trackProgress={false} />
           </Suspense>
         )
       case 'TYPE_DOCUMENT':
@@ -276,6 +277,8 @@ export default function ActivityBlockComponent({ node, updateAttributes, selecte
               activity={activity}
               orgUuid={orgUuid}
               className="w-full h-full"
+              // Sanar y Criar: reading inside a board is not learner progress.
+              trackProgress={false}
             />
           </Suspense>
         )

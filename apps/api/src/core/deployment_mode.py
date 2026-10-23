@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 DeploymentMode = Literal['saas', 'oss', 'ee']
 
 # Features blocked in OSS mode but available in EE and plan-gated in SaaS
+# Sanar y Criar: 'payments' is unlocked in OSS; it is served by our own
+# module (src/services/payments, src/routers/payments.py), not by EE.
 EE_ONLY_FEATURES: frozenset[str] = frozenset({
-    'sso', 'audit_logs', 'payments', 'analytics_advanced', 'scorm'
+    'sso', 'audit_logs', 'analytics_advanced', 'scorm'
 })
 
 

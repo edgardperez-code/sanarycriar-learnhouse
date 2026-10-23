@@ -22,6 +22,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/ui/dropdown-menu"
+// Sanar y Criar: "continue" goes to the exact moment the learner left.
+import { useCourseProgress } from '@/hooks/queries/useCourseProgress'
+import { cleanActivityUuid, isEbookCourse, isNearEnd, isResumablePosition } from '@components/SanarYCriar/progressLocal'
 
 interface TrailCourseCardProps {
   course: any
@@ -108,6 +111,28 @@ function TrailCourseCard(props: TrailCourseCardProps) {
 
   const courseLink = getUriWithOrg(props.orgslug, '/course/' + courseid)
 
+  // Sanar y Criar: deep link to the last unfinished activity (video `?t=`,
+  // PDF `?page=`); finished or no history → the course page, whose
+  // "continue" card points at the next lesson.
+  const isEbook = isEbookCourse(course)
+  const { data: courseProgress } = useCourseProgress(props.course.course_uuid, { enabled: course_progress < 100 })
+  const continueLink = (() => {
+    const last = courseProgress?.last
+    if (!last?.activity_uuid || last.completed || course_progress >= 100) return courseLink
+    const position = Number(last.position_seconds) || 0
+    const duration = last.duration_seconds ? Number(last.duration_seconds) : null
+    // Only videos report a duration when the type isn't known.
+    const isVideo = last.activity_type ? last.activity_type === 'TYPE_VIDEO' : !!duration
+    if (isVideo && isNearEnd(position, duration)) return courseLink
+    const query =
+      isVideo && isResumablePosition(position, duration)
+        ? `?t=${Math.floor(position)}`
+        : last.page && last.page > 1
+          ? `?page=${last.page}`
+          : ''
+    return getUriWithOrg(props.orgslug, `/course/${courseid}/activity/${cleanActivityUuid(last.activity_uuid)}${query}`)
+  })()
+
   return (
     <div className="group relative flex flex-col bg-white rounded-xl nice-shadow overflow-hidden w-full transition-all duration-300 hover:scale-[1.01]" onMouseEnter={handleMouseEnter}>
       {/* Dropdown Menu */}
@@ -157,10 +182,10 @@ function TrailCourseCard(props: TrailCourseCardProps) {
             <BookOpen size={40} strokeWidth={1.5} />
           </div>
         )}
-        {/* Progress overlay */}
+        {/* Progress overlay (Sanar y Criar: brand lavanda instead of teal/green) */}
         <div className="absolute bottom-0 start-0 end-0 h-1.5 bg-gray-200/80">
           <div
-            className={`h-full ${course_progress === 100 ? 'bg-green-500' : 'bg-teal-500'}`}
+            className={`h-full ${course_progress === 100 ? 'bg-lavanda-600' : 'bg-lavanda-500'}`}
             style={{ width: `${course_progress}%` }}
           />
         </div>
@@ -176,7 +201,7 @@ function TrailCourseCard(props: TrailCourseCardProps) {
         </Link>
 
         <div className="flex items-center gap-2 text-sm">
-          <span className={`font-semibold ${course_progress === 100 ? 'text-green-600' : 'text-teal-600'}`}>
+          <span className={`font-semibold ${course_progress === 100 ? 'text-lavanda-700' : 'text-lavanda-600'}`}>
             {course_progress}%
           </span>
           <span className="text-gray-400 text-xs">
@@ -198,9 +223,10 @@ function TrailCourseCard(props: TrailCourseCardProps) {
                 <span className="text-[10px] font-bold uppercase tracking-wider">{t('certificate.certificate')}</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-green-600">
+              // Sanar y Criar: brand color, and "Completado" (common.completed reads "Finalizado").
+              <div className="flex items-center gap-1.5 text-lavanda-700">
                 <Award size={12} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">{t('common.completed')}</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{t('sc_learning.trail.completed', 'Completado')}</span>
               </div>
             )
           ) : (
@@ -222,10 +248,10 @@ function TrailCourseCard(props: TrailCourseCardProps) {
             </Link>
           ) : (
             <Link
-              href={courseLink}
+              href={continueLink}
               className="text-[10px] font-bold text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-wider"
             >
-              {t('courses.continue_learning')}
+              {isEbook ? t('sc_learning.trail.read_ebook', 'Leer ebook') : t('courses.continue_learning')}
             </Link>
           )}
         </div>

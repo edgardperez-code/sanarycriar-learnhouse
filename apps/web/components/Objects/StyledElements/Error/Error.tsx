@@ -1,8 +1,10 @@
 'use client'
 import { classifyError } from '@lib/errors/classify'
+import { errorText } from '@lib/errors/messages'
 import type { ResolutionKind } from '@lib/errors/types'
 import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react'
 import React, { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import ErrorActions from './ErrorActions'
 
 interface ErrorUIProps {
@@ -41,19 +43,23 @@ function ErrorUI({
   compact,
 }: ErrorUIProps) {
   const [showDetails, setShowDetails] = useState(false)
+  const { t, i18n } = useTranslation()
+  // Sanar y Criar: every string comes from sc_errors; the bundled locales-sc
+  // copy is the defaultValue, so no raw key or English text ever shows.
+  const tr = (key: string) => t(`sc_errors.${key}`, { defaultValue: errorText(key, i18n?.language) })
 
   const classified = useMemo(
     () => (error !== undefined ? classifyError(error) : undefined),
     [error],
   )
+  const kind = classified?.category.kind
 
   // Headline + body: explicit props win, else the classified category, else a
   // meaningful default (never a bare "Something went wrong").
-  const title = message || classified?.category.title || 'Something unexpected happened'
+  const title = message || (kind ? tr(`categories.${kind}.title`) : tr('fallback_title'))
   const description =
     submessage ||
-    classified?.category.description ||
-    "We ran into an error. It's been logged automatically; retrying or heading home usually helps."
+    (kind ? tr(`categories.${kind}.description`) : tr('fallback_description'))
 
   const actions: ResolutionKind[] =
     resolutions ||
@@ -80,9 +86,9 @@ function ErrorUI({
           <p className={`font-bold text-rose-700 ${compact ? 'text-xl' : 'text-2xl md:text-3xl'}`}>
             {title}
           </p>
-          {classified?.category.kind && (
+          {kind && (
             <span className="text-[11px] uppercase tracking-wide font-semibold text-rose-400">
-              {classified.category.kind.replace(/_/g, ' ')}
+              {tr(`categories.${kind}.label`)}
             </span>
           )}
         </div>
@@ -101,32 +107,32 @@ function ErrorUI({
             className="flex items-center gap-1 mx-auto text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors"
           >
             {showDetails ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <span>{showDetails ? 'Hide technical details' : 'Show technical details'}</span>
+            <span>{showDetails ? tr('details.hide') : tr('details.show')}</span>
           </button>
           {showDetails && (
             <div className="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4 text-start">
               <dl className="space-y-1.5 text-xs font-mono text-gray-600 break-words">
                 {detail && (
                   <div className="flex gap-2">
-                    <dt className="text-gray-400 shrink-0">cause</dt>
+                    <dt className="text-gray-400 shrink-0">{tr('details.cause')}</dt>
                     <dd className="break-all">{detail}</dd>
                   </div>
                 )}
                 {status !== undefined && (
                   <div className="flex gap-2">
-                    <dt className="text-gray-400 shrink-0">status</dt>
+                    <dt className="text-gray-400 shrink-0">{tr('details.status')}</dt>
                     <dd>{status}</dd>
                   </div>
                 )}
                 {digest && (
                   <div className="flex gap-2">
-                    <dt className="text-gray-400 shrink-0">digest</dt>
+                    <dt className="text-gray-400 shrink-0">{tr('details.digest')}</dt>
                     <dd className="break-all">{digest}</dd>
                   </div>
                 )}
                 {eventId && (
                   <div className="flex gap-2">
-                    <dt className="text-gray-400 shrink-0">ref</dt>
+                    <dt className="text-gray-400 shrink-0">{tr('details.ref')}</dt>
                     <dd className="break-all">{eventId}</dd>
                   </div>
                 )}

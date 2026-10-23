@@ -5,7 +5,8 @@ import { Breadcrumbs } from '@components/Objects/Breadcrumbs/Breadcrumbs'
 import Link from 'next/link'
 import { getUriWithOrg } from '@services/config/config'
 import { Settings, Users, Gem, CreditCard, Layers, ShoppingBag, ExternalLink } from 'lucide-react'
-import { SiStripe } from '@icons-pack/react-simple-icons'
+import { SiPaypal } from '@icons-pack/react-simple-icons'
+import { useQuery } from '@tanstack/react-query'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg } from '@components/Contexts/OrgContext'
 import PaymentsConfigurationPage from '@components/Dashboard/Pages/Payments/PaymentsConfigurationPage'
@@ -13,9 +14,11 @@ import PaymentsCustomersPage from '@components/Dashboard/Pages/Payments/Payments
 import PaymentsOffersPage from '@components/Dashboard/Pages/Payments/PaymentsOffersPage'
 import PaymentsGroupsPage from '@components/Dashboard/Pages/Payments/PaymentsGroupsPage'
 import FeatureGate from '@components/Dashboard/Shared/FeatureGate/FeatureGate'
-import { isOSSMode } from '@services/config/config'
 import { DashTabBar, DashTabItem } from '@components/Dashboard/Shared/DashTabBar/DashTabBar'
-import { useTrackView, AnalyticsEvent } from '@services/analytics'
+import { queryKeys } from '@/lib/query/keys'
+import { getPaymentConfigs } from '@services/payments/payments'
+import { useScT } from '@components/Payments/useScT'
+import { providerDashboardUrl, providerLabel } from '@components/Payments/commerce'
 
 export type PaymentsParams = {
   subpage: string
@@ -24,98 +27,85 @@ export type PaymentsParams = {
 
 function PaymentsPage(props: { params: Promise<PaymentsParams> }) {
   const params = use(props.params);
-  const _session = useLHSession() as any
+  const session = useLHSession() as any
   const org = useOrg() as any
+  const { sc } = useScT()
+  const accessToken = session?.data?.tokens?.access_token
   const subpage = params.subpage || 'overview'
   const getPageTitle = () => {
     switch (subpage) {
       case 'overview':
-        return {
-          h1: 'Overview',
-          h2: 'Revenue, transactions, subscriptions and customers'
-        }
+      case 'customers':
+        return { h1: sc('dash.overview_title'), h2: sc('dash.overview_subtitle') }
       case 'offers':
-        return {
-          h1: 'Offers',
-          h2: 'Manage your offers and subscriptions'
-        }
+        return { h1: sc('dash.offers_title'), h2: sc('dash.offers_subtitle') }
       case 'groups':
-        return {
-          h1: 'Payment Groups',
-          h2: 'Bundle resources for subscriptions and multi-course offers'
-        }
+        return { h1: sc('dash.groups_title'), h2: sc('dash.groups_subtitle') }
       case 'configuration':
-        return {
-          h1: 'Payment Configuration',
-          h2: 'Set up and manage your payment gateway'
-        }
+        return { h1: sc('dash.configuration_title'), h2: sc('dash.configuration_subtitle') }
       default:
-        return {
-          h1: 'Payments',
-          h2: 'Overview of your payment settings and transactions'
-        }
+        return { h1: sc('dash.payments_title'), h2: sc('dash.payments_subtitle') }
     }
   }
 
   const { h1, h2 } = getPageTitle()
   const paymentsEnabled = org?.config?.config?.resolved_features?.payments?.enabled ?? org?.config?.config?.features?.payments?.enabled !== false
 
-  // Fire the gate-blocked impression for the deterministic OSS block.
-  useTrackView(
-    AnalyticsEvent.PaymentsFeatureGateBlocked,
-    { is_oss: true, subpage },
-    isOSSMode(),
-    'dashboard',
-  )
+  // Sanar y Criar: the OSS "Gate 1" that blocked payments entirely is gone;
+  // our own payments module backs this dashboard. FeatureGate below still
+  // honours the org's admin toggle.
 
-  // Gate 1: OSS deployment → payments is EE-only, blocked entirely
-  if (isOSSMode()) {
-    return (
-      <FeatureGate feature="payments">
-        <></>
-      </FeatureGate>
-    )
-  }
+  // Sanar y Criar: provider-aware dashboard link (same cache entry as the
+  // configuration page and usePaymentsEnabled).
+  const { data: configs } = useQuery({
+    queryKey: queryKeys.payments.configs(org?.id),
+    queryFn: () => getPaymentConfigs(org.id, accessToken),
+    enabled: !!(org?.id && accessToken),
+    staleTime: 60_000,
+  })
+  const activeConfig = Array.isArray(configs) ? configs.find((c: any) => c?.active) : null
+  const dashboardUrl = activeConfig
+    ? providerDashboardUrl(activeConfig.provider, activeConfig.settings?.environment)
+    : null
 
   const tabs: DashTabItem[] = [
     {
       key: 'overview',
-      label: 'Overview',
+      label: sc('dash.tab_overview'),
       icon: <Users size={16} />,
       href: getUriWithOrg(params.orgslug, '/dash/payments/overview'),
-      active: subpage === 'overview',
+      active: subpage === 'overview' || subpage === 'customers',
     },
     {
       key: 'offers',
-      label: 'Offers',
+      label: sc('dash.tab_offers'),
       icon: <Gem size={16} />,
       href: getUriWithOrg(params.orgslug, '/dash/payments/offers'),
       active: subpage === 'offers',
     },
     {
       key: 'groups',
-      label: 'Payment Groups',
+      label: sc('dash.tab_groups'),
       icon: <Layers size={16} />,
       href: getUriWithOrg(params.orgslug, '/dash/payments/groups'),
       active: subpage === 'groups',
     },
     {
       key: 'configuration',
-      label: 'Configuration',
+      label: sc('dash.tab_configuration'),
       icon: <Settings size={16} />,
       href: getUriWithOrg(params.orgslug, '/dash/payments/configuration'),
       active: subpage === 'configuration',
     },
   ]
 
-  // Gate 2: plan-based restriction for cloud users (standard required)
   return (
     <FeatureGate feature="payments">
     <div className="h-screen w-full bg-[#f8f8f8] flex flex-col">
       <div className="ps-4 pe-4 sm:ps-10 sm:pe-10 tracking-tight bg-[#fcfbfc] z-10 nice-shadow flex-shrink-0 relative">
         <div className="pt-6 pb-4">
           <Breadcrumbs items={[
-            { label: 'Payments', href: '/dash/payments', icon: <CreditCard size={14} /> }
+            { label: sc('dash.breadcrumb'), href: '/dash/payments', icon: <CreditCard size={14} /> }
           ]} />
         </div>
         <div className="my-2 py-2 flex flex-wrap gap-2 items-end justify-between">
@@ -123,32 +113,40 @@ function PaymentsPage(props: { params: Promise<PaymentsParams> }) {
             <div className="pt-3 flex font-bold text-3xl sm:text-4xl tracking-tighter truncate">
               {h1}
             </div>
-            <div className="flex font-medium text-gray-400 text-md truncate">
+            <div className="flex font-medium text-gray-400 text-md sm:truncate">
               {h2}
             </div>
           </div>
-          <div className="flex items-center space-x-2 pb-1 shrink-0">
+          {/* Sanar y Criar: max-w-full lets the pills wrap inside the header on
+              phones instead of pushing the page sideways (shrink-0 kept their
+              single-line width). */}
+          <div className="flex items-center gap-2 pb-1 shrink-0 flex-wrap max-w-full">
             {paymentsEnabled && (
               <Link
                 href={getUriWithOrg(params.orgslug, '/store')}
                 target="_blank"
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[#EAE8F2] bg-white text-sm font-medium text-[#190933] hover:bg-[#EEEDFF] transition-colors"
               >
                 <ShoppingBag size={14} />
-                <span>Preview Shop</span>
+                <span>{sc('dash.preview_store')}</span>
                 <ExternalLink size={12} className="text-gray-400" />
               </Link>
             )}
-            <a
-              href="https://dashboard.stripe.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <SiStripe size={14} className="text-[#635BFF]" />
-              <span>Stripe Dashboard</span>
-              <ExternalLink size={12} className="text-gray-400" />
-            </a>
+            {dashboardUrl && (
+              <a
+                href={dashboardUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[#EAE8F2] bg-white text-sm font-medium text-[#190933] hover:bg-[#EEEDFF] transition-colors"
+              >
+                <SiPaypal size={14} className="text-[#003087]" />
+                <span>
+                  {sc('dash.provider_dashboard', { provider: providerLabel(activeConfig?.provider, sc) })}
+                  {activeConfig?.settings?.environment !== 'live' ? ` (${sc('config.env_sandbox')})` : ''}
+                </span>
+                <ExternalLink size={12} className="text-gray-400" />
+              </a>
+            )}
           </div>
         </div>
         <DashTabBar tabs={tabs} />
@@ -165,6 +163,10 @@ function PaymentsPage(props: { params: Promise<PaymentsParams> }) {
         {subpage === 'offers' && <PaymentsOffersPage />}
         {subpage === 'groups' && <PaymentsGroupsPage />}
         {(subpage === 'overview' || subpage === 'customers') && <PaymentsCustomersPage />}
+        {/* Sanar y Criar: room after the content for the floating mobile dock,
+            which otherwise covers the last button ("Nueva oferta", …). A
+            spacer, not padding: the pages are h-full and overflow it. */}
+        <div aria-hidden className="h-24 lg:hidden" />
       </motion.div>
     </div>
     </FeatureGate>

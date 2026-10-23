@@ -14,12 +14,13 @@ const VALID_SUBPAGES = ['general', 'profile', 'security', 'purchases']
 
 const getSubpageTitle = (subpage: string): string => {
   const titles: Record<string, string> = {
-    'general': 'General Settings',
-    'profile': 'Profile Builder',
-    'security': 'Security',
-    'purchases': 'Purchases',
+    // Sanar y Criar: Spanish page titles.
+    'general': 'Configuración general',
+    'profile': 'Perfil',
+    'security': 'Seguridad',
+    'purchases': 'Mis compras',
   }
-  return titles[subpage] || 'Account'
+  return titles[subpage] || 'Cuenta'
 }
 
 export async function generateMetadata(props: MetadataProps): Promise<Metadata> {

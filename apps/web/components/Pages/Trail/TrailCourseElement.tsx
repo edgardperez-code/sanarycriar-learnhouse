@@ -132,7 +132,8 @@ function TrailCourseElement(props: TrailCourseElementProps) {
         <div className="course_progress indicator w-full">
           <div className="w-full bg-gray-200 rounded-full h-1.5 ">
             <div
-              className={`bg-teal-600 h-1.5 rounded-full`}
+              // Sanar y Criar: brand lavanda instead of teal.
+              className={`bg-lavanda-600 h-1.5 rounded-full`}
               style={{ width: `${course_progress}%` }}
             ></div>
           </div>

@@ -160,15 +160,15 @@ class TestGetOrgDefaultLanguage:
             org,
             {"config_version": "2.0", "customization": {"general": {}}},
         )
-        assert get_org_default_language(row) == "en"
+        assert get_org_default_language(row) == "es"  # Sanar y Criar: was "en"
 
     def test_returns_en_when_org_config_is_none(self):
-        assert get_org_default_language(None) == "en"
+        assert get_org_default_language(None) == "es"  # Sanar y Criar: was "en"
 
     @pytest.mark.asyncio
     async def test_returns_en_when_config_is_empty(self, db, org):
         row = await _make_org_config(db, org, {})
-        assert get_org_default_language(row) == "en"
+        assert get_org_default_language(row) == "es"  # Sanar y Criar: was "en"
 
 
 class TestApiUpdateOrgDefaultLanguageRouterWrapper:

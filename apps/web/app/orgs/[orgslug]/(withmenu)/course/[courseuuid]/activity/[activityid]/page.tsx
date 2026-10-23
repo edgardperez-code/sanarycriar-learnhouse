@@ -37,15 +37,17 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
   // sign-in prompt.
   if (!course_meta || !activity) {
     return {
-      title: `Activity | ${org?.name || 'LearnHouse'}`,
-      description: 'View this activity on LearnHouse',
+      // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
+      title: `Actividad | ${org?.name || 'Sanar y Criar'}`,
+      description: 'Mira esta actividad en Sanar y Criar',
     }
   }
 
   // Check if this is the course end page
   const isCourseEnd = params.activityid === 'end';
   const seoConfig = getOrgSeoConfig(org)
-  const rawTitle = isCourseEnd ? `Congratulations | ${course_meta.name} Course` : `${activity.name} | ${course_meta.name} Course`
+  // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
+  const rawTitle = isCourseEnd ? `¡Felicitaciones! | ${course_meta.name}` : `${activity.name} | ${course_meta.name}`
   const pageTitle = seoConfig.default_meta_title_suffix ? `${rawTitle}${seoConfig.default_meta_title_suffix}` : rawTitle
 
   const orgOgImageUrl = seoConfig.default_og_image

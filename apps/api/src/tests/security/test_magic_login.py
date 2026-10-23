@@ -173,16 +173,22 @@ class TestSendMagicLoginEmail:
         assert "https://academy.example.com/auth/magic?token=raw.jwt.token" in body
         assert send_mock.call_args.kwargs["to"] == "learner@example.com"
 
-    def test_platform_mail_is_learnhouse_branded(self):
+    def test_platform_mail_is_platform_branded(self):
+        from src.services.users.emails import PLATFORM_LOGO_HTML
+
         with patch.object(ml, "send_email", return_value=True) as send_mock:
             send_magic_login_email(
                 _fake_user_read(), "learner@example.com", "https://app.test", "tok"
             )
         call = send_mock.call_args.kwargs
-        assert call["subject"] == "Your LearnHouse login link"
-        assert "Sign in to LearnHouse" in call["body"]
-        assert "<svg" in call["body"]
-        assert "Powered by LearnHouse" not in call["body"]
+        # Sanar y Criar: Spanish by default, and the platform is Sanar y Criar,
+        # under our text wordmark (was the LearnHouse SVG).
+        assert call["subject"] == "Tu enlace para entrar a Sanar y Criar"
+        assert "Entra a Sanar y Criar" in call["body"]
+        assert PLATFORM_LOGO_HTML in call["body"]
+        assert "<svg" not in call["body"]
+        assert "LearnHouse" not in call["body"]
+        assert "Sanar y Criar · " not in call["body"]
         assert call["sender_name"] is None
 
     def test_org_mail_is_the_orgs_own(self):

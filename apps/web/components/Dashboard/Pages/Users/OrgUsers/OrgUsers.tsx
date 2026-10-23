@@ -25,6 +25,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
 import { readSignupFields } from '@services/settings/org'
 import { useTranslation } from 'react-i18next'
+import { formatDate } from '@/lib/format'
 import {
   Select,
   SelectContent,
@@ -36,25 +37,31 @@ import {
 const ITEMS_PER_PAGE = 10
 
 /** Render a custom signup field answer for the members table. */
-function formatCustomFieldValue(value: any): string {
+function formatCustomFieldValue(value: any, labels: { yes: string; no: string }): string {
   if (value === undefined || value === null) return ''
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'boolean') return value ? labels.yes : labels.no
   return String(value)
 }
 
-function formatShortDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return 'n/a'
+// Sanar y Criar: dates in the UI language (was hard-coded 'en-US').
+function formatShortDate(dateStr: string | null | undefined, lng: string, fallback: string): string {
+  if (!dateStr) return fallback
   try {
     const date = new Date(dateStr)
-    if (isNaN(date.getTime())) return 'n/a'
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    if (isNaN(date.getTime())) return fallback
+    return formatDate(date, lng)
   } catch {
-    return 'n/a'
+    return fallback
   }
 }
 
 function OrgUsers() {
-  const { t } = useTranslation()
+  // Sanar y Criar: every visible string goes through t() (sc_ui.org_users.*).
+  const { t, i18n } = useTranslation()
+  const lng = i18n?.language || 'es'
+  const notAvailable = t('sc_ui.common.not_available')
+  const yesNo = { yes: t('sc_ui.common.yes'), no: t('sc_ui.common.no') }
+  const shortDate = (dateStr: string | null | undefined) => formatShortDate(dateStr, lng, notAvailable)
   const org = useOrg() as any
   // The org's custom signup fields become extra members-table columns.
   const customFields = useMemo(() => readSignupFields(org), [org])
@@ -199,14 +206,14 @@ function OrgUsers() {
 
   const handleBatchRemove = async () => {
     const ids = Array.from(selectedUserIds)
-    const toastId = toast.loading(`Removing ${ids.length} user(s)...`);
+    const toastId = toast.loading(t('sc_ui.org_users.removing', { count: ids.length }));
     const res = await removeUsersFromOrg(org.id, ids, access_token)
     if (res.status === 200) {
       setSelectedUserIds(new Set())
       queryClient.invalidateQueries({ queryKey: queryKeys.org.users(org.id) })
-      toast.success(`${ids.length} user(s) removed successfully`, {id:toastId});
+      toast.success(t('sc_ui.org_users.removed', { count: ids.length }), {id:toastId});
     } else {
-      toast.error('Error removing users', {id:toastId});
+      toast.error(t('sc_ui.org_users.remove_error'), {id:toastId});
     }
   }
 
@@ -232,7 +239,7 @@ function OrgUsers() {
   const handleExportCSV = async () => {
     if (!org || !access_token) return
     setIsExporting(true)
-    const toastId = toast.loading('Exporting users...')
+    const toastId = toast.loading(t('sc_ui.org_users.exporting'))
 
     try {
       const params = new URLSearchParams()
@@ -264,9 +271,9 @@ function OrgUsers() {
       document.body.removeChild(link)
       URL.revokeObjectURL(downloadUrl)
 
-      toast.success('Users exported successfully', { id: toastId })
+      toast.success(t('sc_ui.org_users.export_success'), { id: toastId })
     } catch {
-      toast.error('Failed to export users', { id: toastId })
+      toast.error(t('sc_ui.org_users.export_error'), { id: toastId })
     } finally {
       setIsExporting(false)
     }
@@ -288,7 +295,7 @@ function OrgUsers() {
               <div className="flex items-center gap-2 flex-wrap">
                 {total > 0 && (
                   <div className="text-sm text-gray-500 bg-gray-50 px-3 py-1.5 rounded-lg font-medium">
-                    {total} {total === 1 ? 'user' : 'users'}
+                    {t('sc_ui.org_users.count', { count: total })}
                   </div>
                 )}
                 {/* Only surfaces once the org holds more members than its plan
@@ -334,7 +341,7 @@ function OrgUsers() {
                     className="inline-flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                   >
                     <Download className="w-4 h-4" />
-                    <span className="hidden sm:inline">Export</span>
+                    <span className="hidden sm:inline">{t('sc_ui.org_users.export')}</span>
                   </button>
                 </ToolTip>
               </div>
@@ -343,15 +350,15 @@ function OrgUsers() {
             {/* Filter Bar */}
             <div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-3 border-b border-gray-100 bg-gray-50/30">
               <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Filters</span>
+              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t('sc_ui.org_users.filters')}</span>
 
               {/* Role filter */}
               <Select value={filterRole || 'all'} onValueChange={handleFilterChange(setFilterRole)}>
                 <SelectTrigger className="h-8 w-[140px] text-xs border-gray-200 bg-white">
-                  <SelectValue placeholder="All roles" />
+                  <SelectValue placeholder={t('sc_ui.org_users.all_roles')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All roles</SelectItem>
+                  <SelectItem value="all">{t('sc_ui.org_users.all_roles')}</SelectItem>
                   {roles?.map((role: any) => (
                     <SelectItem key={role.id} value={role.id.toString()}>
                       {role.name}
@@ -363,22 +370,22 @@ function OrgUsers() {
               {/* Status filter */}
               <Select value={filterStatus || 'all'} onValueChange={handleFilterChange(setFilterStatus)}>
                 <SelectTrigger className="h-8 w-[140px] text-xs border-gray-200 bg-white">
-                  <SelectValue placeholder="All statuses" />
+                  <SelectValue placeholder={t('sc_ui.org_users.all_statuses')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="verified">Verified</SelectItem>
-                  <SelectItem value="unverified">Unverified</SelectItem>
+                  <SelectItem value="all">{t('sc_ui.org_users.all_statuses')}</SelectItem>
+                  <SelectItem value="verified">{t('sc_ui.org_users.verified')}</SelectItem>
+                  <SelectItem value="unverified">{t('sc_ui.org_users.unverified')}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Group filter */}
               <Select value={filterGroupId || 'all'} onValueChange={handleFilterChange(setFilterGroupId)}>
                 <SelectTrigger className="h-8 w-[160px] text-xs border-gray-200 bg-white">
-                  <SelectValue placeholder="All groups" />
+                  <SelectValue placeholder={t('sc_ui.org_users.all_groups')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All groups</SelectItem>
+                  <SelectItem value="all">{t('sc_ui.org_users.all_groups')}</SelectItem>
                   {usergroups?.map((group: any) => (
                     <SelectItem key={group.id} value={group.id.toString()}>
                       {group.name}
@@ -393,7 +400,7 @@ function OrgUsers() {
                   className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 font-medium px-2 py-1 rounded hover:bg-gray-100 transition-all"
                 >
                   <X className="w-3 h-3" />
-                  Clear filters
+                  {t('sc_ui.org_users.clear_filters')}
                 </button>
               )}
             </div>
@@ -402,14 +409,14 @@ function OrgUsers() {
             {selectedUserIds.size > 0 && (
               <div className="flex items-center justify-between px-6 py-3 bg-indigo-50 border-b border-indigo-100">
                 <span className="text-sm font-medium text-indigo-700">
-                  {selectedUserIds.size} user{selectedUserIds.size !== 1 ? 's' : ''} selected
+                  {t('sc_ui.org_users.selected', { count: selectedUserIds.size })}
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setSelectedUserIds(new Set())}
                     className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1.5 rounded-md hover:bg-indigo-100 transition-all"
                   >
-                    Clear selection
+                    {t('sc_ui.org_users.clear_selection')}
                   </button>
                   <button
                     onClick={() => setComparing(true)}
@@ -421,13 +428,13 @@ function OrgUsers() {
                   <UserAuditExport userIds={Array.from(selectedUserIds)} label={t('dashboard.users.analytics.export_selected', { count: selectedUserIds.size })} />
                   {canManageOrg && (
                     <ConfirmationModal
-                      confirmationButtonText={`Remove ${selectedUserIds.size} user${selectedUserIds.size !== 1 ? 's' : ''}`}
-                      confirmationMessage={`Are you sure you want to remove ${selectedUserIds.size} user${selectedUserIds.size !== 1 ? 's' : ''} from the organization? This action cannot be undone.`}
-                      dialogTitle="Remove selected users"
+                      confirmationButtonText={t('sc_ui.org_users.remove_selected_button', { count: selectedUserIds.size })}
+                      confirmationMessage={t('sc_ui.org_users.remove_selected_message', { count: selectedUserIds.size })}
+                      dialogTitle={t('sc_ui.org_users.remove_selected_title')}
                       dialogTrigger={
                         <button className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 text-white hover:bg-rose-700 rounded-md text-xs font-medium transition-all">
                           <LogOut className="w-3.5 h-3.5" />
-                          <span>Remove selected</span>
+                          <span>{t('sc_ui.org_users.remove_selected')}</span>
                         </button>
                       }
                       functionToExecute={handleBatchRemove}
@@ -495,7 +502,7 @@ function OrgUsers() {
                         onClick={resetFilters}
                         className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
                       >
-                        Clear all filters
+                        {t('sc_ui.org_users.clear_all_filters')}
                       </button>
                     )}
                   </div>
@@ -529,7 +536,7 @@ function OrgUsers() {
                         onClick={toggleSortOrder}
                       >
                         <div className="inline-flex items-center gap-1">
-                          Joined
+                          {t('sc_ui.org_users.joined')}
                           {sortOrder === 'desc' ? (
                             <ArrowDown className="w-3.5 h-3.5" />
                           ) : (
@@ -538,7 +545,7 @@ function OrgUsers() {
                         </div>
                       </th>
                       <th className="text-start text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
-                        Status
+                        {t('sc_ui.org_users.status')}
                       </th>
                       <th className="text-start text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
                         {t('dashboard.users.active_users.table.role') || 'Role'}
@@ -618,14 +625,14 @@ function OrgUsers() {
                               ))}
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">n/a</span>
+                            <span className="text-xs text-gray-400">{notAvailable}</span>
                           )}
                         </td>
 
                         {/* Joined */}
                         <td className="px-6 py-4">
                           <span className="text-xs text-gray-500">
-                            {formatShortDate(user.joined_at)}
+                            {shortDate(user.joined_at)}
                           </span>
                         </td>
 
@@ -634,14 +641,14 @@ function OrgUsers() {
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">
                               {user.user.email_verified ? (
-                                <span className="inline-flex items-center gap-1 text-xs text-emerald-600" title="Email verified">
+                                <span className="inline-flex items-center gap-1 text-xs text-emerald-600" title={t('sc_ui.org_users.email_verified')}>
                                   <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>Verified</span>
+                                  <span>{t('sc_ui.org_users.verified')}</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-xs text-amber-600" title="Email not verified">
+                                <span className="inline-flex items-center gap-1 text-xs text-amber-600" title={t('sc_ui.org_users.email_not_verified')}>
                                   <XCircle className="w-3.5 h-3.5" />
-                                  <span>Unverified</span>
+                                  <span>{t('sc_ui.org_users.unverified')}</span>
                                 </span>
                               )}
                               {user.user.signup_method && (
@@ -655,13 +662,13 @@ function OrgUsers() {
                                   ) : (
                                     <Mail className="w-3 h-3" />
                                   )}
-                                  {user.user.signup_method === 'email' ? 'Email' : user.user.signup_method === 'google' ? 'Google' : user.user.signup_method.charAt(0).toUpperCase() + user.user.signup_method.slice(1)}
+                                  {user.user.signup_method === 'email' ? t('sc_ui.org_users.signup_email') : user.user.signup_method === 'google' ? 'Google' : user.user.signup_method.charAt(0).toUpperCase() + user.user.signup_method.slice(1)}
                                 </span>
                               )}
                             </div>
                             {user.user.last_login_at && (
                               <span className="text-xs text-gray-400">
-                                Last login: {formatShortDate(user.user.last_login_at)}
+                                {t('sc_ui.org_users.last_login', { date: shortDate(user.user.last_login_at) })}
                               </span>
                             )}
                             {typeof user.visit_days === 'number' && (
@@ -671,9 +678,9 @@ function OrgUsers() {
                                     ? 'bg-emerald-50 text-emerald-600'
                                     : 'bg-gray-100 text-gray-500'
                                 }`}
-                                title={`Seen on ${user.visit_days} day${user.visit_days === 1 ? '' : 's'} this month${user.is_active ? ' (counts as an active user)' : ''}`}
+                                title={t(user.is_active ? 'sc_ui.org_users.seen_active' : 'sc_ui.org_users.seen', { count: user.visit_days })}
                               >
-                                {user.is_active ? 'Active' : 'Inactive'} · {user.visit_days}d
+                                {user.is_active ? t('sc_ui.org_users.active') : t('sc_ui.org_users.inactive')} · {t('sc_ui.org_users.visit_days', { count: user.visit_days })}
                               </span>
                             )}
                           </div>
@@ -730,10 +737,10 @@ function OrgUsers() {
                           <td
                             key={field.key}
                             className="px-6 py-4 text-sm text-gray-600 max-w-[220px] truncate"
-                            title={formatCustomFieldValue(user.user.extra_metadata?.[field.key])}
+                            title={formatCustomFieldValue(user.user.extra_metadata?.[field.key], yesNo)}
                           >
-                            {formatCustomFieldValue(user.user.extra_metadata?.[field.key]) || (
-                              <span className="text-gray-300">n/a</span>
+                            {formatCustomFieldValue(user.user.extra_metadata?.[field.key], yesNo) || (
+                              <span className="text-gray-300">{notAvailable}</span>
                             )}
                           </td>
                         ))}

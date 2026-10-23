@@ -12,10 +12,10 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     const pg = await getPlayground(playgrounduuid)
     return {
       title: pg.name,
-      description: pg.description || `Interactive playground: ${pg.name}`,
+      description: pg.description || `Espacio interactivo: ${pg.name}`, // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
     }
   } catch {
-    return { title: 'Playground' }
+    return { title: 'Espacio interactivo' }
   }
 }
 

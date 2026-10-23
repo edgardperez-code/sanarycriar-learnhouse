@@ -8,9 +8,12 @@ import { getUriWithOrg } from '@services/config/config';
 import { useLHAnalytics, useTrackView, AnalyticsEvent } from '@services/analytics';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '@/lib/format';
+// Sanar y Criar: translated copy; links by offer_uuid when the 402 carries it.
+import { useScT } from './useScT';
 
 interface OfferMeta {
   offer_id: number;
+  offer_uuid?: string;
   offer_name: string;
   amount: number;
   currency: string;
@@ -35,6 +38,7 @@ interface PaymentWallProps {
  */
 function PaymentWall({ offer, resourceName, resourceThumbnail, orgslug }: PaymentWallProps) {
   const { i18n } = useTranslation();
+  const { sc } = useScT();
   const org = useOrg() as any;
   const slug = orgslug ?? org?.slug;
   const { track } = useLHAnalytics('learner');
@@ -49,7 +53,7 @@ function PaymentWall({ offer, resourceName, resourceThumbnail, orgslug }: Paymen
   const formattedPrice = formatCurrency(offer.amount, offer.currency, i18n.language);
 
   const storeHref = slug
-    ? getUriWithOrg(slug, `/store/offers/${offer.offer_id}`)
+    ? getUriWithOrg(slug, `/store/offers/${offer.offer_uuid ?? offer.offer_id}`)
     : '#';
 
   return (
@@ -58,7 +62,7 @@ function PaymentWall({ offer, resourceName, resourceThumbnail, orgslug }: Paymen
         <div className="relative w-full max-w-sm">
           <img
             src={resourceThumbnail}
-            alt={resourceName ?? 'Resource'}
+            alt={resourceName ?? ''}
             className="w-full rounded-xl object-cover opacity-40 blur-sm"
           />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -78,7 +82,7 @@ function PaymentWall({ offer, resourceName, resourceThumbnail, orgslug }: Paymen
           <h2 className="text-xl font-bold text-gray-900">{resourceName}</h2>
         )}
         <p className="text-gray-500 text-sm">
-          This content is part of <strong>{offer.offer_name}</strong> and requires a purchase to access.
+          {sc('payment_wall.description', { name: offer.offer_name })}
         </p>
       </div>
 
@@ -92,9 +96,9 @@ function PaymentWall({ offer, resourceName, resourceThumbnail, orgslug }: Paymen
           href={storeHref}
           onClick={() => track(AnalyticsEvent.PaywallGetAccessClicked, { offer_id: offer.offer_id, amount: offer.amount })}
         >
-          <Button className="w-full flex items-center space-x-2">
+          <Button className="w-full flex items-center space-x-2 rounded-full bg-[#190933] hover:bg-[#41375B] text-white">
             <ShoppingCart size={16} />
-            <span>Get Access</span>
+            <span>{sc('payment_wall.get_access')}</span>
           </Button>
         </Link>
       </div>

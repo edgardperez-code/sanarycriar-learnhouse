@@ -14,9 +14,7 @@ import { ArrowRight, Backpack, Check, File, StickyNote, Video, Square, Image as 
 import { MarkdownLogo } from '@phosphor-icons/react'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { CourseProvider } from '@components/Contexts/CourseContext'
-import { useMediaQuery } from 'usehooks-ts'
 import CoursesActions from '@components/Objects/Courses/CourseActions/CoursesActions'
-import CourseActionsMobile from '@components/Objects/Courses/CourseActions/CourseActionsMobile'
 import CourseAuthors from '@components/Objects/Courses/CourseAuthors/CourseAuthors'
 import LinkifiedText from '@components/Objects/StyledElements/LinkifiedText/LinkifiedText'
 import { Breadcrumbs } from '@components/Objects/Breadcrumbs/Breadcrumbs'
@@ -30,6 +28,10 @@ import CourseShare from '@components/Objects/Courses/CourseShare/CourseShare'
 import CourseAccessError from '@components/Objects/Courses/CourseAccessError/CourseAccessError'
 import { JsonLd } from '@components/SEO/JsonLd'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
+// Sanar y Criar: "continue where you left off" + ebook mode.
+import ContinueLearningCard from '@components/SanarYCriar/ContinueLearningCard'
+import EbookHero, { EbookActionsGate } from '@components/SanarYCriar/EbookHero'
+import { isEbookCourse } from '@components/SanarYCriar/progressLocal'
 
 const CourseClient = (props: any) => {
   const { t } = useTranslation()
@@ -42,7 +44,6 @@ const CourseClient = (props: any) => {
   const serverError = props.serverError
   const org = useOrg() as any
   const _router = useRouter()
-  const isMobile = useMediaQuery('(max-width: 768px)')
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const queryClient = useQueryClient()
@@ -320,6 +321,10 @@ const CourseClient = (props: any) => {
 
   const jsonLd = generateJsonLd()
 
+  // Sanar y Criar: an ebook shows its cover and reading buttons instead of the
+  // lesson list; visitors who can't open it yet still get the purchase area.
+  const isEbook = isEbookCourse(course)
+
   return (
     <>
       {jsonLd && <JsonLd data={jsonLd} />}
@@ -333,7 +338,9 @@ const CourseClient = (props: any) => {
               ]} />
             </div>
             <div className="pb-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-              <h1 className="text-3xl md:text-3xl font-bold" dir="auto">{course.name}</h1>
+              {/* Sanar y Criar: brand title (Playfair 600 via globals.css), cards with
+                  the brand radius/border (.sc-card) and lavender accents. */}
+              <h1 className="text-[2rem] md:text-[2.5rem] leading-[1.12] font-semibold text-violeta" dir="auto">{course.name}</h1>
               <CourseShare
                 courseName={course.name}
                 courseUrl={getUriWithOrg(orgslug, `/course/${courseuuid}`)}
@@ -342,13 +349,15 @@ const CourseClient = (props: any) => {
 
             <div className="flex flex-col md:flex-row gap-8 pt-2">
               <div className="w-full md:w-3/4 space-y-4">
-                {(() => {
+                {isEbook ? (
+                  <EbookHero course={course} orgslug={orgslug} orgUuid={org?.org_uuid} />
+                ) : (() => {
                   const showVideo = course.thumbnail_type === 'video' || (course.thumbnail_type === 'both' && activeThumbnailType === 'video');
                   const showImage = course.thumbnail_type === 'image' || (course.thumbnail_type === 'both' && activeThumbnailType === 'image') || !course.thumbnail_type;
 
                   if (showVideo && course.thumbnail_video) {
                     return (
-                      <div className="relative inset-0 ring-1 ring-inset ring-black/10 rounded-lg shadow-xl w-full h-[200px] md:h-[400px]">
+                      <div className="relative inset-0 ring-1 ring-inset ring-black/5 rounded-xl overflow-hidden w-full h-[200px] md:h-[400px]">
                         {course.thumbnail_type === 'both' && (
                           <div className="absolute top-3 end-3 z-10">
                             <div className="bg-black/20 backdrop-blur-sm rounded-lg p-1 flex space-x-1">
@@ -396,7 +405,7 @@ const CourseClient = (props: any) => {
                     );
                   } else if (showImage && course.thumbnail_image) {
                     return (
-                      <div className="relative inset-0 ring-1 ring-inset ring-black/10 rounded-lg shadow-xl w-full h-[200px] md:h-[400px] bg-cover bg-center"
+                      <div className="relative inset-0 ring-1 ring-inset ring-black/5 rounded-xl overflow-hidden w-full h-[200px] md:h-[400px] bg-cover bg-center"
                         style={{
                           backgroundImage: `url(${getCourseThumbnailMediaDirectory(
                             org?.org_uuid,
@@ -447,7 +456,7 @@ const CourseClient = (props: any) => {
                   } else {
                     return (
                       <div
-                        className="inset-0 ring-1 ring-inset ring-black/10 rounded-lg shadow-xl relative w-full h-[400px] bg-cover bg-center"
+                        className="inset-0 ring-1 ring-inset ring-black/5 rounded-xl overflow-hidden relative w-full h-[400px] bg-cover bg-center"
                         style={{
                           backgroundImage: `url('/empty_thumbnail.png')`,
                           backgroundSize: 'auto',
@@ -457,7 +466,11 @@ const CourseClient = (props: any) => {
                   }
                 })()}
 
-                {(() => {
+                {!isEbook && (
+                  <ContinueLearningCard course={course} orgslug={orgslug} trailData={trailData} />
+                )}
+
+                {!isEbook && (() => {
                   const cleanCourseUuid = course.course_uuid?.replace('course_', '');
                   const run = trailData?.runs?.find(
                     (run: any) => {
@@ -483,11 +496,13 @@ const CourseClient = (props: any) => {
               </div>
 
               <div className='course_metadata_right w-full md:w-1/4 space-y-4'>
-                {/* Actions Box */}
-                <CoursesActions courseuuid={courseuuid} orgslug={orgslug} course={course} trailData={trailData} />
+                {/* Actions Box (Sanar y Criar: hidden for ebook readers, see EbookHero) */}
+                <EbookActionsGate course={course}>
+                  <CoursesActions courseuuid={courseuuid} orgslug={orgslug} course={course} trailData={trailData} />
+                </EbookActionsGate>
                 
                 {/* Authors & Updates Box */}
-                <div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden p-4">
+                <div className="sc-card overflow-hidden p-4">
                   <CourseProvider courseuuid={course.course_uuid}>
                     <CourseAuthors authors={course.authors} />
                   </CourseProvider>
@@ -503,8 +518,8 @@ const CourseClient = (props: any) => {
               if (displayLearnings.length === 0) return null
               return (
                 <div className="w-full">
-                  <h2 className="py-5 text-xl md:text-2xl font-bold">{t('courses.what_you_will_learn')}</h2>
-                  <div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden px-5 py-5 space-y-2">
+                  <h2 className="py-5 text-2xl md:text-[1.75rem] font-semibold text-violeta">{t('courses.what_you_will_learn')}</h2>
+                  <div className="sc-card overflow-hidden px-5 py-5 space-y-2">
                     {displayLearnings.map((learning: any) => {
                       const learningText = typeof learning === 'string' ? learning : learning.text
                       const learningEmoji = typeof learning === 'string' ? null : learning.emoji
@@ -527,7 +542,7 @@ const CourseClient = (props: any) => {
                               href={learning.link}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-500 hover:underline text-sm"
+                              className="text-lavanda-600 hover:underline text-sm"
                             >
                               <span className="sr-only">Link to {learningText}</span>
                               <ArrowRight size={14} />
@@ -541,15 +556,16 @@ const CourseClient = (props: any) => {
               )
             })()}
 
+            {!isEbook && (
             <div className="w-full my-5 mb-10">
-              <h2 className="py-5 text-xl md:text-2xl font-bold">{t('courses.course_lessons')}</h2>
-              <div className="bg-white shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden">
+              <h2 className="py-5 text-2xl md:text-[1.75rem] font-semibold text-violeta">{t('courses.course_lessons')}</h2>
+              <div className="sc-card overflow-hidden">
                 {(course.chapters ?? []).map((chapter: any, idx: number) => {
                   const isExpanded = expandedChapters[chapter.chapter_uuid] ?? (idx === 0); // Default to expanded for first chapter
                   return (
                     <div key={chapter.chapter_uuid || `chapter-${chapter.name}`} className="">
                       <div 
-                        className="flex items-start py-4 px-4 outline outline-1 outline-neutral-200/40 font-bold bg-neutral-50 text-neutral-600 cursor-pointer hover:bg-neutral-100 transition-colors"
+                        className="flex items-start py-4 px-4 border-b border-borde font-bold bg-lavanda-100/50 text-violeta cursor-pointer hover:bg-lavanda-100 transition-colors"
                         onClick={() => setExpandedChapters(prev => ({
                           ...prev,
                           [chapter.chapter_uuid]: !isExpanded
@@ -583,7 +599,8 @@ const CourseClient = (props: any) => {
                           </div>
                           <div className="flex items-center space-x-1 text-sm text-neutral-400 font-normal">
                             <Layers size={16} className="me-1" />
-                            <span>{chapter.activities.length} {t('activities.activities')}</span>
+                            {/* Sanar y Criar: plural-aware ("1 actividad" / "3 actividades"). */}
+                            <span>{t('activities.count', { count: chapter.activities.length })}</span>
                           </div>
                         </div>
                       </div>
@@ -600,8 +617,8 @@ const CourseClient = (props: any) => {
                                     </div>
                                   ) : isActivityDone(activity) ? (
                                     <div className="relative cursor-pointer">
-                                      <Square size={16} className="stroke-[2] text-teal-600" />
-                                      <Check size={16} className="stroke-[2.5] text-teal-600 absolute top-0 start-0" />
+                                      <Square size={16} className="stroke-[2] text-lavanda-600" />
+                                      <Check size={16} className="stroke-[2.5] text-lavanda-600 absolute top-0 start-0" />
                                     </div>
                                   ) : (
                                     <div className="text-neutral-300 cursor-pointer">
@@ -619,7 +636,7 @@ const CourseClient = (props: any) => {
                                       </span>
                                     )}
                                     {!locked && isActivityCurrent(activity) && (
-                                      <div className="flex items-center space-x-1 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full text-xs font-semibold animate-pulse">
+                                      <div className="flex items-center space-x-1 text-lavanda-700 bg-lavanda-100 px-2 py-0.5 rounded-full text-xs font-semibold animate-pulse">
                                         <span>{t('activities.current')}</span>
                                       </div>
                                     )}
@@ -670,6 +687,7 @@ const CourseClient = (props: any) => {
                 })}
               </div>
             </div>
+            )}
 
             {/* Community Section */}
             <Suspense fallback={<div className="animate-pulse h-48 bg-gray-100 rounded-lg mt-4" />}>
@@ -677,10 +695,10 @@ const CourseClient = (props: any) => {
             </Suspense>
           </GeneralWrapperStyled>
 
-          {/* Mobile Actions Box */}
-          {isMobile && (
-            <CourseActionsMobile courseuuid={courseuuid} orgslug={orgslug} course={course} trailData={trailData} />
-          )}
+          {/* Sanar y Criar: no separate mobile actions box. The right column
+              (CoursesActions + authors) already stacks under the description
+              on narrow screens, so CourseActionsMobile at the bottom showed
+              the same buttons and authors a second time. */}
         </>
       )}
     </>

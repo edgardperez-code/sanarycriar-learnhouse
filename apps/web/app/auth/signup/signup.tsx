@@ -10,6 +10,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { validateInviteCode } from '@services/organizations/invites'
 import { joinOrg } from '@services/organizations/orgs'
 import { getUriWithOrg } from '@services/config/config'
+// Sanar y Criar: after joining, go back to the offer/course that sent us here.
+import { currentAuthRedirect } from '@components/Payments/useAuthRedirect'
 import { getErrorMessage } from '@services/utils/ts/errorMessage'
 import { useTranslation } from 'react-i18next'
 import AuthLayout from '@components/Auth/AuthLayout'
@@ -147,7 +149,7 @@ const LoggedInJoinScreen = ({ inviteCode, org }: JoinScreenProps) => {
         // Refresh session so the new org membership appears in session.data.roles
         await session.update?.(true)
         redirectTimeoutRef.current = setTimeout(() => {
-          router.push(getUriWithOrg(activeOrg.slug, '/'))
+          router.push(getUriWithOrg(activeOrg.slug, currentAuthRedirect() ?? '/'))
         }, 2000)
       } else {
         setError(getErrorMessage(res.data?.detail, t('common.something_went_wrong')))

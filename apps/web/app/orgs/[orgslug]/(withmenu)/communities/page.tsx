@@ -26,7 +26,7 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
     ? getOrgOgImageMediaDirectory(org?.org_uuid, seoConfig.default_og_image)
     : null
   const imageUrl = ogImageUrl || getOrgThumbnailMediaDirectory(org?.org_uuid, org?.thumbnail_image)
-  const title = buildPageTitle('Communities', org.name, seoConfig)
+  const title = buildPageTitle('Comunidades', org.name, seoConfig) // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
   const description = seoConfig.default_meta_description || `Discussion communities from ${org.name}`
   const canonical = await getServerCanonicalUrl(params.orgslug, '/communities')
 
@@ -94,8 +94,8 @@ const CommunitiesPage = async (params: any) => {
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Home', url: await getServerCanonicalUrl(orgslug, '/') },
-    { name: 'Communities', url: await getServerCanonicalUrl(orgslug, '/communities') },
+    { name: 'Inicio', url: await getServerCanonicalUrl(orgslug, '/') },
+    { name: 'Comunidades', url: await getServerCanonicalUrl(orgslug, '/communities') },
   ])
 
   return (

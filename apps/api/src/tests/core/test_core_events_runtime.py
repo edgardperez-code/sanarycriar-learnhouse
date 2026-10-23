@@ -406,7 +406,11 @@ def test_ee_hook_registration_and_paid_access(monkeypatch):
     assert result is None
     assert paid_calls
 
+    # Sanar y Criar: without EE our payments module decides.
     monkeypatch.setattr(ee_hooks, "get_ee_hooks", lambda: None)
+    monkeypatch.setattr(
+        "src.services.payments.access.check_activity_paid_access", AsyncMock(return_value=True)
+    )
     assert asyncio.run(
         ee_hooks.check_ee_activity_paid_access(
             object(),

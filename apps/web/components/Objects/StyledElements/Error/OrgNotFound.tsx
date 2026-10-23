@@ -4,10 +4,16 @@ import React, { useState } from 'react'
 import { getLEARNHOUSE_DOMAIN_VAL } from '@services/config/config'
 import { stripPort } from '@services/utils/ts/hostUtils'
 import { safeRedirectUrl } from '@services/auth/redirects'
+import { errorText } from '@lib/errors/messages'
+import { useTranslation } from 'react-i18next'
 
 function OrgNotFound() {
   const [orgSlug, setOrgSlug] = useState('')
   const [isNavigating, setIsNavigating] = useState(false)
+  const { t, i18n } = useTranslation()
+  // Sanar y Criar: copy from sc_errors.org_not_found.
+  const tr = (key: string) =>
+    t(`sc_errors.org_not_found.${key}`, { defaultValue: errorText(`org_not_found.${key}`, i18n?.language) })
 
   const handleNavigate = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,10 +39,10 @@ function OrgNotFound() {
             <Building2 className="h-8 w-8 text-gray-600" />
           </div>
           <h1 className="mt-6 text-2xl font-bold text-gray-900">
-            Enter Your Organization
+            {tr('title')}
           </h1>
           <p className="mt-3 text-sm text-gray-600">
-            Enter your organization name to continue to the login page.
+            {tr('description')}
           </p>
         </div>
 
@@ -47,7 +53,7 @@ function OrgNotFound() {
                 type="text"
                 value={orgSlug}
                 onChange={(e) => setOrgSlug(e.target.value)}
-                placeholder="your-organization"
+                placeholder={tr('placeholder')}
                 className="flex-1 bg-transparent outline-none text-gray-900 placeholder-gray-400"
                 autoFocus
               />
@@ -60,10 +66,10 @@ function OrgNotFound() {
               className="w-full flex items-center justify-center gap-2 bg-black text-white py-3 px-4 rounded-xl font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isNavigating ? (
-                'Redirecting...'
+                tr('redirecting')
               ) : (
                 <>
-                  Continue
+                  {tr('continue')}
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
@@ -72,7 +78,7 @@ function OrgNotFound() {
         </form>
 
         <p className="mt-6 text-center text-xs text-gray-500">
-          Don't know your organization name? Contact your administrator.
+          {tr('help')}
         </p>
       </div>
     </div>

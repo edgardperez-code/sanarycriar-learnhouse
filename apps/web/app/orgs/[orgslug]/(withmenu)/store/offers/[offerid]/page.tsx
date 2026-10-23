@@ -13,14 +13,15 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   const { orgslug, offerid } = await params
   const org = await getOrganizationContextInfo(orgslug, { revalidate: 120, tags: ['organizations'] })
   const seoConfig = getOrgSeoConfig(org)
-  let offerName = 'Offer'
+  // Sanar y Criar: Spanish-first metadata.
+  let offerName = 'Oferta'
   try {
     const result = await getPublicOffer(org.id, offerid)
-    offerName = (result?.success && result.data?.name) || 'Offer'
+    offerName = (result?.success && result.data?.name) || 'Oferta'
   } catch {
-    // The title falls back to "Offer"; the page itself reports a missing offer.
+    // The title falls back to "Oferta"; the page itself reports a missing offer.
   }
-  const title = buildPageTitle(offerName, org?.name || 'Organization', seoConfig)
+  const title = buildPageTitle(offerName, org?.name || 'Sanar y Criar', seoConfig)
   return {
     title,
     robots: { index: true, follow: true },
@@ -46,9 +47,9 @@ export default async function OfferPage({ params }: { params: PageParams }) {
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Home', url: await getServerCanonicalUrl(orgslug, '/') },
-    { name: 'Store', url: await getServerCanonicalUrl(orgslug, '/store') },
-    { name: offer?.name || 'Offer', url: await getServerCanonicalUrl(orgslug, `/store/offers/${offerid}`) },
+    { name: 'Inicio', url: await getServerCanonicalUrl(orgslug, '/') },
+    { name: 'Tienda', url: await getServerCanonicalUrl(orgslug, '/store') },
+    { name: offer?.name || 'Oferta', url: await getServerCanonicalUrl(orgslug, `/store/offers/${offerid}`) },
   ])
 
   return (

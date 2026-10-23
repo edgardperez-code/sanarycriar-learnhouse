@@ -1,0 +1,7 @@
+/* Sanar y Criar: display face for headings in the learner components.
+   The brand workstream loads Playfair Display globally; `--font-sc-display`
+   lets it point this class at the next/font variable. */
+.sc-display {
+  font-family: var(--font-sc-display, 'Playfair Display'), Georgia, 'Times New Roman', serif;
+  letter-spacing: -0.005em;
+}

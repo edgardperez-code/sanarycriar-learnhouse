@@ -1,13 +1,11 @@
 'use client'
 import React from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
-import learnhouseIcon from 'public/learnhouse_bigicon_1.png'
 import { getOrgAuthBackgroundMediaDirectory } from '@services/media/media'
-import OrgSquareLogo from '@components/Objects/Org/OrgSquareLogo'
 import { getUriWithOrg } from '@services/config/config'
 import { cn } from '@/lib/utils'
-import { usePlan } from '@components/Hooks/usePlan'
+import ScWordmark from '@components/Objects/Menus/ScWordmark'
+import { SC_PROFESSIONAL } from '@components/Objects/Menus/scBrand'
 
 interface AuthBrandingPanelProps {
   org: any
@@ -18,7 +16,17 @@ interface AuthBrandingPanelProps {
   subtitle?: string
 }
 
-export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }: AuthBrandingPanelProps) {
+// Sanar y Criar: lavanda-100 panel with two soft watercolor stains (brand
+// manual p.2: watercolors only on light backgrounds).
+const BRAND_PANEL_BACKGROUND: React.CSSProperties = {
+  background:
+    'radial-gradient(26rem 20rem at 100% 0%, rgb(187 187 255 / 0.38), transparent 70%), ' +
+    'radial-gradient(24rem 18rem at 0% 100%, rgb(240 180 223 / 0.3), transparent 70%), #EEEDFF',
+}
+
+// `welcomeText` (the page's own greeting) is no longer shown here: it repeats
+// the form title. Kept in the props for the callers.
+export default function AuthBrandingPanel({ org, title, subtitle }: AuthBrandingPanelProps) {
   const authBranding = org?.config?.config?.customization?.auth_branding || org?.config?.config?.general?.auth_branding || {}
   const {
     welcome_message = '',
@@ -31,11 +39,6 @@ export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }:
   } = authBranding
   const UNSPLASH_UTM = '?utm_source=LearnHouse&utm_medium=referral'
   const withUtm = (url: string) => (url ? `${url}${UNSPLASH_UTM}` : '')
-
-  // Check if org has enterprise plan - hide LearnHouse branding for enterprise users
-  // In OSS mode, always show branding regardless of plan
-  const plan = usePlan()
-  const isEnterprise = plan === 'enterprise'
 
   // No org context (the generic apex login) → use the platform's auth
   // illustration instead of the flat gradient.
@@ -50,10 +53,7 @@ export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }:
       }
     }
     if (background_type === 'gradient' || !background_image) {
-      // Keep the original black gradient
-      return {
-        background: 'linear-gradient(041.61deg, #202020 7.15%, #000000 90.96%)',
-      }
+      return BRAND_PANEL_BACKGROUND
     }
     if (background_type === 'custom' && background_image) {
       return {
@@ -69,12 +69,9 @@ export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }:
         backgroundPosition: 'center',
       }
     }
-    return {
-      background: 'linear-gradient(041.61deg, #202020 7.15%, #000000 90.96%)',
-    }
+    return BRAND_PANEL_BACKGROUND
   }
 
-  const displayMessage = welcome_message || welcomeText || ''
   // No-org platform copy (defaults mirror the platform login illustration).
   const noOrgTitle = title || 'Welcome back to LearnHouse.'
   const noOrgSubtitle =
@@ -86,32 +83,9 @@ export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }:
   return (
     <div className="relative h-full w-full">
       {/* Inset rounded card (platform-style) */}
-      <div className="absolute inset-16 rounded-2xl overflow-hidden">
+      <div className="absolute inset-10 xl:inset-14 rounded-[20px] overflow-hidden">
         {/* Base layer: org's chosen background (gradient | custom | unsplash) */}
         <div className="absolute inset-0" style={getBackgroundStyle()} />
-
-        {/* Blueprint + dot overlays, ONLY for gradient fallback (no photo) */}
-        {!hasCustomBackground && (
-          <>
-            <div
-              className="absolute inset-0 opacity-[0.14]"
-              style={{
-                backgroundImage: `linear-gradient(rgba(120,165,255,0.6) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(120,165,255,0.6) 1px, transparent 1px),
-                  linear-gradient(rgba(120,165,255,0.3) 0.5px, transparent 0.5px),
-                  linear-gradient(90deg, rgba(120,165,255,0.3) 0.5px, transparent 0.5px)`,
-                backgroundSize: '120px 120px, 120px 120px, 24px 24px, 24px 24px',
-              }}
-            />
-            <div
-              className="absolute inset-0 opacity-[0.18]"
-              style={{
-                backgroundImage: 'radial-gradient(circle, rgba(120,165,255,0.9) 1.5px, transparent 1.5px)',
-                backgroundSize: '120px 120px',
-              }}
-            />
-          </>
-        )}
 
         {/* Dark scrim for org photo backgrounds (centered text needs it).
             The no-org illustration stays vivid; it's darkened only at the top. */}
@@ -142,25 +116,6 @@ export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }:
 
         {/* Content */}
         <div className="relative z-10 flex flex-col h-full p-10">
-          {/* Top bar with LearnHouse lrn.svg logo - hidden for enterprise users
-              and for the no-org apex panel (platform shows no logo on the image). */}
-          {!isEnterprise && !noOrg && (
-            <div className="login-topbar">
-              <Link prefetch href="https://learnhouse.app" target="_blank">
-                <img
-                  src="/lrn.svg"
-                  alt="LearnHouse"
-                  width={30}
-                  height={30}
-                  className={cn(
-                    "transition-opacity hover:opacity-100",
-                    text_color === 'light' ? "opacity-60 invert" : "opacity-40"
-                  )}
-                />
-              </Link>
-            </div>
-          )}
-
           {noOrg ? (
             /* No-org apex panel, platform layout: heading at the TOP, no logo
                box, platform copy. */
@@ -173,51 +128,45 @@ export default function AuthBrandingPanel({ org, welcomeText, title, subtitle }:
               </p>
             </div>
           ) : (
-            /* Org panel: centered logo + name (unchanged). */
-            <>
-              <div className="flex-1 flex items-center justify-center">
-                <div className={cn(
-                  "flex flex-col items-center text-center gap-6",
-                  text_color === 'light' ? "text-white" : "text-gray-900"
-                )}>
-                  {/* Organization logo */}
-                  <Link prefetch href={getUriWithOrg(org?.slug, '/')}>
-                    <div className="w-24 h-24 rounded-2xl ring-1 ring-inset ring-white/10 bg-white flex items-center justify-center overflow-hidden">
-                      <OrgSquareLogo
-                        org={org}
-                        wideInsetClassName="p-3"
-                        fallback={
-                          <Image
-                            quality={100}
-                            width={96}
-                            height={96}
-                            src={learnhouseIcon}
-                            alt="LearnHouse"
-                            className="object-contain"
-                          />
-                        }
+            /* Sanar y Criar: brand panel (manual p.3 hero): wordmark, Hilda in
+               the organic lavender-to-pink frame, eyebrow and a brand phrase
+               (manual p.2). Only the org's own welcome message is added here;
+               the page's welcome text is already the form title. */
+            <div className={cn('flex flex-col h-full', hasCustomBackground ? 'sc-on-dark text-nube' : 'text-violeta')}>
+              <Link prefetch href={getUriWithOrg(org?.slug, '/')} className="w-fit rounded-md">
+                <ScWordmark size="lg" tone={hasCustomBackground ? 'light' : 'dark'} />
+              </Link>
+              {!hasCustomBackground && (
+                <div className="flex-1 min-h-0 flex items-center justify-center py-6">
+                  <div className="relative h-full max-h-[24rem] aspect-[100/108]">
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-[5%_-3%_-2%_7%] rounded-[52%_48%_46%_54%/44%_50%_50%_56%] bg-[linear-gradient(150deg,var(--color-lavanda-300)_0%,var(--color-rosa-300)_100%)] opacity-80"
+                    />
+                    <div className="absolute inset-0 overflow-hidden rounded-[47%_53%_44%_56%/42%_44%_56%_58%] bg-[linear-gradient(165deg,var(--color-blanco-calido)_0%,var(--color-lavanda-100)_40%,var(--color-rosa-200)_100%)]">
+                      <img
+                        src="/sc-hilda.webp"
+                        alt={`${SC_PROFESSIONAL.name}, ${SC_PROFESSIONAL.shortTitle.toLowerCase()}`}
+                        width={720}
+                        height={713}
+                        className="absolute start-[-8.5%] top-[4.5%] h-auto w-[110%] max-w-none select-none"
                       />
                     </div>
-                  </Link>
-
-                  {/* Text content */}
-                  <div className="space-y-1">
-                    <h1 className="font-black text-3xl tracking-tight">{org?.name || 'LearnHouse'}</h1>
-                    {displayMessage && (
-                      <p className={cn(
-                        "text-lg max-w-sm leading-relaxed",
-                        text_color === 'light' ? "text-white/70" : "text-gray-600"
-                      )}>
-                        {displayMessage}
-                      </p>
-                    )}
                   </div>
                 </div>
+              )}
+              <div className={cn('max-w-md', hasCustomBackground && 'mt-auto')}>
+                <p className="sc-eyebrow">{SC_PROFESSIONAL.shortTitle} · {SC_PROFESSIONAL.license}</p>
+                <p className="mt-3 font-display text-[2rem] xl:text-[2.375rem] font-semibold leading-[1.12] tracking-[-0.01em]">
+                  Sanar tu historia para criar <em className="sc-title-accent">distinto</em>.
+                </p>
+                {welcome_message && (
+                  <p className={cn('mt-3 text-[1.0625rem] leading-relaxed', hasCustomBackground ? 'text-nube/80' : 'text-violeta-600')}>
+                    {welcome_message}
+                  </p>
+                )}
               </div>
-
-              {/* Bottom spacer for visual balance */}
-              <div className="h-10" />
-            </>
+            </div>
           )}
 
           {/* Unsplash attribution (required by Unsplash API guidelines) */}

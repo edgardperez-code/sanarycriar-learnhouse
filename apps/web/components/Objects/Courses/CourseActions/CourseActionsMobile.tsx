@@ -4,7 +4,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg, useOrgMembership } from '@components/Contexts/OrgContext'
 import { getUriWithOrg } from '@services/config/config'
 import { getOffersByResource } from '@services/payments/offers'
-import { LogIn, LogOut, ShoppingCart, Lock, UserPlus } from 'lucide-react'
+import { LogIn, LogOut, ShoppingCart, Lock, UserPlus, CheckCircle2, ArrowRight, ClockIcon } from 'lucide-react'
 import { removeCourse, startCourse } from '@services/courses/activity'
 import { revalidateTags, asArray } from '@services/utils/ts/requests'
 import UserAvatar from '../../UserAvatar'
@@ -16,6 +16,20 @@ import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency } from '@/lib/format'
 import { billingIntervalSuffix } from '@/lib/payments/billingInterval'
+// Sanar y Criar: ownership from the payments access endpoint (spec 4.1).
+import { useCourseAccess } from '@components/Hooks/useCourseAccess'
+import { useScT } from '@components/Payments/useScT'
+import { productTypeOfCourse, withRedirect } from '@components/Payments/commerce'
+// Sanar y Criar: free courses with history get "Continuar" + a confirmed leave.
+import {
+  LeaveCourseDialog,
+  LeaveCourseLink,
+  forgetLocalCourseProgress,
+  useFreeCourseContinue,
+} from '@components/ScFixes/FreeCourseContinue'
+import { useFixesT } from '@components/ScFixes/useFixesT'
+import toast from 'react-hot-toast'
+import { sessionUserKey } from '@components/SanarYCriar/progressLocal'
 
 interface Author {
   user: {
@@ -62,10 +76,11 @@ interface CourseActionsMobileProps {
 
 // Component for displaying multiple authors
 const MultipleAuthors = ({ authors }: { authors: Author[] }) => {
+  const { sc } = useScT()
   if (!authors.length) return null
   const displayedAvatars = authors.slice(0, 3)
   const remainingCount = Math.max(0, authors.length - 3)
-  
+
   // Avatar size for mobile
   const avatarSize = 36
   const borderSize = "border-2"
@@ -89,14 +104,14 @@ const MultipleAuthors = ({ authors }: { authors: Author[] }) => {
           </div>
         ))}
         {remainingCount > 0 && (
-          <div 
+          <div
             className="relative"
             style={{ zIndex: 0 }}
           >
-            <div 
+            <div
               className="flex items-center justify-center bg-neutral-100 text-neutral-600 font-medium rounded-full border-2 border-white shadow-sm"
-              style={{ 
-                width: `${avatarSize}px`, 
+              style={{
+                width: `${avatarSize}px`,
                 height: `${avatarSize}px`,
                 fontSize: '12px'
               }}
@@ -106,15 +121,15 @@ const MultipleAuthors = ({ authors }: { authors: Author[] }) => {
           </div>
         )}
       </div>
-      
+
       <div className="flex flex-col">
         <span className="text-xs text-neutral-400 font-medium">
-          {authors.length > 1 ? 'Authors' : 'Author'}
+          {authors.length > 1 ? sc('course_actions.authors') : sc('course_actions.author')}
         </span>
         {authors.length === 1 ? (
           <span className="text-sm font-semibold text-neutral-800">
-            {authors[0].user.first_name && authors[0].user.last_name 
-              ? `${authors[0].user.first_name} ${authors[0].user.last_name}` 
+            {authors[0].user.first_name && authors[0].user.last_name
+              ? `${authors[0].user.first_name} ${authors[0].user.last_name}`
               : `@${authors[0].user.username}`}
           </span>
         ) : (
@@ -122,7 +137,7 @@ const MultipleAuthors = ({ authors }: { authors: Author[] }) => {
             {authors[0].user.first_name && authors[0].user.last_name
               ? `${authors[0].user.first_name} ${authors[0].user.last_name}`
               : `@${authors[0].user.username}`}
-            {authors.length > 1 && ` & ${authors.length - 1} more`}
+            {authors.length > 1 && ` ${sc('course_actions.and_more', { count: authors.length - 1 })}`}
           </span>
         )}
       </div>
@@ -138,17 +153,23 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
   const queryClient = useQueryClient()
   const { track } = useLHAnalytics('learner')
   const [isActionLoading, setIsActionLoading] = useState(false)
+  const [isLeaveOpen, setIsLeaveOpen] = useState(false)
+  const { fx } = useFixesT()
   // Clean up course UUID by removing 'course_' prefix if it exists
   const cleanCourseUuid = course.course_uuid?.replace('course_', '');
   const resourceUuid = cleanCourseUuid ? `course_${cleanCourseUuid}` : null;
-    const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { sc, lng } = useScT()
+  const coursePath = `/course/${cleanCourseUuid ?? courseuuid}`
+  const isEbook = productTypeOfCourse(course) === 'ebook'
 
-  const isStarted = trailData?.runs?.find(
+  const run = trailData?.runs?.find(
     (run: any) => {
       const cleanRunCourseUuid = run.course?.course_uuid?.replace('course_', '');
       return cleanRunCourseUuid === cleanCourseUuid;
     }
-  ) ?? false;
+  );
+  const isStarted = !!run;
 
   // Public endpoint: no auth needed, works for unauthenticated visitors too
   const { data: offersResult, isLoading } = useQuery({
@@ -159,19 +180,78 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
   });
   const linkedOffers: any[] = asArray(offersResult);
 
+  // Sanar y Criar: same decision as CoursesActions.
+  const { access, isLoading: isAccessLoading } = useCourseAccess(course.course_uuid)
+  const forSale = access ? access.for_sale : linkedOffers.length > 0
+  const hasAccess = access ? access.has_access : isStarted
+
+  const allActivities = (course.chapters ?? []).flatMap((chapter: any) => chapter.activities ?? [])
+  const firstActivity: any = allActivities[0]
+  const completedIds = new Set((run?.steps ?? []).filter((s: any) => s.complete !== false).map((s: any) => String(s.activity_id)))
+  const nextActivity: any = allActivities.find((a: any) => !completedIds.has(String(a.id))) ?? firstActivity
+  const activityHref = (activity: any) =>
+    getUriWithOrg(orgslug, '') + `/course/${courseuuid}/activity/${activity.activity_uuid.replace('activity_', '')}`
+
+  // Sanar y Criar: continue point for free courses (saved progress first).
+  const freeContinue = useFreeCourseContinue({
+    course,
+    orgslug,
+    trailData,
+    fallbackHref: nextActivity ? activityHref(nextActivity) : null,
+  })
+  // Non-members keep the upstream button (it sends them to join), as on desktop.
+  const hasFreeHistory = !!session.data?.user && isUserPartOfTheOrg && (isStarted || freeContinue.hasProgress)
+
+  const handleContinue = async () => {
+    const href = freeContinue.href
+    if (!href) return
+    if (!isStarted) {
+      // Saved progress without a TrailRun: start the course as well.
+      setIsActionLoading(true)
+      try {
+        await startCourse('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
+        queryClient.invalidateQueries({ queryKey: queryKeys.trail.org(org.id) })
+      } catch {
+        // Best effort: the trail is a convenience, the lesson still opens.
+      } finally {
+        setIsActionLoading(false)
+      }
+    }
+    router.push(href)
+  }
+
+  // Resolves true when the learner left (closes the confirmation dialog).
+  const handleLeaveCourse = async (): Promise<boolean> => {
+    try {
+      await removeCourse('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
+    } catch {
+      toast.error(fx('course_actions.leave_error'))
+      return false
+    }
+    forgetLocalCourseProgress(sessionUserKey(session), course)
+    queryClient.invalidateQueries({ queryKey: queryKeys.trail.org(org.id) })
+    // The server deleted the saved positions too (progress.course / .activity).
+    queryClient.invalidateQueries({ queryKey: ['progress'] })
+    track(AnalyticsEvent.CourseLeft, { course_uuid: cleanCourseUuid })
+    toast.success(fx('course_actions.leave_success'))
+    await revalidateTags(['courses'], orgslug)
+    router.refresh()
+    return true
+  }
+
   const handleCourseAction = async () => {
     if (!session.data?.user) {
       track(AnalyticsEvent.CourseSignupPrompted, {
         reason: 'unauthenticated',
         intended_action: isStarted ? 'leave_course' : 'start_course',
       })
-      router.push(getUriWithOrg(orgslug, '/signup'))
+      router.push(getUriWithOrg(orgslug, withRedirect('/signup', coursePath)))
       return
     }
 
     // Check if user is part of the organization
     if (!isUserPartOfTheOrg) {
-      router.push(getUriWithOrg(orgslug, '/signup'))
+      router.push(getUriWithOrg(orgslug, withRedirect('/signup', coursePath)))
       return
     }
 
@@ -193,17 +273,10 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
           has_offers: linkedOffers.length > 0,
         })
 
-        // Get the first activity from the first chapter
-        const firstChapter = course.chapters?.[0]
-        const firstActivity = firstChapter?.activities?.[0]
-        
         if (firstActivity) {
           // Redirect to the first activity
           await revalidateTags(['activities'], orgslug)
-          router.push(
-            getUriWithOrg(orgslug, '') +
-            `/course/${courseuuid}/activity/${firstActivity.activity_uuid.replace('activity_', '')}`
-          )
+          router.push(activityHref(firstActivity))
         } else {
           router.refresh()
         }
@@ -216,12 +289,31 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
     }
   }
 
-  if (isLoading) {
+  // Sanar y Criar: owners of a paid course only start/continue, never leave.
+  const handleOwnedAction = async () => {
+    if (isStarted) {
+      if (nextActivity) router.push(activityHref(nextActivity))
+      return
+    }
+    setIsActionLoading(true)
+    try {
+      await startCourse('course_' + courseuuid, orgslug, session.data?.tokens?.access_token)
+      queryClient.invalidateQueries({ queryKey: queryKeys.trail.org(org.id) })
+    } catch (error) {
+      console.error('Failed to start owned course:', error)
+    } finally {
+      setIsActionLoading(false)
+    }
+    if (firstActivity) router.push(activityHref(firstActivity))
+  }
+
+  if (isLoading || isAccessLoading) {
     return <div className="animate-pulse h-16 bg-gray-100 rounded-lg mt-4 mb-8" />
   }
 
   // Show join organization prompt for authenticated users who are not part of the org
-  if (session.data?.user && !isUserPartOfTheOrg) {
+  // (free courses only: buying a paid one adds the buyer to the org).
+  if (!forSale && session.data?.user && !isUserPartOfTheOrg) {
     return (
       <div className="bg-white/90 backdrop-blur-sm shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden p-4 my-6 mx-2">
         <div className="flex flex-col space-y-3">
@@ -235,7 +327,7 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
             </p>
           </div>
           <a
-            href={getUriWithOrg(orgslug, '/signup')}
+            href={getUriWithOrg(orgslug, withRedirect('/signup', coursePath))}
             className="w-full py-2 px-4 rounded-lg bg-neutral-900 text-white font-semibold text-sm hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
@@ -247,7 +339,7 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
   }
 
   // Filter active authors and sort by role priority
-  const sortedAuthors = [...course.authors]
+  const sortedAuthors = [...(course.authors ?? [])]
     .filter(author => author.authorship_status === 'ACTIVE')
     .sort((a, b) => {
       const rolePriority: Record<string, number> = {
@@ -259,75 +351,157 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
       return rolePriority[a.authorship] - rolePriority[b.authorship];
     });
 
+  const renderPaid = () => {
+    if (hasAccess) {
+      const actionLabel = isEbook
+        ? sc('course_actions.read_now')
+        : isStarted ? sc('course_actions.continue') : sc('course_actions.start')
+      const ownedTitle =
+        access?.reason === 'admin' || access?.reason === 'author'
+          ? sc('course_actions.staff_access_title')
+          : isEbook ? sc('course_actions.owned_ebook_title') : sc('course_actions.owned_course_title')
+      return (
+        <div className="space-y-3">
+          <div className="p-3 bg-[#EEEDFF] rounded-[20px]">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-[#6559CA]" />
+              <span className="text-[#190933] text-sm font-semibold">{ownedTitle}</span>
+            </div>
+          </div>
+          {firstActivity && (
+            <button
+              onClick={handleOwnedAction}
+              disabled={isActionLoading}
+              className="w-full py-2.5 px-4 rounded-full bg-[#190933] text-white font-semibold text-sm hover:bg-[#41375B] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {isActionLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  {actionLabel}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      )
+    }
+
+    // Sanar y Criar: payment under review: no second purchase meanwhile.
+    if (access?.payment_pending) {
+      return (
+        <div role="status" className="p-4 bg-amber-50 border border-amber-200 rounded-[20px] space-y-1">
+          <div className="flex items-center gap-2">
+            <ClockIcon className="w-4 h-4 text-amber-700" />
+            <h3 className="text-[#190933] font-semibold text-sm">{sc('course_actions.payment_pending_title')}</h3>
+          </div>
+          <p className="text-xs text-[#584F72] leading-relaxed">{sc('course_actions.payment_pending_description')}</p>
+        </div>
+      )
+    }
+
+    const offer = linkedOffers[0]
+    const loginHref = getUriWithOrg(orgslug, withRedirect('/login', coursePath))
+    if (!offer) {
+      return (
+        <div className="p-3 bg-[#EEEDFF] rounded-[20px] space-y-1">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-[#6559CA]" />
+            <span className="text-[#190933] text-sm font-semibold">
+              {isEbook ? sc('course_actions.paid_ebook_title') : sc('course_actions.paid_course_title')}
+            </span>
+          </div>
+          <Link href={getUriWithOrg(orgslug, '/store')} className="text-xs text-[#4F43A4] underline">
+            {sc('course_actions.see_store')}
+          </Link>
+        </div>
+      )
+    }
+    const formattedPrice = offer?.amount != null
+      ? formatCurrency(Number(offer.amount), offer.currency ?? 'USD', lng)
+      : null;
+    // Sanar y Criar: link by offer_uuid (was offer_id).
+    const storeHref = getUriWithOrg(orgslug, `/store/offers/${offer.offer_uuid ?? offer.offer_id}`);
+
+    return (
+      <div className="space-y-3">
+        <div className="p-3 bg-[#FFFCF9] border border-[#EAE8F2] rounded-[20px]">
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-[#6559CA]" />
+            <div>
+              <span className="text-[#190933] text-sm font-semibold">{offer.offer_name}</span>
+              {formattedPrice && (
+                <p className="text-[#584F72] text-xs">
+                  {formattedPrice}
+                  {offer.offer_type === 'subscription'
+                    ? ` ${billingIntervalSuffix(offer.billing_interval, t)}`
+                    : ` · ${sc('offer_card.one_time')}`}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+        <Link
+          href={storeHref}
+          onClick={() => track(AnalyticsEvent.CourseOfferCtaClicked, {
+            offer_uuid: offer.offer_uuid,
+            offer_type: offer.offer_type,
+            amount: offer.amount,
+            currency: offer.currency,
+          })}
+          className="w-full py-2.5 px-4 rounded-full bg-[#190933] text-white font-semibold text-sm hover:bg-[#41375B] transition-colors flex items-center justify-center gap-2"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          {formattedPrice ? sc('offer_card.cta', { price: formattedPrice }) : sc('course_actions.buy')}
+        </Link>
+        {linkedOffers.length > 1 && (
+          <p className="text-xs text-gray-400 text-center">
+            {sc('course_actions.options_available', { count: linkedOffers.length })}
+          </p>
+        )}
+        {!session.data?.user && (
+          <p className="text-xs text-[#584F72] text-center">
+            {sc('course_actions.already_bought')}{' '}
+            <Link href={loginHref} className="font-semibold text-[#4F43A4] underline">
+              {sc('course_actions.login')}
+            </Link>
+          </p>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white/90 backdrop-blur-sm shadow-md shadow-gray-300/25 outline outline-1 outline-neutral-200/40 rounded-lg overflow-hidden p-4 my-6 mx-2">
       <div className="flex flex-col space-y-4">
         <MultipleAuthors authors={sortedAuthors} />
-        
-        {linkedOffers.length > 0 ? (() => {
-          const offer = linkedOffers[0];
-          const formattedPrice = offer?.amount != null
-            ? formatCurrency(offer.amount, offer.currency ?? 'USD', i18n.language)
-            : null;
-          const storeHref = org?.slug ? getUriWithOrg(org.slug, `/store/offers/${offer.offer_id}`) : '#';
 
-          return (
-            <div className="space-y-3">
-              {isStarted ? (
-                <>
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-green-800 text-sm font-semibold">{t('courses.you_own_this_course')}</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleCourseAction}
-                    disabled={isActionLoading}
-                    className="w-full py-2 px-4 rounded-lg bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors flex items-center justify-center gap-2 disabled:bg-red-400"
-                  >
-                    {isActionLoading ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <LogOut className="w-4 h-4" />
-                        {t('courses.leave_course')}
-                      </>
-                    )}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4 text-gray-600" />
-                      <div>
-                        <span className="text-gray-900 text-sm font-semibold">{offer.offer_name}</span>
-                        {formattedPrice && (
-                          <p className="text-gray-500 text-xs">{formattedPrice}{offer.offer_type === 'subscription' ? ` ${billingIntervalSuffix(offer.billing_interval, t)}` : ' one-time'}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <Link href={storeHref}>
-                    <button
-                      onClick={() => track(AnalyticsEvent.CourseOfferCtaClicked, {
-                        offer_uuid: offer.offer_uuid,
-                        offer_type: offer.offer_type,
-                        amount: offer.amount,
-                        currency: offer.currency,
-                      })}
-                      className="w-full py-2 px-4 rounded-lg bg-neutral-900 text-white font-semibold text-sm hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      {formattedPrice ? `Get Access for ${formattedPrice}` : 'Purchase Course'}
-                    </button>
-                  </Link>
-                </>
-              )}
-            </div>
-          );
-        })() : (
+        {forSale ? renderPaid() : hasFreeHistory ? (
+          // Sanar y Criar: free course with history: continue, leave is secondary.
+          <div className="space-y-2">
+            {freeContinue.href && (
+              <button
+                onClick={handleContinue}
+                disabled={isActionLoading}
+                className="w-full py-2.5 px-4 rounded-full bg-[#190933] text-white font-semibold text-sm hover:bg-[#41375B] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {isActionLoading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    {fx('course_actions.continue')}
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            )}
+            {isStarted && (
+              <LeaveCourseLink size="sm" onClick={() => setIsLeaveOpen(true)} disabled={isActionLoading} />
+            )}
+            <LeaveCourseDialog open={isLeaveOpen} onOpenChange={setIsLeaveOpen} onConfirm={handleLeaveCourse} />
+          </div>
+        ) : (
           <button
             onClick={handleCourseAction}
             disabled={isActionLoading}
@@ -362,4 +536,4 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
   )
 }
 
-export default CourseActionsMobile 
+export default CourseActionsMobile

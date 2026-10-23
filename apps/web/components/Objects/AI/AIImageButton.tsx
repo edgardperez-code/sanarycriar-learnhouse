@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Sparkle } from '@phosphor-icons/react'
 import AIImagePicker from './AIImagePicker'
 
@@ -21,10 +22,13 @@ const AIImageButton: React.FC<AIImageButtonProps> = ({
   onSelect,
   onSelectFile,
   className,
-  label = 'Generate with AI',
+  label,
   variant = 'button',
 }) => {
   const [open, setOpen] = useState(false)
+  // Sanar y Criar: translated default label (was a hard-coded "Generate with AI").
+  const { t } = useTranslation()
+  const buttonLabel = label ?? t('sc_ui.ai.generate_with_ai', { defaultValue: 'Generar con IA' })
 
   const base =
     variant === 'chip'
@@ -35,7 +39,7 @@ const AIImageButton: React.FC<AIImageButtonProps> = ({
     <>
       <button type="button" onClick={() => setOpen(true)} className={className || base}>
         <Sparkle weight="duotone" size={15} />
-        {label}
+        {buttonLabel}
       </button>
       {open && (
         <AIImagePicker

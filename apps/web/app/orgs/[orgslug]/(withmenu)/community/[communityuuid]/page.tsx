@@ -32,7 +32,7 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
 
   const seoConfig = getOrgSeoConfig(org)
 
-  const title = buildPageTitle(community ? community.name : 'Community', org.name, seoConfig)
+  const title = buildPageTitle(community ? community.name : 'Comunidad', org.name, seoConfig) // Sanar y Criar: Spanish page title, "Sanar y Criar" fallback.
   const description = community?.description || seoConfig.default_meta_description || `Community discussions from ${org.name}`
 
   const ogImageUrl = seoConfig.default_og_image
@@ -152,8 +152,8 @@ const CommunityPage = async (params: any) => {
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Home', url: await getServerCanonicalUrl(orgslug, '/') },
-    { name: 'Communities', url: await getServerCanonicalUrl(orgslug, '/communities') },
+    { name: 'Inicio', url: await getServerCanonicalUrl(orgslug, '/') },
+    { name: 'Comunidades', url: await getServerCanonicalUrl(orgslug, '/communities') },
     { name: community.name || 'Community', url: await getServerCanonicalUrl(orgslug, `/community/${communityuuid}`) },
   ])
 

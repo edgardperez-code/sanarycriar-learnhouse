@@ -6,6 +6,8 @@ import { getServerCanonicalUrl } from '@/lib/seo/utils.server'
 import { JsonLd } from '@components/SEO/JsonLd'
 import { getPublicOffers } from '@services/payments/offers'
 import Store from './store'
+// Sanar y Criar: translated unavailable state.
+import StoreUnavailable from '@components/Payments/StoreUnavailable'
 
 type PageParams = Promise<{ orgslug: string }>
 
@@ -17,8 +19,9 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
     ? getOrgOgImageMediaDirectory(org?.org_uuid, seoConfig.default_og_image)
     : null
   const imageUrl = ogImageUrl || (org ? getOrgThumbnailMediaDirectory(org.org_uuid, org.thumbnail_image) : undefined)
-  const title = buildPageTitle('Store', org?.name || 'Organization', seoConfig)
-  const description = `Browse offers and subscriptions from ${org?.name || 'this organization'}`
+  // Sanar y Criar: Spanish-first storefront metadata.
+  const title = buildPageTitle('Tienda', org?.name || 'Sanar y Criar', seoConfig)
+  const description = `Cursos y ebooks de ${org?.name || 'Sanar y Criar'} con acceso inmediato.`
   const canonical = await getServerCanonicalUrl(orgslug, '/store')
 
   return {
@@ -30,7 +33,7 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
       title,
       description,
       type: 'website',
-      ...(imageUrl && { images: [{ url: imageUrl, width: 800, height: 600, alt: org?.name || 'Store' }] }),
+      ...(imageUrl && { images: [{ url: imageUrl, width: 800, height: 600, alt: org?.name || 'Tienda' }] }),
     },
     twitter: {
       card: 'summary_large_image',
@@ -48,17 +51,7 @@ export default async function StorePage({ params }: { params: PageParams }) {
   const paymentsEnabled = org?.config?.config?.resolved_features?.payments?.enabled ?? org?.config?.config?.features?.payments?.enabled !== false
 
   if (!paymentsEnabled) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center mb-4 nice-shadow">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" x2="21" y1="6" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        </div>
-        <h2 className="text-xl font-bold text-gray-600 mb-2">Store not available</h2>
-        <p className="text-gray-400 text-sm max-w-sm">
-          This organization has not enabled their store yet.
-        </p>
-      </div>
-    )
+    return <StoreUnavailable />
   }
 
   let offers: any[] = []
@@ -70,8 +63,8 @@ export default async function StorePage({ params }: { params: PageParams }) {
   }
 
   const breadcrumbJsonLd = buildBreadcrumbJsonLd([
-    { name: 'Home', url: await getServerCanonicalUrl(orgslug, '/') },
-    { name: 'Store', url: await getServerCanonicalUrl(orgslug, '/store') },
+    { name: 'Inicio', url: await getServerCanonicalUrl(orgslug, '/') },
+    { name: 'Tienda', url: await getServerCanonicalUrl(orgslug, '/store') },
   ])
 
   return (

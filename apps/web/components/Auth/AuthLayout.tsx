@@ -1,6 +1,5 @@
 'use client'
 import React from 'react'
-import LanguageSwitcher from '@components/Utils/LanguageSwitcher'
 import AuthBrandingPanel from '@components/Auth/AuthBrandingPanel'
 import AuthMobileHeader from '@components/Auth/AuthMobileHeader'
 import { AuthFooter } from '@components/Footers/LegalFooters'
@@ -16,28 +15,10 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ org, welcomeText, title, subtitle, children }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen lg:h-screen bg-white flex flex-col lg:flex-row relative overflow-hidden">
-      {/* Page-level blueprint grid, bottom-anchored */}
-      <div
-        className="absolute inset-0 pointer-events-none z-0"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px),
-            linear-gradient(rgba(0,0,0,0.018) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.018) 1px, transparent 1px)`,
-          backgroundSize: '80px 80px, 80px 80px, 16px 16px, 16px 16px',
-          maskImage: 'linear-gradient(to top, black 0%, transparent 60%)',
-          WebkitMaskImage: 'linear-gradient(to top, black 0%, transparent 60%)',
-        }}
-      />
-
-      {/* Language switcher: must sit ABOVE the right-hand branding panel
-          (z-10), otherwise the panel intercepts its clicks. `z-dropdown`
-          resolves to z-index:auto here, so use a concrete z-50. */}
-      <div className="absolute top-4 end-4 z-50">
-        <LanguageSwitcher />
-      </div>
+    // Sanar y Criar: nube page with soft watercolor corners instead of the
+    // blueprint grid, no language switcher (Spanish only). `sc-auth` gives the
+    // forms the brand shapes (pill buttons, 12px fields; see globals.css).
+    <div className="sc-auth sc-watercolor min-h-screen lg:h-screen bg-nube flex flex-col lg:flex-row relative overflow-hidden">
 
       {/* Mobile Header - visible only on small screens */}
       <div className="lg:hidden relative z-10">

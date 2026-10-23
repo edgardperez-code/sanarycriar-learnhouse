@@ -15,13 +15,15 @@ SUPPORTED_LANGUAGES: Final[tuple[str, ...]] = (
 
 # Locales selectable as an organisation's UI language; mirrors
 # apps/web/lib/languages.ts. A UI locale need not have an email-translation
-# bundle; emails for any locale without one fall back to English (see `t()`).
+# bundle; emails for any locale without one fall back to DEFAULT_LANGUAGE
+# (see `t()`).
 SUPPORTED_UI_LANGUAGES: Final[tuple[str, ...]] = (
     "en", "fr", "de", "es", "ar", "ja", "pt", "ru", "zh", "hi",
     "ko", "it", "tr", "vi", "id", "pl", "uk", "nl", "th", "bn", "sk", "fa",
 )
 
-DEFAULT_LANGUAGE: Final[str] = "en"
+# Sanar y Criar: Spanish when the org/user language is unknown (was "en").
+DEFAULT_LANGUAGE: Final[str] = "es"
 
 
 EMAIL_TRANSLATIONS: dict[str, dict[str, str]] = {
@@ -202,57 +204,80 @@ EMAIL_TRANSLATIONS: dict[str, dict[str, str]] = {
         "magic_login.cta": "Anmelden",
         "magic_login.footer": "Dieser Link meldet dich bei deinem {brand}-Konto an.",
     },
+    # Sanar y Criar: Spanish is the primary language; complete bundle, warm
+    # "tú" copy, and the platform is named Sanar y Criar (not LearnHouse).
     "es": {
-        "account_creation.subject": "¡Bienvenido a LearnHouse, {username}!",
-        "account_creation.heading": "¡Bienvenido, {username}!",
-        "account_creation.body": "Tu cuenta de LearnHouse está lista. Empieza creando tu propia organización o uniéndote a una.",
+        "account_creation.subject": "¡Te damos la bienvenida a Sanar y Criar, {username}!",
+        "account_creation.heading": "¡Hola, {username}!",
+        "account_creation.body": "Tu cuenta de Sanar y Criar está lista. Entra cuando quieras para ver tus cursos y seguir a tu ritmo.",
         "account_creation.subject_org": "¡Te damos la bienvenida a {org_name}, {username}!",
-        "account_creation.body_in_org": "Tu cuenta de {org_name} está lista. Empieza a continuación.",
-        "common.powered_by": "Con la tecnología de LearnHouse",
+        "account_creation.body_in_org": "Tu cuenta de {org_name} está lista. Entra con el botón de abajo para empezar.",
+        "common.powered_by": "Sanar y Criar · Hilda Hernández, psicóloga infanto-juvenil",
         "account_creation.cta": "Empezar",
         "account_creation.footer": "¿Necesitas ayuda? Visita {academy_link} para aprender lo básico.",
         "academy_link_text": "LearnHouse Academy",
+
+        "org_created.subject": "Tu organización {org_name} está lista",
+        "org_created.heading": "¡{org_name} ya está en línea!",
+        "org_created.body": "Tu nueva organización está configurada y lista. Invita a tu equipo, crea tu primer curso y hazla tuya.",
+        "org_created.cta": "Abrir tu panel",
+        "org_created.footer": "Recibes este correo porque creaste una organización en Sanar y Criar.",
+
+        "org_deleted.subject": "Se eliminó tu organización {org_name}",
+        "org_deleted.heading": "{org_name} fue eliminada",
+        "org_deleted.body": "Tu organización y todo su contenido se eliminaron de forma permanente de Sanar y Criar. Si no fuiste tú, escríbenos de inmediato.",
+        "org_deleted.footer": "Recibes este correo porque eras administradora o administrador de esta organización.",
+
+        "account_deleted.subject": "Se eliminó tu cuenta de Sanar y Criar",
+        "account_deleted.heading": "Tu cuenta fue eliminada",
+        "account_deleted.body": "Tu cuenta de Sanar y Criar y tus datos personales se eliminaron de forma permanente. Lamentamos verte partir. Si no fuiste tú, escríbenos de inmediato.",
+        "account_deleted.footer": "Este correo confirma que tu cuenta fue eliminada.",
+
+        "email_changed.subject": "Se cambió tu dirección de correo",
+        "email_changed.heading": "Se cambió tu dirección de correo",
+        "email_changed.body": "Hola {username}, el correo de tu cuenta se cambió a {new_email}. Si hiciste este cambio, no tienes que hacer nada más.",
+        "email_changed.footer": "Si no hiciste este cambio, restablece tu contraseña y escríbenos de inmediato.",
 
         "password_reset.subject": "Restablece tu contraseña",
         "password_reset.heading": "Restablece tu contraseña",
         "password_reset.body": "Hola {username}, recibimos una solicitud para restablecer tu contraseña. Usa el código de abajo o haz clic en el botón.",
         "password_reset.cta": "Restablecer contraseña",
-        "password_reset.footer_org": "Si no solicitaste restablecer tu contraseña, puedes ignorar este correo. Este enlace caducará pronto.",
-        "password_reset.footer_platform": "Si no solicitaste restablecer tu contraseña, puedes ignorar este correo. Este enlace caducará en 1 hora.",
+        "password_reset.footer_org": "Si no pediste restablecer tu contraseña, puedes ignorar este correo. Este enlace vence en poco tiempo.",
+        "password_reset.footer_platform": "Si no pediste restablecer tu contraseña, puedes ignorar este correo. Este enlace vence en 1 hora.",
 
-        "invitation.subject": "Te han invitado a unirte a {org_name}",
-        "invitation.heading": "¡Te han invitado!",
-        "invitation.intro": "<strong>@{inviter}</strong> te ha invitado a unirte a <strong>{org_name}</strong>.",
-        "invitation.code_hint": "Usa el código de invitación de arriba, o haz clic en el botón para registrarte.",
+        "invitation.subject": "Te invitaron a unirte a {org_name}",
+        "invitation.heading": "¡Tienes una invitación!",
+        "invitation.intro": "<strong>@{inviter}</strong> te invitó a unirte a <strong>{org_name}</strong>.",
+        "invitation.code_hint": "Usa el código de invitación de arriba, o haz clic en el botón de abajo para crear tu cuenta.",
         "invitation.no_code_hint": "Haz clic en el botón de abajo para empezar.",
-        "invitation.cta": "Unirse a {org_name}",
-        "invitation.footer": "Esta invitación fue enviada por @{inviter}. Si no la esperabas, puedes ignorarla.",
+        "invitation.cta": "Unirme a {org_name}",
+        "invitation.footer": "Esta invitación la envió @{inviter}. Si no la esperabas, puedes ignorarla.",
 
-        "org_join.subject": "Bienvenido a {org_name}",
+        "org_join.subject": "Te damos la bienvenida a {org_name}",
         "org_join.heading": "¡Ya estás dentro, {username}!",
-        "org_join.body": "Ya eres miembro de {org_name}. Abre tu página de inicio para explorar los cursos y continuar donde lo dejaste.",
+        "org_join.body": "Ya eres parte de {org_name}. Abre tu página de inicio para ver los cursos y seguir donde lo dejaste.",
         "org_join.cta": "Ver mis cursos",
-        "org_join.footer": "Recibes este correo porque te has unido a {org_name}.",
+        "org_join.footer": "Recibes este correo porque te uniste a {org_name}.",
 
-        "role_changed.subject": "Tu rol en {org_name} ha sido actualizado",
-        "role_changed.heading": "Tu rol ha sido actualizado",
-        "role_changed.body_1": "Hola {username}, tu rol en <strong>{org_name}</strong> ha cambiado a <strong>{role}</strong>.",
-        "role_changed.body_2": "Esto puede afectar lo que puedes ver y gestionar dentro de la organización. Si tienes preguntas, contacta al administrador de tu organización.",
-        "role_changed.footer": "Recibiste este correo porque tu rol fue cambiado en {org_name}.",
+        "role_changed.subject": "Se actualizó tu rol en {org_name}",
+        "role_changed.heading": "Se actualizó tu rol",
+        "role_changed.body_1": "Hola {username}, tu rol en <strong>{org_name}</strong> cambió a <strong>{role}</strong>.",
+        "role_changed.body_2": "Esto puede cambiar lo que puedes ver y administrar dentro de la organización. Si tienes preguntas, escríbele a quien administra tu organización.",
+        "role_changed.footer": "Recibes este correo porque cambió tu rol en {org_name}.",
         "role_changed.cta": "Ir a {org_name}",
 
         "email_verification.subject": "Verifica tu dirección de correo",
         "email_verification.heading": "Verifica tu correo",
-        "email_verification.body": "Hola {username}, ¡bienvenido a {brand}! Haz clic en el botón para verificar tu dirección de correo y activar tu cuenta.",
-        "email_verification.cta": "Verificar correo",
+        "email_verification.body": "Hola {username}, ¡te damos la bienvenida a {brand}! Haz clic en el botón de abajo para verificar tu correo y activar tu cuenta.",
+        "email_verification.cta": "Verificar mi correo",
         "email_verification.copy_paste": "O copia y pega este enlace:",
-        "email_verification.footer": "Este enlace caduca en 1 hora. Si no creaste una cuenta de {brand}, puedes ignorar este correo.",
+        "email_verification.footer": "Este enlace vence en 1 hora. Si no creaste una cuenta en {brand}, puedes ignorar este correo.",
 
-        "magic_login.subject": "Tu enlace de inicio de sesión de {brand}",
-        "magic_login.heading": "Inicia sesión en {brand}",
-        "magic_login.body": "Hola {username}, haz clic en el botón de abajo para iniciar sesión. Este enlace funciona una sola vez y caduca en 15 minutos. Si no lo solicitaste, puedes ignorar este correo.",
+        "magic_login.subject": "Tu enlace para entrar a {brand}",
+        "magic_login.heading": "Entra a {brand}",
+        "magic_login.body": "Hola {username}, haz clic en el botón de abajo para iniciar sesión. Este enlace funciona una sola vez y vence en 15 minutos. Si no lo pediste, puedes ignorar este correo.",
         "magic_login.cta": "Iniciar sesión",
-        "magic_login.footer": "Este enlace inicia sesión en tu cuenta de {brand}.",
+        "magic_login.footer": "Este enlace te permite entrar a tu cuenta de {brand}.",
     },
     "ar": {
         "account_creation.subject": "مرحبًا بك في LearnHouse يا {username}!",
@@ -1097,8 +1122,48 @@ for _nudge_lang, _nudge_keys in NUDGE_TRANSLATIONS.items():
     EMAIL_TRANSLATIONS.setdefault(_nudge_lang, {}).update(_nudge_keys)
 
 
+# Sanar y Criar: platform branding. The upstream copy above is kept as is (to
+# keep merges small) and patched here:
+# - Mail that names the platform says "Sanar y Criar", not "LearnHouse".
+# - The footer line of org-branded mail names Sanar y Criar instead of
+#   "Powered by LearnHouse" (AGPL-3.0 asks for no attribution in email); its
+#   link target is POWERED_BY_URL in branding.py.
+PLATFORM_NAME: Final[str] = "Sanar y Criar"
+_PLATFORM_NAMED_KEYS: Final[tuple[str, ...]] = (
+    "account_creation.subject",
+    "account_creation.body",
+    "org_created.footer",
+    "org_deleted.body",
+    "account_deleted.subject",
+    "account_deleted.body",
+)
+FOOTER_LINE: Final[dict[str, str]] = {
+    "es": "Sanar y Criar · Hilda Hernández, psicóloga infanto-juvenil",
+    "en": "Sanar y Criar · Hilda Hernández, child and adolescent psychologist",
+}
+
+for _lang, _bundle in EMAIL_TRANSLATIONS.items():
+    for _key in _PLATFORM_NAMED_KEYS:
+        if _key in _bundle:
+            _bundle[_key] = _bundle[_key].replace("LearnHouse", PLATFORM_NAME)
+    _bundle["common.powered_by"] = FOOTER_LINE.get(_lang, FOOTER_LINE["en"])
+
+# Sanar y Criar: the org-less welcome mail's footer link points at our site
+# (ACADEMY_URL in users/emails.py), not at LearnHouse Academy.
+ACADEMY_LINK_TEXT: Final[str] = "sanarycriarve.com"
+ACCOUNT_CREATION_FOOTER: Final[dict[str, str]] = {
+    "es": "¿Tienes alguna duda? En {academy_link} encuentras cómo escribirnos.",
+    "en": "Any questions? You'll find how to reach us at {academy_link}.",
+}
+
+for _lang, _bundle in EMAIL_TRANSLATIONS.items():
+    _bundle["academy_link_text"] = ACADEMY_LINK_TEXT
+    if _lang in ACCOUNT_CREATION_FOOTER:
+        _bundle["account_creation.footer"] = ACCOUNT_CREATION_FOOTER[_lang]
+
+
 def normalize_language(lang: str | None) -> str:
-    """Return a supported locale code, falling back to English."""
+    """Return a supported locale code, falling back to DEFAULT_LANGUAGE."""
     if not lang:
         return DEFAULT_LANGUAGE
     code = lang.split("-")[0].lower()
@@ -1106,10 +1171,18 @@ def normalize_language(lang: str | None) -> str:
 
 
 def t(lang: str | None, key: str, **fmt) -> str:
-    """Translate `key` for `lang`, falling back to English on missing locale or key."""
+    """Translate `key` for `lang`.
+
+    Sanar y Criar: a key missing from the locale falls back to Spanish
+    (DEFAULT_LANGUAGE), then English, then the key itself.
+    """
     code = normalize_language(lang)
-    bundle = EMAIL_TRANSLATIONS.get(code, EMAIL_TRANSLATIONS[DEFAULT_LANGUAGE])
-    template = bundle.get(key) or EMAIL_TRANSLATIONS[DEFAULT_LANGUAGE].get(key, key)
+    template = key
+    for fallback in (code, DEFAULT_LANGUAGE, "en"):
+        value = EMAIL_TRANSLATIONS.get(fallback, {}).get(key)
+        if value:
+            template = value
+            break
     try:
         return template.format(**fmt)
     except (KeyError, IndexError):

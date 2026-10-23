@@ -27,6 +27,12 @@ export const queryKeys = {
   trail: {
     org: (orgId: number) => ['trail', 'org', orgId] as const,
   },
+  // Sanar y Criar: learner progress (video position, last page). Keyed by the
+  // clean uuid (no `course_` / `activity_` prefix).
+  progress: {
+    course: (uuid: string) => ['progress', 'course', uuid] as const,
+    activity: (uuid: string) => ['progress', 'activity', uuid] as const,
+  },
   folders: {
     list: (orgId: number) => ['folders', orgId] as const,
     detail: (uuid: string) => ['folder', uuid] as const,

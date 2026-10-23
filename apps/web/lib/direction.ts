@@ -45,29 +45,33 @@ export function dirMultiplier(dir: Direction): 1 | -1 {
 }
 
 /**
- * Detect the language the same way i18next's LanguageDetector does, in the same
- * order (see `detection.order` in lib/i18n.ts). Client-only; returns 'en' on
- * the server.
+ * Sanar y Criar: the platform language, used when nothing else applies. Same
+ * value as DEFAULT_LANGUAGE in lib/i18n.ts (not imported: this module must
+ * stay dependency-free).
+ */
+export const DEFAULT_LANGUAGE = 'es'
+
+/**
+ * Detect the language the same way lib/i18n.ts does, in the same order (see
+ * `detection.order` there). Client-only; returns DEFAULT_LANGUAGE on the
+ * server.
  *
- * Kept byte-for-byte equivalent to the detector in public/dir-init.js.
+ * Sanar y Criar: kept equivalent to the detector in public/dir-init.js:
+ *   1. the stored language, only when the user picked it explicitly
+ *      (`i18nextLng_userPicked`, set by changeLanguage() in lib/i18n.ts);
+ *   2. `?lng=`;
+ *   3. Spanish. No cookie and no browser-language detection.
  */
 export function detectClientLanguage(): string {
-  if (typeof window === 'undefined') return 'en'
+  if (typeof window === 'undefined') return DEFAULT_LANGUAGE
 
   try {
-    const stored = window.localStorage.getItem('i18nextLng')
-    if (stored) return stored
+    if (window.localStorage.getItem('i18nextLng_userPicked')) {
+      const stored = window.localStorage.getItem('i18nextLng')
+      if (stored) return stored
+    }
   } catch {
     /* localStorage can throw in private mode / sandboxed iframes */
-  }
-
-  const cookie = document.cookie.match(/(?:^|;\s*)i18next=([^;]*)/)
-  if (cookie) {
-    try {
-      return decodeURIComponent(cookie[1])
-    } catch {
-      /* malformed cookie value */
-    }
   }
 
   try {
@@ -77,7 +81,7 @@ export function detectClientLanguage(): string {
     /* malformed query string */
   }
 
-  return navigator.languages?.[0] || navigator.language || 'en'
+  return DEFAULT_LANGUAGE
 }
 
 /**

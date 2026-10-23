@@ -1,4 +1,8 @@
 'use client'
+// Sanar y Criar: provider-agnostic sales dashboard (overview, customers,
+// transactions). Uses /overview and /transactions instead of the Stripe
+// endpoints; subscriptions, MRR/ARR and churn are hidden because only
+// one-time purchases exist; a provider chip replaces the card brand.
 import React, { useState } from 'react'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
@@ -6,18 +10,13 @@ import { useQuery } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
 import {
   getOrgCustomers,
-  getStripeOverview,
-  getStripeCharges,
-  getStripeSubscriptions,
+  getPaymentsOverview,
+  getPaymentsTransactions,
 } from '@services/payments/payments'
-import { Badge } from '@components/ui/badge'
 import PageLoading from '@components/Objects/Loaders/PageLoading'
 import {
   CreditCard,
   ExternalLink,
-  RefreshCcw,
-  SquareCheck,
-  TrendingUp,
   DollarSign,
   Users,
   Activity,
@@ -25,7 +24,6 @@ import {
   ChevronLeft,
   AlertCircle,
   CheckCircle2,
-  Clock,
 } from 'lucide-react'
 import { getUserAvatarMediaDirectory } from '@services/media/media'
 import UserAvatar from '@components/Objects/UserAvatar'
@@ -40,53 +38,87 @@ import {
   TableHeader,
   TableRow,
 } from '@components/ui/table'
+import { formatCurrency, formatDate } from '@/lib/format'
+import { useScT, ScTranslate } from '@components/Payments/useScT'
+import { providerLabel } from '@components/Payments/commerce'
+import { safeExternalUrl } from '@services/security/url'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function fmt(amount: number, currency = 'USD') {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount)
+function useFormatters() {
+  const { sc, lng } = useScT()
+  const fmt = (amount: number | null | undefined, currency?: string | null) =>
+    amount == null ? '—' : formatCurrency(Number(amount), currency || 'USD', lng)
+  const fmtDate = (iso: string | null | undefined) =>
+    iso ? formatDate(iso, lng, { dateStyle: undefined, month: 'short', day: 'numeric', year: 'numeric' }) : '—'
+  return { sc, fmt, fmtDate }
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function CardChip({ brand, last4 }: { brand?: string; last4?: string }) {
-  const labels: Record<string, string> = {
-    visa: 'Visa', mastercard: 'MC', amex: 'Amex',
-    discover: 'Disc', jcb: 'JCB', unionpay: 'UP',
-  }
-  if (!brand) return <span className="text-gray-400">n/a</span>
+function ProviderChip({ provider, sc }: { provider?: string | null; sc: ScTranslate }) {
+  const label = providerLabel(provider, sc)
+  if (!label) return <span className="text-gray-400">—</span>
+  const isPaypal = (provider ?? '').toLowerCase() === 'paypal'
   return (
-    <div className="flex items-center space-x-1.5">
-      <span className="text-[10px] font-bold uppercase tracking-wide text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-        {labels[brand.toLowerCase()] ?? brand}
-      </span>
-      {last4 && <span className="text-sm text-gray-600 font-mono">••••&nbsp;{last4}</span>}
-    </div>
+    <span
+      className={`text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ${
+        isPaypal ? 'text-[#003087] bg-[#E6EEF8]' : 'text-[#6559CA] bg-[#EEEDFF]'
+      }`}
+    >
+      {label}
+    </span>
   )
 }
 
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  active:    { label: 'Active',    cls: 'bg-green-100 text-green-700' },
-  completed: { label: 'Completed', cls: 'bg-blue-100 text-blue-700' },
-  succeeded: { label: 'Paid',      cls: 'bg-green-100 text-green-700' },
-  pending:   { label: 'Pending',   cls: 'bg-amber-100 text-amber-700' },
-  failed:    { label: 'Failed',    cls: 'bg-red-100 text-red-600' },
-  cancelled: { label: 'Cancelled', cls: 'bg-gray-100 text-gray-500' },
-  canceled:  { label: 'Cancelled', cls: 'bg-gray-100 text-gray-500' },
-  refunded:  { label: 'Refunded',  cls: 'bg-purple-100 text-purple-700' },
-  trialing:  { label: 'Trialing',  cls: 'bg-sky-100 text-sky-700' },
-  past_due:  { label: 'Past due',  cls: 'bg-red-100 text-red-600' },
+const STATUS_CLS: Record<string, string> = {
+  active: 'bg-green-100 text-green-700',
+  completed: 'bg-blue-100 text-blue-700',
+  paid: 'bg-green-100 text-green-700',
+  accredited: 'bg-green-100 text-green-700',
+  succeeded: 'bg-green-100 text-green-700',
+  pending: 'bg-amber-100 text-amber-700',
+  created: 'bg-gray-100 text-gray-500',
+  approved: 'bg-sky-100 text-sky-700',
+  failed: 'bg-red-100 text-red-600',
+  expired: 'bg-gray-100 text-gray-500',
+  cancelled: 'bg-gray-100 text-gray-500',
+  canceled: 'bg-gray-100 text-gray-500',
+  refunded: 'bg-purple-100 text-purple-700',
 }
 
-function StatusPill({ status }: { status: string }) {
-  const s = STATUS_BADGE[status] ?? { label: status, cls: 'bg-gray-100 text-gray-500' }
+function StatusPill({ status, sc }: { status: string; sc: ScTranslate }) {
+  const key = (status ?? '').toLowerCase()
+  const cls = STATUS_CLS[key] ?? 'bg-gray-100 text-gray-500'
+  const label = STATUS_CLS[key] ? sc(`status.${key === 'canceled' ? 'cancelled' : key}`) : status
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${s.cls}`}>
-      {s.label}
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cls}`}>
+      {label}
     </span>
+  )
+}
+
+/** Sanar y Criar: a second charge for something already bought, or a sandbox sale. */
+function ChargeFlags({ charge, sc }: { charge: any; sc: ScTranslate }) {
+  if (!charge?.needs_refund && !charge?.test_mode) return null
+  return (
+    <>
+      {charge.needs_refund && (
+        <span
+          title={sc('customers.duplicate_charge_hint')}
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700"
+        >
+          {sc('customers.duplicate_charge')}
+        </span>
+      )}
+      {charge.test_mode && (
+        <span
+          title={sc('customers.test_sale_hint')}
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600"
+        >
+          {sc('customers.test_sale')}
+        </span>
+      )}
+    </>
   )
 }
 
@@ -94,17 +126,16 @@ function StatusPill({ status }: { status: string }) {
 // Metric card
 // ---------------------------------------------------------------------------
 function MetricCard({
-  label, value, sub, icon: Icon, color,
-}: { label: string; value: string; sub?: string; icon: any; color: string }) {
+  label, value, icon: Icon, color,
+}: { label: string; value: string; icon: any; color: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 flex items-center space-x-4">
+    <div className="bg-white border border-[#EAE8F2] rounded-xl px-5 py-4 flex items-center space-x-4">
       <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
         <Icon size={18} />
       </div>
       <div>
-        <div className="text-2xl font-bold text-gray-900 tracking-tight">{value}</div>
+        <div className="text-2xl font-bold text-[#190933] tracking-tight">{value}</div>
         <div className="text-xs text-gray-500">{label}</div>
-        {sub && <div className="text-xs text-gray-400 mt-0.5">{sub}</div>}
       </div>
     </div>
   )
@@ -113,69 +144,74 @@ function MetricCard({
 // ---------------------------------------------------------------------------
 // Tab bar (internal)
 // ---------------------------------------------------------------------------
-type Tab = 'overview' | 'customers' | 'transactions' | 'subscriptions'
+type Tab = 'overview' | 'customers' | 'transactions'
 
-const TABS: { id: Tab; label: string; icon: any }[] = [
-  { id: 'overview',      label: 'Overview',      icon: Activity },
-  { id: 'customers',     label: 'Customers',     icon: Users },
-  { id: 'transactions',  label: 'Transactions',  icon: CreditCard },
-  { id: 'subscriptions', label: 'Subscriptions', icon: RefreshCcw },
+const TABS: { id: Tab; labelKey: string; icon: any }[] = [
+  { id: 'overview', labelKey: 'customers.tab_overview', icon: Activity },
+  { id: 'customers', labelKey: 'customers.tab_customers', icon: Users },
+  { id: 'transactions', labelKey: 'customers.tab_transactions', icon: CreditCard },
 ]
+
+function customerName(c: any): string | null {
+  return c?.name || c?.email || null
+}
 
 // ---------------------------------------------------------------------------
 // Overview tab
 // ---------------------------------------------------------------------------
 function OverviewTab({ orgId, accessToken }: { orgId: number; accessToken: string }) {
+  const { sc, fmt, fmtDate } = useFormatters()
   const { data, error, isLoading } = useQuery({
-    queryKey: ['stripe', 'overview', orgId],
-    queryFn: () => getStripeOverview(orgId, accessToken),
+    queryKey: ['payments', orgId, 'overview'],
+    queryFn: () => getPaymentsOverview(orgId, accessToken),
     enabled: !!(orgId && accessToken),
     staleTime: 60_000,
   })
 
   if (isLoading) return <PageLoading />
-  if (error) return <StripeUnavailable />
+  if (error) return <ProviderUnavailable sc={sc} />
 
-  const d = data as any
+  const d = (data ?? {}) as any
+  const recent: any[] = Array.isArray(d.recent_charges) ? d.recent_charges : []
 
   return (
     <div className="space-y-6">
-      {/* Metric cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-        <MetricCard label="MRR"               value={fmt(d.mrr)}            icon={TrendingUp}  color="bg-blue-100 text-blue-600" />
-        <MetricCard label="ARR"               value={fmt(d.arr)}            icon={TrendingUp}  color="bg-indigo-100 text-indigo-600" />
-        <MetricCard label="Total revenue"     value={fmt(d.total_revenue)}  icon={DollarSign}  color="bg-green-100 text-green-600" />
-        <MetricCard label="Active subscribers" value={String(d.active_subscribers)} icon={RefreshCcw} color="bg-violet-100 text-violet-600" />
-        <MetricCard label="Total customers"   value={String(d.total_customers)} icon={Users}   color="bg-purple-100 text-purple-600" />
-        <MetricCard label="Churned (30d)"     value={String(d.churn_30d)}   icon={Activity}    color="bg-red-100 text-red-500" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+        <MetricCard label={sc('customers.metric_revenue')} value={fmt(d.total_revenue ?? 0, d.currency)} icon={DollarSign} color="bg-green-100 text-green-600" />
+        <MetricCard label={sc('customers.metric_customers')} value={String(d.total_customers ?? 0)} icon={Users} color="bg-[#EEEDFF] text-[#6559CA]" />
       </div>
+      {Number(d.duplicate_charges) > 0 && (
+        <p role="alert" className="max-w-2xl text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          {sc('customers.duplicate_alert', { count: Number(d.duplicate_charges) })}
+        </p>
+      )}
 
-      {/* Recent charges */}
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#EAE8F2] rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-          <span className="font-semibold text-gray-800 text-sm">Recent transactions</span>
+          <span className="font-semibold text-[#190933] text-sm">{sc('customers.recent_transactions')}</span>
         </div>
-        {d.recent_charges.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-gray-400">No transactions yet</div>
+        {recent.length === 0 ? (
+          <div className="px-5 py-8 text-center text-sm text-gray-400">{sc('customers.no_transactions')}</div>
         ) : (
           <div className="divide-y divide-gray-50">
-            {d.recent_charges.map((ch: any) => (
-              <div key={ch.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center ${ch.paid ? 'bg-green-100' : 'bg-red-100'}`}>
+            {recent.map((ch: any) => (
+              <div key={ch.id} className="px-5 py-3 flex flex-wrap gap-2 items-center justify-between hover:bg-gray-50 transition-colors">
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${ch.paid ? 'bg-green-100' : 'bg-red-100'}`}>
                     {ch.paid ? <CheckCircle2 size={13} className="text-green-600" /> : <AlertCircle size={13} className="text-red-500" />}
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-800">
-                      {ch.customer?.name ?? ch.customer?.email ?? ch.customer?.id ?? 'Unknown'}
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-800 truncate">
+                      {customerName(ch.customer) ?? sc('customers.unknown_customer')}
                     </div>
-                    <div className="text-xs text-gray-400">{fmtDate(ch.created)}</div>
+                    <div className="text-xs text-gray-400">{fmtDate(ch.created)}{ch.description ? ` · ${ch.description}` : ''}</div>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  {ch.card && <CardChip brand={ch.card.brand} last4={ch.card.last4} />}
+                  <ChargeFlags charge={ch} sc={sc} />
+                  <ProviderChip provider={ch.provider ?? ch.payment?.provider} sc={sc} />
                   <span className="font-semibold text-gray-900">{fmt(ch.amount, ch.currency)}</span>
-                  <StatusPill status={ch.status} />
+                  <StatusPill status={ch.paid ? 'paid' : ch.status} sc={sc} />
                 </div>
               </div>
             ))}
@@ -190,6 +226,7 @@ function OverviewTab({ orgId, accessToken }: { orgId: number; accessToken: strin
 // Customers tab
 // ---------------------------------------------------------------------------
 function CustomersTab({ orgId, accessToken }: { orgId: number; accessToken: string }) {
+  const { sc, fmt, fmtDate } = useFormatters()
   const { data: customers, error, isLoading } = useQuery({
     queryKey: queryKeys.payments.customers(orgId),
     queryFn: () => getOrgCustomers(orgId, accessToken),
@@ -198,33 +235,30 @@ function CustomersTab({ orgId, accessToken }: { orgId: number; accessToken: stri
   })
 
   if (isLoading) return <PageLoading />
-  if (error) return <div className="p-6 text-sm text-red-500">Error loading customers</div>
-  if (!customers || customers.length === 0) {
-    return <Empty message="No customers yet" />
+  if (error) return <div className="p-6 text-sm text-red-500">{sc('customers.load_error')}</div>
+  const list: any[] = Array.isArray(customers) ? customers : []
+  if (list.length === 0) {
+    return <Empty message={sc('customers.no_customers')} />
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+    <div className="bg-white border border-[#EAE8F2] rounded-xl overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Customer</TableHead>
-            <TableHead>Offer</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Payment method</TableHead>
-            <TableHead>Last charge</TableHead>
-            <TableHead>Next billing</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Since</TableHead>
-            <TableHead></TableHead>
+            <TableHead>{sc('customers.col_customer')}</TableHead>
+            <TableHead>{sc('customers.col_offer')}</TableHead>
+            <TableHead>{sc('customers.col_amount')}</TableHead>
+            <TableHead>{sc('customers.col_method')}</TableHead>
+            <TableHead>{sc('customers.col_last_payment')}</TableHead>
+            <TableHead>{sc('customers.col_status')}</TableHead>
+            <TableHead>{sc('customers.col_since')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {customers.map((item: any) => {
+          {list.map((item: any) => {
             const offer = item.offer
-            const stripe = item.stripe
-            const pm = stripe?.payment_method
+            const payment = item.payment ?? null
             return (
               <TableRow key={item.enrollment_id}>
                 <TableCell>
@@ -242,43 +276,21 @@ function CustomersTab({ orgId, accessToken }: { orgId: number; accessToken: stri
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="font-medium">{offer?.name ?? 'n/a'}</TableCell>
+                <TableCell className="font-medium">{offer?.name ?? '—'}</TableCell>
+                <TableCell>{offer ? fmt(offer.amount, offer.currency) : '—'}</TableCell>
+                <TableCell><ProviderChip provider={payment?.provider} sc={sc} /></TableCell>
                 <TableCell>
-                  {offer?.offer_type === 'subscription' ? (
-                    <Badge variant="outline" className="flex items-center gap-1 w-fit"><RefreshCcw size={11} /><span>Subscription</span></Badge>
-                  ) : (
-                    <Badge variant="outline" className="flex items-center gap-1 w-fit"><SquareCheck size={11} /><span>One-time</span></Badge>
-                  )}
-                </TableCell>
-                <TableCell>{offer ? fmt(offer.amount, offer.currency) : 'n/a'}</TableCell>
-                <TableCell>{pm ? <CardChip brand={pm.brand} last4={pm.last4} /> : <span className="text-gray-400">n/a</span>}</TableCell>
-                <TableCell>
-                  {stripe?.last_charge_date ? (
+                  {payment?.last_charge_date ? (
                     <div className="flex flex-col">
-                      <span className="text-sm">{fmtDate(stripe.last_charge_date)}</span>
-                      {stripe.last_charge_amount != null && (
-                        <span className="text-xs text-gray-400">{fmt(stripe.last_charge_amount, offer?.currency)}</span>
+                      <span className="text-sm">{fmtDate(payment.last_charge_date)}</span>
+                      {payment.last_charge_amount != null && (
+                        <span className="text-xs text-gray-400">{fmt(payment.last_charge_amount, payment.currency ?? offer?.currency)}</span>
                       )}
                     </div>
-                  ) : <span className="text-gray-400">n/a</span>}
+                  ) : <span className="text-gray-400">—</span>}
                 </TableCell>
-                <TableCell>
-                  {stripe?.next_billing_date ? (
-                    <div className="flex flex-col">
-                      <span className="text-sm">{fmtDate(stripe.next_billing_date)}</span>
-                      {stripe.cancel_at_period_end && <span className="text-xs text-red-500">Cancels then</span>}
-                    </div>
-                  ) : <span className="text-gray-400">n/a</span>}
-                </TableCell>
-                <TableCell><StatusPill status={item.status} /></TableCell>
+                <TableCell><StatusPill status={item.status} sc={sc} /></TableCell>
                 <TableCell className="text-sm text-gray-500">{fmtDate(item.creation_date)}</TableCell>
-                <TableCell>
-                  {stripe?.stripe_customer_url && (
-                    <a href={stripe.stripe_customer_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition">
-                      <ExternalLink size={13} />
-                    </a>
-                  )}
-                </TableCell>
               </TableRow>
             )
           })}
@@ -289,15 +301,16 @@ function CustomersTab({ orgId, accessToken }: { orgId: number; accessToken: stri
 }
 
 // ---------------------------------------------------------------------------
-// Transactions tab (paginated, direct from Stripe)
+// Transactions tab (cursor-paginated)
 // ---------------------------------------------------------------------------
 function TransactionsTab({ orgId, accessToken }: { orgId: number; accessToken: string }) {
+  const { sc, fmt, fmtDate } = useFormatters()
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const [cursorStack, setCursorStack] = useState<string[]>([])
 
   const { data, error, isLoading } = useQuery({
-    queryKey: ['stripe', 'charges', orgId, cursor],
-    queryFn: () => getStripeCharges(orgId, accessToken, 25, cursor),
+    queryKey: ['payments', orgId, 'transactions', cursor],
+    queryFn: () => getPaymentsTransactions(orgId, accessToken, 25, cursor),
     enabled: !!(orgId && accessToken),
     staleTime: 60_000,
   })
@@ -305,7 +318,7 @@ function TransactionsTab({ orgId, accessToken }: { orgId: number; accessToken: s
   const goNext = () => {
     if (data?.next_cursor) {
       setCursorStack(s => [...s, cursor ?? ''])
-      setCursor(data.next_cursor)
+      setCursor(String(data.next_cursor))
     }
   }
   const goPrev = () => {
@@ -316,49 +329,55 @@ function TransactionsTab({ orgId, accessToken }: { orgId: number; accessToken: s
   }
 
   if (isLoading) return <PageLoading />
-  if (error) return <StripeUnavailable />
-  if (!data?.data?.length) return <Empty message="No transactions yet" />
+  if (error) return <ProviderUnavailable sc={sc} />
+  const rows: any[] = Array.isArray(data?.data) ? data.data : []
+  if (!rows.length) return <Empty message={sc('customers.no_transactions')} />
 
   return (
     <div className="space-y-3">
-      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-white border border-[#EAE8F2] rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Payment method</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Refunded</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>{sc('customers.col_date')}</TableHead>
+              <TableHead>{sc('customers.col_customer')}</TableHead>
+              <TableHead>{sc('customers.col_method')}</TableHead>
+              <TableHead>{sc('customers.col_amount')}</TableHead>
+              <TableHead>{sc('customers.col_refunded')}</TableHead>
+              <TableHead>{sc('customers.col_status')}</TableHead>
+              <TableHead>{sc('customers.col_description')}</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.data.map((ch: any) => (
+            {rows.map((ch: any) => (
               <TableRow key={ch.id}>
                 <TableCell className="text-sm text-gray-500 whitespace-nowrap">{fmtDate(ch.created)}</TableCell>
                 <TableCell>
                   <div className="flex flex-col min-w-0">
-                    <span className="font-medium truncate">{ch.customer?.name ?? ch.customer?.email ?? 'n/a'}</span>
+                    <span className="font-medium truncate">{customerName(ch.customer) ?? '—'}</span>
                     {ch.customer?.name && ch.customer?.email && (
                       <span className="text-xs text-gray-400 truncate">{ch.customer.email}</span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell><CardChip brand={ch.card?.brand} last4={ch.card?.last4} /></TableCell>
+                <TableCell><ProviderChip provider={ch.provider ?? ch.payment?.provider} sc={sc} /></TableCell>
                 <TableCell className="font-semibold">{fmt(ch.amount, ch.currency)}</TableCell>
                 <TableCell className="text-sm">
-                  {ch.amount_refunded > 0 ? (
+                  {Number(ch.amount_refunded) > 0 ? (
                     <span className="text-purple-600">{fmt(ch.amount_refunded, ch.currency)}</span>
-                  ) : 'n/a'}
+                  ) : '—'}
                 </TableCell>
-                <TableCell><StatusPill status={ch.paid ? 'succeeded' : ch.status} /></TableCell>
-                <TableCell className="text-sm text-gray-500 max-w-[200px] truncate">{ch.description ?? 'n/a'}</TableCell>
                 <TableCell>
-                  {ch.receipt_url && (
-                    <a href={ch.receipt_url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition" title="View receipt">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <StatusPill status={ch.paid ? 'paid' : ch.status} sc={sc} />
+                    <ChargeFlags charge={ch} sc={sc} />
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm text-gray-500 max-w-[200px] truncate">{ch.description || '—'}</TableCell>
+                <TableCell>
+                  {safeExternalUrl(ch.receipt_url) && (
+                    <a href={safeExternalUrl(ch.receipt_url) as string} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-gray-600 transition" title={sc('customers.view_receipt')} aria-label={sc('customers.view_receipt')}>
                       <ExternalLink size={13} />
                     </a>
                   )}
@@ -369,109 +388,14 @@ function TransactionsTab({ orgId, accessToken }: { orgId: number; accessToken: s
         </Table>
       </div>
 
-      {/* Pagination */}
       <div className="flex items-center justify-end space-x-2">
-        <Button variant="outline" size="sm" onClick={goPrev} disabled={cursorStack.length === 0}>
-          <ChevronLeft size={14} className="me-1" /> Previous
+        <Button variant="outline" size="sm" className="rounded-full" onClick={goPrev} disabled={cursorStack.length === 0}>
+          <ChevronLeft size={14} className="me-1" /> {sc('common.previous')}
         </Button>
-        <Button variant="outline" size="sm" onClick={goNext} disabled={!data?.has_more}>
-          Next <ChevronRight size={14} className="ms-1" />
+        <Button variant="outline" size="sm" className="rounded-full" onClick={goNext} disabled={!data?.has_more}>
+          {sc('common.next')} <ChevronRight size={14} className="ms-1" />
         </Button>
       </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Subscriptions tab (direct from Stripe)
-// ---------------------------------------------------------------------------
-function SubscriptionsTab({ orgId, accessToken }: { orgId: number; accessToken: string }) {
-  const [status, setStatus] = useState('active')
-
-  const { data, error, isLoading } = useQuery({
-    queryKey: ['stripe', 'subscriptions', orgId, status],
-    queryFn: () => getStripeSubscriptions(orgId, accessToken, status),
-    enabled: !!(orgId && accessToken),
-    staleTime: 60_000,
-  })
-
-  const statuses = ['active', 'trialing', 'past_due', 'canceled', 'all']
-
-  if (isLoading) return <PageLoading />
-  if (error) return <StripeUnavailable />
-
-  return (
-    <div className="space-y-3">
-      {/* Status filter */}
-      <div className="flex items-center space-x-1">
-        {statuses.map(s => (
-          <button
-            key={s}
-            onClick={() => setStatus(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
-              status === s ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
-
-      {(!data?.data?.length) ? <Empty message={`No ${status} subscriptions`} /> : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Plan</TableHead>
-                <TableHead>Payment method</TableHead>
-                <TableHead>Current period</TableHead>
-                <TableHead>Next billing</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Started</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.data.map((sub: any) => (
-                <TableRow key={sub.id}>
-                  <TableCell>
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-medium truncate">{sub.customer?.name ?? sub.customer?.email ?? 'n/a'}</span>
-                      {sub.customer?.name && sub.customer?.email && (
-                        <span className="text-xs text-gray-400 truncate">{sub.customer.email}</span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {sub.plan ? (
-                      <div className="flex flex-col">
-                        <span className="font-medium">{fmt(sub.plan.amount, sub.plan.currency)}/{sub.plan.interval}</span>
-                        {sub.plan.nickname && <span className="text-xs text-gray-400">{sub.plan.nickname}</span>}
-                      </div>
-                    ) : 'n/a'}
-                  </TableCell>
-                  <TableCell><CardChip brand={sub.card?.brand} last4={sub.card?.last4} /></TableCell>
-                  <TableCell className="text-sm text-gray-600 whitespace-nowrap">
-                    {fmtDate(sub.current_period_start)} – {fmtDate(sub.current_period_end)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-sm">{fmtDate(sub.current_period_end)}</span>
-                      {sub.cancel_at_period_end && (
-                        <span className="text-xs text-red-500 flex items-center gap-1">
-                          <Clock size={10} /> Cancels then
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell><StatusPill status={sub.status} /></TableCell>
-                  <TableCell className="text-sm text-gray-500">{fmtDate(sub.created)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
     </div>
   )
 }
@@ -480,14 +404,14 @@ function SubscriptionsTab({ orgId, accessToken }: { orgId: number; accessToken: 
 // Shared utility components
 // ---------------------------------------------------------------------------
 function Empty({ message }: { message: string }) {
-  return <div className="bg-white border border-gray-200 rounded-xl py-12 text-center text-sm text-gray-400">{message}</div>
+  return <div className="bg-white border border-[#EAE8F2] rounded-xl py-12 text-center text-sm text-gray-400">{message}</div>
 }
 
-function StripeUnavailable() {
+function ProviderUnavailable({ sc }: { sc: ScTranslate }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl py-10 text-center space-y-1">
+    <div className="bg-white border border-[#EAE8F2] rounded-xl py-10 text-center space-y-1">
       <AlertCircle size={20} className="mx-auto text-gray-400" />
-      <p className="text-sm text-gray-500">Could not reach Stripe. Check your connection or configuration.</p>
+      <p className="text-sm text-gray-500">{sc('customers.unavailable')}</p>
     </div>
   )
 }
@@ -501,36 +425,34 @@ function PaymentsCustomersPage() {
   const access_token = session?.data?.tokens?.access_token
   const { isEnabled, isLoading } = usePaymentsEnabled()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const { sc } = useScT()
 
   if (!isEnabled && !isLoading) return <UnconfiguredPaymentsDisclaimer />
   if (isLoading) return <PageLoading />
 
   return (
-    <div className="ms-10 me-10 mx-auto space-y-4">
-      {/* Inner tab bar */}
-      <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-xl w-fit">
-        {TABS.map(({ id, label, icon: Icon }) => (
+    <div className="ms-4 me-4 sm:ms-10 sm:me-10 mx-auto space-y-4">
+      <div className="flex flex-wrap items-center gap-1 bg-[#EEEDFF] p-1 rounded-full w-fit">
+        {TABS.map(({ id, labelKey, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               activeTab === id
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-[#190933] shadow-sm'
+                : 'text-[#584F72] hover:text-[#190933]'
             }`}
           >
             <Icon size={15} />
-            <span>{label}</span>
+            <span>{sc(labelKey)}</span>
           </button>
         ))}
       </div>
 
-      {/* Tab content */}
       <div>
-        {activeTab === 'overview'      && <OverviewTab       orgId={org.id} accessToken={access_token} />}
-        {activeTab === 'customers'     && <CustomersTab      orgId={org.id} accessToken={access_token} />}
-        {activeTab === 'transactions'  && <TransactionsTab   orgId={org.id} accessToken={access_token} />}
-        {activeTab === 'subscriptions' && <SubscriptionsTab  orgId={org.id} accessToken={access_token} />}
+        {activeTab === 'overview' && <OverviewTab orgId={org.id} accessToken={access_token} />}
+        {activeTab === 'customers' && <CustomersTab orgId={org.id} accessToken={access_token} />}
+        {activeTab === 'transactions' && <TransactionsTab orgId={org.id} accessToken={access_token} />}
       </div>
     </div>
   )

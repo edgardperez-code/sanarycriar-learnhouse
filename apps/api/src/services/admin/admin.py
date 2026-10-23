@@ -1962,6 +1962,11 @@ async def reset_user_progress(
         await db_session.delete(step)
         deleted += 1
 
+    # Sanar y Criar: saved playback/reading positions go with the steps.
+    from src.services.progress.cleanup import clear_progress
+
+    await clear_progress(db_session, user_id, course_id=course.id)
+
     trail_run = (await db_session.execute(
         select(TrailRun).where(
             TrailRun.course_id == course.id,

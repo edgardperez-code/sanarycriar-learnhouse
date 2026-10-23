@@ -3,9 +3,9 @@ import { getUriWithOrg } from '@services/config/config'
 import { Books, FolderSimple, ChatsCircle, Headphones, Cube, ShoppingBag } from '@phosphor-icons/react'
 import { menuIcon } from '@components/Objects/Menus/menuIcons'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { getMenuColorClasses } from '@services/utils/ts/colorUtils'
 
 type Builtin = { feature: string; link: string; labelKey: string; Icon: any }
 
@@ -21,10 +21,15 @@ const BUILTIN: Record<string, Builtin> = {
 // Default order when an org has no custom menu config.
 const DEFAULT_ORDER = ['courses', 'library', 'podcasts', 'communities', 'playgrounds', 'store']
 
-function MenuLinks(props: { orgslug: string; primaryColor?: string }) {
+// Sanar y Criar: brand nav (text links like the marketing site, no icons;
+// rosa-300 underline marks hover and the current section). `primaryColor`
+// is accepted for API compatibility but the header always uses the brand
+// palette. `variant="mobile"` renders the stacked list of the mobile panel.
+function MenuLinks(props: { orgslug: string; primaryColor?: string; variant?: 'desktop' | 'mobile'; onNavigate?: () => void }) {
   const { t } = useTranslation()
   const org = useOrg() as any
-  const colors = getMenuColorClasses(props.primaryColor || '')
+  const pathname = usePathname() || ''
+  const variant = props.variant ?? 'desktop'
 
   const rf = org?.config?.config?.resolved_features
   const isEnabled = (feature: string) => rf?.[feature]?.enabled === true
@@ -48,6 +53,7 @@ function MenuLinks(props: { orgslug: string; primaryColor?: string }) {
           label: item.label || item.url,
           Icon: menuIcon(item.icon),
           href: external ? item.url : getUriWithOrg(props.orgslug, item.url),
+          path: external ? '' : item.url,
           external,
         }
       }
@@ -60,28 +66,43 @@ function MenuLinks(props: { orgslug: string; primaryColor?: string }) {
         label: item.label || t(meta.labelKey),
         Icon: meta.Icon,
         href: getUriWithOrg(props.orgslug, meta.link),
+        path: meta.link,
         external: false,
       }
     })
     .filter(Boolean) as any[]
 
+  // "/courses" is current on /courses and on a course page; "/store" on offers.
+  const isCurrent = (path: string) => {
+    if (!path) return false
+    if (path === '/courses') return /\/(courses|course)(\/|$)/.test(pathname)
+    return pathname === path || pathname.startsWith(path + '/') || pathname.endsWith(path)
+  }
+
+  const linkClass =
+    variant === 'mobile'
+      ? 'flex min-h-12 items-center py-3 font-display text-[1.375rem] font-semibold text-violeta aria-[current=page]:text-lavanda-600'
+      : 'whitespace-nowrap text-[0.9375rem] font-medium text-violeta-600 underline-offset-[0.4em] decoration-rosa-300 decoration-2 transition-colors hover:text-violeta hover:underline aria-[current=page]:text-violeta aria-[current=page]:underline'
+
   return (
-    <div className="ps-1">
-      <ul className="flex space-x-5">
-        {rendered.map((it) => {
-          const content = (
-            <li className={`flex space-x-2 items-center ${colors.text} font-semibold`}>
-              <it.Icon size={20} weight="fill" /> <span>{it.label}</span>
-            </li>
-          )
-          return it.external ? (
-            <a key={it.key} href={it.href} target="_blank" rel="noopener noreferrer">{content}</a>
-          ) : (
-            <Link key={it.key} href={it.href}>{content}</Link>
-          )
-        })}
-      </ul>
-    </div>
+    <ul className={variant === 'mobile' ? 'flex flex-col' : 'flex items-center gap-6 ps-2'}>
+      {rendered.map((it) => {
+        const current = isCurrent(it.path) ? 'page' : undefined
+        return (
+          <li key={it.key} className={variant === 'mobile' ? 'border-b border-borde last:border-b-0' : ''}>
+            {it.external ? (
+              <a href={it.href} target="_blank" rel="noopener noreferrer" className={linkClass} onClick={props.onNavigate}>
+                {it.label}
+              </a>
+            ) : (
+              <Link href={it.href} aria-current={current} className={linkClass} onClick={props.onNavigate}>
+                {it.label}
+              </Link>
+            )}
+          </li>
+        )
+      })}
+    </ul>
   )
 }
 

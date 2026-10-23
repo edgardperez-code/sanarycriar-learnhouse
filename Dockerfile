@@ -82,8 +82,10 @@ COPY --from=node:24.22.1-alpine3.24 /usr/local/lib/node_modules/npm /usr/local/l
 
 # Apply the stable distribution's security updates at build time. The Python
 # image can be published before a newer package fix reaches Alpine's mirrors.
+# Sanar y Criar: ffmpeg is needed for MP4 faststart and HLS transcoding (both
+# are skipped silently without it; the API-only image already ships it).
 RUN apk upgrade --no-cache \
-    && apk add --no-cache nginx curl netcat-openbsd ca-certificates bash libstdc++ \
+    && apk add --no-cache nginx curl netcat-openbsd ca-certificates bash libstdc++ ffmpeg \
     && ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && npm install -g pm2@7.1.0 \
     && rm -rf /root/.npm \
@@ -105,6 +107,11 @@ COPY ./apps/api/uv.lock ./apps/api/pyproject.toml ./
 RUN uv sync --frozen --no-dev --no-install-project --no-cache
 COPY ./apps/api ./
 
+# Sanar y Criar: drop uploads and logs a local checkout may hold (tests write
+# there), so they never ship in the image or seed a fresh content volume.
+RUN find /app/api/content -mindepth 1 -maxdepth 1 ! -name __init__.py -exec rm -rf {} + \
+    && rm -rf /app/api/logs/*
+
 # Remove Enterprise Edition folder for public builds
 ARG LEARNHOUSE_PUBLIC=false
 RUN if [ "$LEARNHOUSE_PUBLIC" = "true" ]; then rm -rf /app/api/ee; fi
@@ -120,7 +127,10 @@ WORKDIR /app
 COPY ./docker/nginx.conf /etc/nginx/http.d/default.conf
 COPY ./apps/api/docker-entrypoint.sh /app/api/docker-entrypoint.sh
 COPY ./docker/start.sh /app/start.sh
-RUN chmod +x /app/api/docker-entrypoint.sh /app/start.sh
+# Sanar y Criar: a Windows checkout (core.autocrlf) gives these files CRLF line
+# endings, which break /bin/sh; normalize them so local builds run as CI ones do.
+RUN sed -i 's/\r$//' /app/start.sh /app/api/docker-entrypoint.sh /app/web/server-wrapper.js /etc/nginx/http.d/default.conf \
+    && chmod +x /app/api/docker-entrypoint.sh /app/start.sh
 
 # PYTHONDONTWRITEBYTECODE: the image ships read-only source and gains nothing
 # from writing .pyc files back into it. It also keeps __pycache__ out of the

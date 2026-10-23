@@ -1,71 +1,117 @@
 'use client'
-import React, { useState } from 'react'
+// Sanar y Criar: purchases list with a direct link to each course/ebook the
+// purchase unlocks. No billing portal: PayPal (and later Pago Móvil) have
+// none; receipts come from the provider by email.
+import React from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { getUriWithOrg } from '@services/config/config'
-import { getUserEnrollments, getBillingPortalSession } from '@services/payments/offers'
+import { getUserEnrollments } from '@services/payments/offers'
 import {
   ShoppingBag, RefreshCcw, SquareCheck, ArrowRight,
-  ExternalLink, Loader2, CalendarDays, BadgeCheck
+  Loader2, CalendarDays, BadgeCheck, BookOpen, BookMarked,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
-import { meaningfulMessage } from '@lib/errors/classify'
 import { useTranslation } from 'react-i18next'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { billingIntervalLabel } from '@/lib/payments/billingInterval'
+import { useScT, ScTranslate } from '@components/Payments/useScT'
+import { normalizeProductType, stripCoursePrefix } from '@components/Payments/commerce'
+import { safeImageSrc } from '@services/security/url'
 
 interface AccountPurchasesProps {
   orgId: number
   orgslug: string
 }
 
-function EnrollmentCard({ enrollment, orgslug, onManageBilling, billingLoading }: {
+// Enrollments in these states are real purchases; pending/failed/cancelled
+// ones are abandoned or in-flight checkouts and only add noise here.
+const VISIBLE_STATUSES = new Set(['active', 'completed', 'refunded'])
+
+const STATUS_CLS: Record<string, string> = {
+  active: 'bg-green-100 text-green-700',
+  completed: 'bg-green-100 text-green-700',
+  refunded: 'bg-purple-100 text-purple-700',
+}
+
+function ResourceLink({ resource, orgslug, sc }: { resource: any; orgslug: string; sc: ScTranslate }) {
+  const courseUuid = stripCoursePrefix(resource.course_uuid ?? resource.resource_uuid)
+  if (!courseUuid) return null
+  const isEbook = normalizeProductType(resource.product_type) === 'ebook'
+  const thumb = safeImageSrc(resource.thumbnail_url)
+  return (
+    <div className="flex items-center justify-between gap-3 bg-[#FFFCF9] border border-[#EAE8F2] rounded-xl px-3 py-2">
+      <div className="flex items-center gap-2 min-w-0">
+        {thumb ? (
+          <img src={thumb} alt="" className="w-9 h-9 rounded-md object-cover shrink-0" />
+        ) : (
+          <div className="w-9 h-9 rounded-md bg-[#EEEDFF] flex items-center justify-center shrink-0">
+            {isEbook ? <BookMarked size={14} className="text-[#AC4691]" /> : <BookOpen size={14} className="text-[#6559CA]" />}
+          </div>
+        )}
+        <span className="text-sm font-medium text-[#190933] truncate">{resource.name}</span>
+      </div>
+      <Link
+        href={getUriWithOrg(orgslug, `/course/${courseUuid}`)}
+        className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-[#190933] hover:bg-[#41375B] transition-colors px-3 py-1.5 rounded-full"
+      >
+        {isEbook ? sc('purchases.read_ebook') : sc('purchases.go_to_course')} <ArrowRight size={11} />
+      </Link>
+    </div>
+  )
+}
+
+function EnrollmentCard({ enrollment, orgslug }: {
   enrollment: any
   orgslug: string
-  onManageBilling: () => void
-  billingLoading: boolean
 }) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { sc, lng } = useScT()
   const isSubscription = enrollment.offer_type === 'subscription'
-  const isActive = enrollment.status === 'active'
+  const status = String(enrollment.status ?? '').toLowerCase()
+  const isActive = status === 'active' || status === 'completed'
+  const resources: any[] = Array.isArray(enrollment.resources) ? enrollment.resources : []
 
   const formattedPrice = enrollment.amount != null
-    ? formatCurrency(enrollment.amount, enrollment.currency ?? 'USD', i18n.language)
+    ? formatCurrency(Number(enrollment.amount), enrollment.currency ?? 'USD', lng)
     : null
 
-  const formattedDate = enrollment.creation_date
-    ? formatDate(enrollment.creation_date, i18n.language, { dateStyle: undefined, year: 'numeric', month: 'short', day: 'numeric' })
+  // Sanar y Criar: the purchase date is when it was paid (creation_date is
+  // when the checkout started).
+  const purchasedAt = enrollment.paid_at ?? enrollment.creation_date
+  const formattedDate = purchasedAt
+    ? formatDate(purchasedAt, lng, { dateStyle: undefined, year: 'numeric', month: 'short', day: 'numeric' })
     : null
+
+  const offerKey = enrollment.offer_uuid ?? enrollment.offer_id
 
   return (
-    <div className="bg-white rounded-xl nice-shadow overflow-hidden">
+    <div className="bg-white rounded-[20px] nice-shadow overflow-hidden">
       {/* Type stripe */}
-      <div className={`px-4 py-2 flex items-center justify-between ${isSubscription ? 'bg-indigo-50' : 'bg-gray-50'}`}>
-        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${isSubscription ? 'text-indigo-700' : 'text-gray-600'}`}>
+      <div className="px-4 py-2 flex items-center justify-between bg-[#EEEDFF]">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4F43A4]">
           {isSubscription ? <RefreshCcw size={11} /> : <SquareCheck size={11} />}
-          {isSubscription ? 'Subscription' : 'One-time purchase'}
+          {isSubscription ? sc('offer_card.subscription') : sc('purchases.one_time_purchase')}
         </span>
         <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
-          isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+          STATUS_CLS[status] ?? 'bg-gray-100 text-gray-500'
         }`}>
           <BadgeCheck size={11} />
-          {isActive ? 'Active' : enrollment.status}
+          {isActive ? sc('purchases.status_active') : sc(`status.${status}`)}
         </span>
       </div>
 
       <div className="p-4 space-y-3">
         {/* Offer name + price */}
         <div className="flex items-start justify-between gap-3">
-          <p className="font-bold text-gray-900 leading-snug">{enrollment.offer_name}</p>
+          <p className="font-bold text-[#190933] leading-snug">{enrollment.offer_name}</p>
           {formattedPrice && (
             <div className="shrink-0 text-end">
-              <p className={`font-black text-lg ${isSubscription ? 'text-indigo-700' : 'text-gray-900'}`}>
+              <p className="font-black text-lg text-[#190933]">
                 {formattedPrice}
               </p>
               {isSubscription && (
-                <p className="text-xs text-indigo-400 leading-none">{billingIntervalLabel(enrollment.billing_interval, t)}</p>
+                <p className="text-xs text-[#6559CA] leading-none">{billingIntervalLabel(enrollment.billing_interval, t)}</p>
               )}
             </div>
           )}
@@ -75,31 +121,32 @@ function EnrollmentCard({ enrollment, orgslug, onManageBilling, billingLoading }
         {formattedDate && (
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <CalendarDays size={12} />
-            <span>Purchased {formattedDate}</span>
+            <span>{sc('purchases.purchased_on', { date: formattedDate })}</span>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 pt-1">
-          <Link
-            href={getUriWithOrg(orgslug, `/store/offers/${enrollment.offer_id}`)}
-            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-2 rounded-lg"
-          >
-            View offer <ArrowRight size={11} />
-          </Link>
-          {isSubscription && (
-            <button
-              onClick={onManageBilling}
-              disabled={billingLoading}
-              className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors px-3 py-2 rounded-lg"
+        {/* What this purchase unlocks */}
+        {isActive && resources.length > 0 && (
+          <div className="space-y-2">
+            {resources.map((r: any) => (
+              <ResourceLink key={r.resource_uuid ?? r.course_uuid} resource={r} orgslug={orgslug} sc={sc} />
+            ))}
+          </div>
+        )}
+        {status === 'refunded' && (
+          <p className="text-xs text-gray-500">{sc('purchases.refunded_note')}</p>
+        )}
+
+        {offerKey != null && (
+          <div className="flex items-center gap-2 pt-1">
+            <Link
+              href={getUriWithOrg(orgslug, `/store/offers/${offerKey}`)}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#4F43A4] hover:text-[#190933] transition-colors"
             >
-              {billingLoading
-                ? <Loader2 size={12} className="animate-spin" />
-                : <><ExternalLink size={11} /> Manage subscription</>
-              }
-            </button>
-          )}
-        </div>
+              {sc('purchases.view_offer')} <ArrowRight size={11} />
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -108,8 +155,7 @@ function EnrollmentCard({ enrollment, orgslug, onManageBilling, billingLoading }
 function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
   const session = useLHSession() as any
   const access_token = session?.data?.tokens?.access_token
-  const [billingLoading, setBillingLoading] = useState(false)
-  const { track } = useLHAnalytics('learner')
+  const { sc } = useScT()
 
   const { data: enrollmentsResult, isLoading, error } = useQuery({
     queryKey: ['payments', orgId, 'enrollments', 'mine'],
@@ -118,27 +164,8 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
     staleTime: 60_000,
   })
 
-  const enrollments: any[] = Array.isArray(enrollmentsResult?.data) ? enrollmentsResult.data : []
-
-  const handleManageBilling = async (source: string) => {
-    if (!access_token) return
-    setBillingLoading(true)
-    try {
-      const return_url = `${window.location.origin}${getUriWithOrg(orgslug, '/account/purchases')}`
-      const result = await getBillingPortalSession(orgId, return_url, access_token)
-      const url = result?.data?.portal_url
-      if (url) {
-        track(AnalyticsEvent.AccountBillingPortalOpened, { source })
-        window.location.href = url
-      } else {
-        toast.error('Could not open billing portal. Please try again.')
-      }
-    } catch (err) {
-      toast.error(meaningfulMessage(err))
-    } finally {
-      setBillingLoading(false)
-    }
-  }
+  const enrollments: any[] = (Array.isArray(enrollmentsResult?.data) ? enrollmentsResult.data : [])
+    .filter((e: any) => VISIBLE_STATUSES.has(String(e?.status ?? '').toLowerCase()))
 
   if (isLoading) {
     return (
@@ -151,7 +178,7 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
   if (error) {
     return (
       <div className="bg-white rounded-xl nice-shadow p-8 text-center text-sm text-red-400">
-        Could not load purchases. Please refresh and try again.
+        {sc('purchases.load_error')}
       </div>
     )
   }
@@ -161,13 +188,13 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
       {/* Header */}
       <div className="bg-white rounded-xl nice-shadow p-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center nice-shadow">
-            <ShoppingBag size={18} className="text-gray-700" />
+          <div className="w-10 h-10 rounded-xl bg-[#EEEDFF] flex items-center justify-center">
+            <ShoppingBag size={18} className="text-[#6559CA]" />
           </div>
           <div>
-            <h1 className="font-bold text-gray-900">Purchases</h1>
+            <h1 className="font-bold text-[#190933]">{sc('purchases.title')}</h1>
             <p className="text-sm text-gray-400 mt-0.5">
-              Your active purchases and subscriptions
+              {sc('purchases.subtitle')}
             </p>
           </div>
         </div>
@@ -176,18 +203,18 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
       {/* Enrollment list */}
       {enrollments.length === 0 ? (
         <div className="bg-white rounded-xl nice-shadow p-12 flex flex-col items-center justify-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 nice-shadow">
-            <ShoppingBag size={24} className="text-gray-300" strokeWidth={1.5} />
+          <div className="w-14 h-14 rounded-2xl bg-[#EEEDFF] flex items-center justify-center mb-4">
+            <ShoppingBag size={24} className="text-[#6559CA]" strokeWidth={1.5} />
           </div>
-          <h2 className="font-bold text-gray-600 mb-1">No purchases yet</h2>
+          <h2 className="font-bold text-[#190933] mb-1">{sc('purchases.empty_title')}</h2>
           <p className="text-sm text-gray-400 max-w-xs">
-            Your purchases and subscriptions will appear here once you buy something from the store.
+            {sc('purchases.empty_description')}
           </p>
           <Link
             href={getUriWithOrg(orgslug, '/store')}
-            className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white bg-gray-900 hover:bg-gray-800 transition-colors px-4 py-2 rounded-xl"
+            className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white bg-[#190933] hover:bg-[#41375B] transition-colors px-4 py-2 rounded-full"
           >
-            Browse store <ArrowRight size={14} />
+            {sc('purchases.browse_store')} <ArrowRight size={14} />
           </Link>
         </div>
       ) : (
@@ -197,25 +224,9 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
               key={enrollment.enrollment_id}
               enrollment={enrollment}
               orgslug={orgslug}
-              onManageBilling={() => handleManageBilling('subscription')}
-              billingLoading={billingLoading}
             />
           ))}
-          {/* Global billing portal link for one-time purchases (invoices) */}
-          <div className="bg-white rounded-xl nice-shadow p-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-700">Invoices & receipts</p>
-              <p className="text-xs text-gray-400 mt-0.5">View and download all your invoices via the billing portal</p>
-            </div>
-            <button
-              onClick={() => handleManageBilling('invoices')}
-              disabled={billingLoading}
-              className="shrink-0 flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-60 transition-colors"
-            >
-              {billingLoading ? <Loader2 size={12} className="animate-spin" /> : <ExternalLink size={13} />}
-              Open portal
-            </button>
-          </div>
+          <p className="text-xs text-gray-400 px-1">{sc('purchases.receipts_note')}</p>
         </div>
       )}
     </div>

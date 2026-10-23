@@ -11,6 +11,12 @@ import type { ErrorCategory } from './types'
 // is the single source of truth for what users read when something breaks;
 // keep titles human and non-alarming, descriptions short and honest, and
 // resolutions limited to actions that actually help for that failure.
+//
+// Sanar y Criar: `title` / `description` below are the upstream English
+// reference only. The copy users read is localized per `kind` in
+// locales-sc/errors.<lng>.json (sc_errors.categories.<kind>), read through
+// ./messages.ts; a new category needs an entry there too
+// (tests/sc-i18n-loose.test.mjs checks it).
 
 export const ERROR_CATALOG: ErrorCategory[] = [
   {

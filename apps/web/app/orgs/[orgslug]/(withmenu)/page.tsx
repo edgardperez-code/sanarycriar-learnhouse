@@ -24,7 +24,8 @@ export async function generateMetadata(props: MetadataProps): Promise<Metadata> 
     : null
   const imageUrl = ogImageUrl || getOrgThumbnailMediaDirectory(org?.org_uuid, org?.thumbnail_image)
   const canonical = await getServerCanonicalUrl(params.orgslug, '/')
-  const title = buildPageTitle('Home', org.name, seoConfig)
+  // Sanar y Criar: Spanish page title ("Cursos y ebooks · Sanar y Criar").
+  const title = buildPageTitle('Cursos y ebooks', org.name, seoConfig)
   const description = org.description || seoConfig.default_meta_description || ''
 
   // SEO
