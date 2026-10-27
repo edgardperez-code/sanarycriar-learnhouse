@@ -2,8 +2,10 @@
 // Sanar y Criar: provider-agnostic sales dashboard (overview, customers,
 // transactions). Uses /overview and /transactions instead of the Stripe
 // endpoints; subscriptions, MRR/ARR and churn are hidden because only
-// one-time purchases exist; a provider chip replaces the card brand.
+// one-time purchases exist; a provider chip replaces the card brand. A charge
+// of a Pago Móvil order also shows the order code, linked to Pedidos.
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useQuery } from '@tanstack/react-query'
@@ -42,6 +44,8 @@ import { formatCurrency, formatDate } from '@/lib/format'
 import { useScT, ScTranslate } from '@components/Payments/useScT'
 import { providerLabel } from '@components/Payments/commerce'
 import { safeExternalUrl } from '@services/security/url'
+import { parsePurchaseCode } from '@components/Dashboard/Pages/Orders/ordersForm'
+import { useOrdersT } from '@components/Dashboard/Pages/Orders/useOrdersT'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,6 +70,32 @@ function ProviderChip({ provider, sc }: { provider?: string | null; sc: ScTransl
       }`}
     >
       {label}
+    </span>
+  )
+}
+
+/** Sanar y Criar: the Pago Móvil order a charge belongs to, linked to Pedidos. */
+function PurchaseCodeLink({ code }: { code?: string | null }) {
+  const { ot } = useOrdersT()
+  const clean = parsePurchaseCode(code)
+  if (!clean) return null
+  return (
+    <Link
+      href={`/dash/orders?code=${encodeURIComponent(clean)}`}
+      title={ot('charges.order_link_title', { code: clean })}
+      className="whitespace-nowrap font-mono text-[11px] font-semibold text-[#4F43A4] underline-offset-2 hover:underline"
+    >
+      {clean}
+    </Link>
+  )
+}
+
+/** Provider chip plus, for a Pago Móvil order, its code. */
+function ProviderWithOrder({ provider, purchaseCode, sc }: { provider?: string | null; purchaseCode?: string | null; sc: ScTranslate }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      <ProviderChip provider={provider} sc={sc} />
+      <PurchaseCodeLink code={purchaseCode} />
     </span>
   )
 }
@@ -209,7 +239,7 @@ function OverviewTab({ orgId, accessToken }: { orgId: number; accessToken: strin
                 </div>
                 <div className="flex items-center space-x-3">
                   <ChargeFlags charge={ch} sc={sc} />
-                  <ProviderChip provider={ch.provider ?? ch.payment?.provider} sc={sc} />
+                  <ProviderWithOrder provider={ch.provider ?? ch.payment?.provider} purchaseCode={ch.purchase_code} sc={sc} />
                   <span className="font-semibold text-gray-900">{fmt(ch.amount, ch.currency)}</span>
                   <StatusPill status={ch.paid ? 'paid' : ch.status} sc={sc} />
                 </div>
@@ -278,7 +308,7 @@ function CustomersTab({ orgId, accessToken }: { orgId: number; accessToken: stri
                 </TableCell>
                 <TableCell className="font-medium">{offer?.name ?? '—'}</TableCell>
                 <TableCell>{offer ? fmt(offer.amount, offer.currency) : '—'}</TableCell>
-                <TableCell><ProviderChip provider={payment?.provider} sc={sc} /></TableCell>
+                <TableCell><ProviderWithOrder provider={payment?.provider} purchaseCode={payment?.purchase_code} sc={sc} /></TableCell>
                 <TableCell>
                   {payment?.last_charge_date ? (
                     <div className="flex flex-col">
@@ -361,7 +391,7 @@ function TransactionsTab({ orgId, accessToken }: { orgId: number; accessToken: s
                     )}
                   </div>
                 </TableCell>
-                <TableCell><ProviderChip provider={ch.provider ?? ch.payment?.provider} sc={sc} /></TableCell>
+                <TableCell><ProviderWithOrder provider={ch.provider ?? ch.payment?.provider} purchaseCode={ch.purchase_code} sc={sc} /></TableCell>
                 <TableCell className="font-semibold">{fmt(ch.amount, ch.currency)}</TableCell>
                 <TableCell className="text-sm">
                   {Number(ch.amount_refunded) > 0 ? (

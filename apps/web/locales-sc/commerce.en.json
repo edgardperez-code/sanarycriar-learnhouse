@@ -19,7 +19,8 @@
     "providers": {
       "paypal": "PayPal",
       "spidi": "Pago Móvil",
-      "manual": "Manual"
+      "manual": "Manual",
+      "pago_movil": "Pago Móvil"
     },
     "status": {
       "active": "Active",
@@ -64,7 +65,7 @@
     },
     "config": {
       "title": "Payment methods",
-      "subtitle": "Connect your PayPal account to start selling. Pago Móvil is coming soon.",
+      "subtitle": "Connect PayPal or turn on Pago Móvil to get paid for your courses and ebooks.",
       "load_error": "We could not load the payment settings.",
       "paypal_tagline": "Get paid with PayPal or by card (your customer does not need a PayPal account).",
       "paypal_developer_link": "Open the PayPal developer dashboard",
@@ -368,7 +369,7 @@
       "and_more_one": "and {{count}} more",
       "and_more_other": "and {{count}} more",
       "payment_pending_title": "Your payment is under review",
-      "payment_pending_description": "PayPal is reviewing your payment. As soon as it is confirmed you will get access and an email."
+      "payment_pending_description": "We're reviewing your payment. We'll email you as soon as you have access."
     },
     "purchases": {
       "title": "My purchases",
@@ -384,7 +385,7 @@
       "read_ebook": "Read the ebook",
       "view_offer": "View the offer",
       "refunded_note": "This purchase was refunded and no longer gives access to the content.",
-      "receipts_note": "Payment receipts are emailed to you by PayPal."
+      "receipts_note": "We email you for every confirmed purchase. If you paid with PayPal, you also get its receipt."
     },
     "payment_wall": {
       "description": "This content is part of \"{{name}}\" and needs a purchase to see it.",

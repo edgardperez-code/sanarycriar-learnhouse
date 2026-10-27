@@ -21,6 +21,9 @@ from src.services.webhooks.crypto import encrypt_secret
 logger = logging.getLogger(__name__)
 
 ENVIRONMENTS = ("sandbox", "live")
+# Sanar y Criar: the Pago Móvil row is edited only through /manual/settings.
+MANUAL_PROVIDER = "manual"
+MANUAL_CONFIG_MESSAGE = "Configura Pago Móvil desde su tarjeta en Pagos → Configuración."
 
 _VALIDATION_MESSAGES = {
     "invalid_credentials": "PayPal rechazó las credenciales. Revisa el Client ID, el Secret y el entorno (sandbox o live).",
@@ -32,6 +35,9 @@ _VALIDATION_MESSAGES = {
 
 def config_environment(cfg: Optional[PaymentsConfig]) -> str:
     """'live' or 'sandbox' (anything else counts as sandbox, like the provider)."""
+    # Sanar y Criar: Pago Móvil has no sandbox: every confirmation is real money.
+    if cfg is not None and cfg.provider == MANUAL_PROVIDER:
+        return "live"
     settings = (cfg.provider_config or {}) if cfg is not None else {}
     return "live" if settings.get("environment") == "live" else "sandbox"
 
@@ -59,7 +65,8 @@ def webhook_url(request: Optional[Request], provider: str, org_id: int) -> str:
 def serialize_config(cfg: PaymentsConfig, request: Optional[Request] = None) -> dict:
     provider = get_provider(cfg.provider)
     settings = provider.public_settings(cfg) if provider else {}
-    settings["webhook_url"] = webhook_url(request, cfg.provider, cfg.org_id)
+    if cfg.provider != MANUAL_PROVIDER:  # Sanar y Criar: Pago Móvil has no webhook
+        settings["webhook_url"] = webhook_url(request, cfg.provider, cfg.org_id)
     return {
         "id": cfg.id,
         "org_id": cfg.org_id,
@@ -151,6 +158,8 @@ async def create_config(db_session: AsyncSession, request: Optional[Request], or
                         provider_id: Optional[str], body: PaymentConfigBody) -> dict:
     await get_org_or_404(db_session, org_id)
     provider_id = (provider_id or body.provider or "").strip().lower()
+    if provider_id == MANUAL_PROVIDER:
+        raise HTTPException(status_code=400, detail=MANUAL_CONFIG_MESSAGE)
     if get_provider(provider_id) is None:
         raise HTTPException(status_code=400, detail="Proveedor de pago no soportado")
     existing = (await db_session.execute(
@@ -172,6 +181,8 @@ async def update_config(db_session: AsyncSession, request: Optional[Request], or
     cfg = await db_session.get(PaymentsConfig, config_id)
     if cfg is None or cfg.org_id != org_id:
         raise HTTPException(status_code=404, detail="Payment configuration not found")
+    if cfg.provider == MANUAL_PROVIDER:
+        raise HTTPException(status_code=400, detail=MANUAL_CONFIG_MESSAGE)
     # Validate a detached copy so a rejected update leaves the row untouched.
     candidate = PaymentsConfig(
         org_id=cfg.org_id,

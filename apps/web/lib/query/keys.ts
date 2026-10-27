@@ -132,4 +132,11 @@ export const queryKeys = {
     job: (orgId: number, jobId: number) => ['blog', orgId, 'job', jobId] as const,
     activeJob: (orgId: number) => ['blog', orgId, 'job', 'active'] as const,
   },
+  // Sanar y Criar: Pago Móvil orders (cart purchases). Invalidate ['payments', orgId, 'orders'] to refresh lists and the menu count.
+  orders: {
+    list: (orgId: number, status: string, q: string, offset: number) => ['payments', orgId, 'orders', 'list', status, q, offset] as const,
+    summary: (orgId: number) => ['payments', orgId, 'orders', 'summary'] as const,
+    detail: (orgId: number, uuid: string) => ['payments', orgId, 'orders', 'detail', uuid] as const,
+    manualSettings: (orgId: number) => ['payments', orgId, 'orders', 'manual-settings'] as const,
+  },
 }

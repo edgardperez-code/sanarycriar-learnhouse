@@ -44,6 +44,7 @@ import {
   Lightning,
   EnvelopeSimple,
   Article,
+  Receipt,
 } from '@phosphor-icons/react'
 import { motion } from 'motion/react'
 import { DiscordIcon } from '@components/Objects/Icons/DiscordIcon'
@@ -86,6 +87,7 @@ import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import OnboardingSidebarBox from '@components/Dashboard/Onboarding/OnboardingSidebarBox'
 import { useOnboarding } from '@components/Hooks/useOnboarding'
+import { usePendingOrdersCount } from '@components/Dashboard/Pages/Orders/usePendingOrdersCount'
 
 // Scattered night-sky starfield for the free-plan upgrade box. Fixed positions
 // (top/left %) so the constellation is stable across renders; `north` is the
@@ -197,6 +199,8 @@ function DashLeftMenu() {
   // Only org managers (admins/superadmins) see billing surfaces; non-admins
   // shouldn't manage the plan/subscription.
   const { canManageOrg } = useAdminStatus()
+  // Sanar y Criar: Pago Móvil orders waiting for confirmation ("Pedidos (3)").
+  const pendingOrders = usePendingOrdersCount()
 
   if (!org || !session) return null
   const planLabel =
@@ -611,6 +615,17 @@ function DashLeftMenu() {
                 label={t('common.payments')}
                 isCollapsed={isCollapsed}
                 active={isActivePath('/dash/payments')}
+              />
+            )}
+
+            {/* Sanar y Criar: Pago Móvil orders of the cart. MenuLink has no badge, so the pending count goes in the label. */}
+            {showPayments && (
+              <MenuLink
+                href="/dash/orders"
+                icon={<Receipt size={20} weight="fill" />}
+                label={pendingOrders > 0 ? `${t('sc_orders.menu_label')} (${pendingOrders})` : t('sc_orders.menu_label')}
+                isCollapsed={isCollapsed}
+                active={isActivePath('/dash/orders')}
               />
             )}
 

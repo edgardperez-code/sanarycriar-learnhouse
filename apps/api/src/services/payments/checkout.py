@@ -25,6 +25,7 @@ from src.db.payments.payments import (
     PaymentsOrder,
     PaymentsWebhookEvent,
 )
+from src.db.payments.purchases import PaymentsPurchase, PaymentsPurchaseItem
 from src.db.users import AnonymousUser, APITokenUser, SuperadminAPITokenUser
 from src.services.payments.access import (
     ACCESS_STATUSES,
@@ -180,6 +181,21 @@ async def _config_for(db_session: AsyncSession, order_or_org_id, provider_id: st
     )).scalars().first()
 
 
+async def purchase_ref_for_order(db_session: AsyncSession, order: Optional[PaymentsOrder]) -> Optional[dict]:
+    """Sanar y Criar: ``{purchase_uuid, code}`` of the cart purchase (Pago
+    Móvil) an order belongs to, or None (PayPal orders belong to none)."""
+    if order is None or order.provider != "manual":
+        return None
+    row = (await db_session.execute(
+        select(PaymentsPurchase.purchase_uuid, PaymentsPurchase.code)
+        .join(PaymentsPurchaseItem, PaymentsPurchaseItem.purchase_id == PaymentsPurchase.id)  # type: ignore[arg-type]
+        .where(PaymentsPurchaseItem.order_id == order.id)
+    )).first()
+    if row is None:
+        return None
+    return {"purchase_uuid": row[0], "code": row[1]}
+
+
 async def order_response(db_session: AsyncSession, request: Optional[Request], order: PaymentsOrder,
                          status: Optional[str] = None, **extra) -> dict:
     from src.db.organizations import Organization
@@ -203,6 +219,7 @@ async def order_response(db_session: AsyncSession, request: Optional[Request], o
         "currency": order.currency,
         "provider": order.provider,
         "resources": resources,
+        "purchase": await purchase_ref_for_order(db_session, order),
     }
     body.update(extra)
     return body
@@ -269,27 +286,34 @@ async def course_access(db_session: AsyncSession, org_id: int, resource_uuid: st
     # again (a second checkout would charge twice).
     access["payment_pending"] = False
     if access["for_sale"] and not access["has_access"] and access["reason"] == "none":
-        access["payment_pending"] = await _has_open_payment_for_course(db_session, user, course)
+        open_order = await _open_order_for_course(db_session, user, course)
+        access["payment_pending"] = open_order is not None
+        if open_order is not None:
+            # Sanar y Criar: a Pago Móvil purchase waiting for the admin.
+            access["pending_purchase"] = await purchase_ref_for_order(db_session, open_order)
     return access
 
 
 async def _has_open_payment_for_course(db_session: AsyncSession, user, course: Course) -> bool:
+    return await _open_order_for_course(db_session, user, course) is not None
+
+
+async def _open_order_for_course(db_session: AsyncSession, user, course: Course) -> Optional[PaymentsOrder]:
     from src.services.payments.access import covering_offer_ids_query
 
     if user is None or isinstance(user, (AnonymousUser, APITokenUser, SuperadminAPITokenUser)):
-        return False
+        return None
     user_id = int(getattr(user, "id", 0) or 0)
     if not user_id:
-        return False
+        return None
     offers = covering_offer_ids_query(course.course_uuid, org_id=course.org_id, include_archived=True)
-    row = (await db_session.execute(
-        select(PaymentsOrder.id).where(
+    return (await db_session.execute(
+        select(PaymentsOrder).where(
             PaymentsOrder.user_id == user_id,
             PaymentsOrder.offer_id.in_(offers),  # type: ignore[attr-defined]
             _open_payment_clause(),
-        ).limit(1)
-    )).first()
-    return row is not None
+        ).order_by(PaymentsOrder.id.desc()).limit(1)  # type: ignore[union-attr]
+    )).scalars().first()
 
 
 # ---------------------------------------------------------------- checkout
@@ -306,6 +330,14 @@ async def start_checkout(db_session: AsyncSession, request: Optional[Request], o
     if not is_allowed_redirect(redirect_uri):
         raise HTTPException(status_code=400, detail="redirect_uri no permitido")
 
+    # Sanar y Criar: Pago Móvil has no per-offer checkout; it is paid from the
+    # cart (POST /cart/checkout) and confirmed by an admin.
+    if (provider_id or "").strip().lower() == "manual":
+        raise HTTPException(
+            status_code=400,
+            detail={"code": "MANUAL_ONLY", "message": "Pago Móvil se paga desde el carrito."},
+        )
+
     method = (method or "paypal").strip().lower()
     if method not in METHODS:
         raise HTTPException(status_code=400, detail="Método de pago no válido")
@@ -318,6 +350,7 @@ async def start_checkout(db_session: AsyncSession, request: Optional[Request], o
                 PaymentsConfig.org_id == org_id,
                 PaymentsConfig.active == True,  # noqa: E712
                 PaymentsConfig.enabled == True,  # noqa: E712
+                PaymentsConfig.provider != "manual",
             ).order_by(PaymentsConfig.id)
         )).scalars().first()
     provider = get_provider(cfg.provider) if cfg else None
@@ -351,9 +384,11 @@ async def start_checkout(db_session: AsyncSession, request: Optional[Request], o
     # instead of opening a second charge.
     open_order = await open_payment_for(db_session, user.id, offer.id)
     if open_order is not None:
-        raise HTTPException(
-            status_code=409, detail={"code": "PAYMENT_PENDING", "order_uuid": open_order.order_uuid}
-        )
+        detail = {"code": "PAYMENT_PENDING", "order_uuid": open_order.order_uuid}
+        purchase = await purchase_ref_for_order(db_session, open_order)
+        if purchase is not None:  # Sanar y Criar: part of a Pago Móvil purchase
+            detail.update(purchase_uuid=purchase["purchase_uuid"], purchase_code=purchase["code"])
+        raise HTTPException(status_code=409, detail=detail)
 
     # One enrollment row per (user, offer): reuse an abandoned/failed one.
     enrollment = (await db_session.execute(
@@ -433,6 +468,10 @@ def _redis():
 
 
 _LOCAL_CAPTURE_LOCKS: dict[str, asyncio.Lock] = {}
+# Sanar y Criar: holders + waiters of each local lock. The entry is dropped
+# only when nobody holds or waits for it: dropping it while someone waits let
+# a newcomer create a second Lock for the same key and run concurrently.
+_LOCAL_CAPTURE_USERS: dict[str, int] = {}
 _CAPTURE_LOCK_TTL_SECONDS = 45
 _CAPTURE_LOCK_WAIT_SECONDS = 30
 
@@ -452,33 +491,41 @@ async def _capture_lock(lock_id: str):
     PayPal and fulfillment locks the order row.
     """
     local = _LOCAL_CAPTURE_LOCKS.setdefault(lock_id, asyncio.Lock())
-    async with local:
-        client = _redis()
-        key = f"sc_pay:capture_lock:{lock_id}"
-        token = str(uuid4())
-        acquired = False
-        if client is not None:
-            deadline = time.monotonic() + _CAPTURE_LOCK_WAIT_SECONDS
-            while True:
-                try:
-                    acquired = bool(client.set(key, token, nx=True, ex=_CAPTURE_LOCK_TTL_SECONDS))
-                except Exception:
-                    break  # Redis unavailable: rely on idempotency alone
-                if acquired or time.monotonic() > deadline:
-                    break
-                await asyncio.sleep(0.25)
-        try:
-            yield
-        finally:
-            if acquired:
-                try:
-                    current = client.get(key)
-                    if current is not None and (current.decode() if isinstance(current, bytes) else current) == token:
-                        client.delete(key)
-                except Exception:
-                    pass
-    if not local.locked():
-        _LOCAL_CAPTURE_LOCKS.pop(lock_id, None)
+    _LOCAL_CAPTURE_USERS[lock_id] = _LOCAL_CAPTURE_USERS.get(lock_id, 0) + 1
+    try:
+        async with local:
+            client = _redis()
+            key = f"sc_pay:capture_lock:{lock_id}"
+            token = str(uuid4())
+            acquired = False
+            if client is not None:
+                deadline = time.monotonic() + _CAPTURE_LOCK_WAIT_SECONDS
+                while True:
+                    try:
+                        acquired = bool(client.set(key, token, nx=True, ex=_CAPTURE_LOCK_TTL_SECONDS))
+                    except Exception:
+                        break  # Redis unavailable: rely on idempotency alone
+                    if acquired or time.monotonic() > deadline:
+                        break
+                    await asyncio.sleep(0.25)
+            try:
+                yield
+            finally:
+                if acquired:
+                    try:
+                        current = client.get(key)
+                        if current is not None and (current.decode() if isinstance(current, bytes) else current) == token:
+                            client.delete(key)
+                    except Exception:
+                        pass
+    finally:
+        remaining = _LOCAL_CAPTURE_USERS.get(lock_id, 1) - 1
+        if remaining > 0:
+            _LOCAL_CAPTURE_USERS[lock_id] = remaining
+        else:
+            _LOCAL_CAPTURE_USERS.pop(lock_id, None)
+            if _LOCAL_CAPTURE_LOCKS.get(lock_id) is local:
+                _LOCAL_CAPTURE_LOCKS.pop(lock_id, None)
 
 
 async def _owned_through_other_order(db_session: AsyncSession, order: PaymentsOrder) -> bool:

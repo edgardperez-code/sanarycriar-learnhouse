@@ -4,7 +4,7 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useOrg, useOrgMembership } from '@components/Contexts/OrgContext'
 import { getUriWithOrg } from '@services/config/config'
 import { getOffersByResource } from '@services/payments/offers'
-import { LogIn, LogOut, ShoppingCart, Lock, UserPlus, CheckCircle2, ArrowRight, ClockIcon } from 'lucide-react'
+import { LogIn, LogOut, ShoppingCart, Lock, UserPlus, CheckCircle2, ArrowRight } from 'lucide-react'
 import { removeCourse, startCourse } from '@services/courses/activity'
 import { revalidateTags, asArray } from '@services/utils/ts/requests'
 import UserAvatar from '../../UserAvatar'
@@ -20,6 +20,7 @@ import { billingIntervalSuffix } from '@/lib/payments/billingInterval'
 import { useCourseAccess } from '@components/Hooks/useCourseAccess'
 import { useScT } from '@components/Payments/useScT'
 import { productTypeOfCourse, withRedirect } from '@components/Payments/commerce'
+import { PendingPaymentCard } from '@components/Store/Cart/PendingPaymentCard'
 // Sanar y Criar: free courses with history get "Continuar" + a confirmed leave.
 import {
   LeaveCourseDialog,
@@ -389,16 +390,9 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
     }
 
     // Sanar y Criar: payment under review: no second purchase meanwhile.
+    // A Pago Móvil order also names its code and links to it.
     if (access?.payment_pending) {
-      return (
-        <div role="status" className="p-4 bg-amber-50 border border-amber-200 rounded-[20px] space-y-1">
-          <div className="flex items-center gap-2">
-            <ClockIcon className="w-4 h-4 text-amber-700" />
-            <h3 className="text-[#190933] font-semibold text-sm">{sc('course_actions.payment_pending_title')}</h3>
-          </div>
-          <p className="text-xs text-[#584F72] leading-relaxed">{sc('course_actions.payment_pending_description')}</p>
-        </div>
-      )
+      return <PendingPaymentCard access={access} orgslug={orgslug} />
     }
 
     const offer = linkedOffers[0]

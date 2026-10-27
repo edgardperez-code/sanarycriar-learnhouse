@@ -18,6 +18,9 @@ import { billingIntervalLabel } from '@/lib/payments/billingInterval'
 import { useScT, ScTranslate } from '@components/Payments/useScT'
 import { normalizeProductType, stripCoursePrefix } from '@components/Payments/commerce'
 import { safeImageSrc } from '@services/security/url'
+// Sanar y Criar: Pago Móvil orders (pending ones first) above the purchases.
+import { MyPurchasesSection } from '@components/Store/Cart/MyPurchasesSection'
+import { useMyPurchases } from '@components/Store/Cart/useMyPurchases'
 
 interface AccountPurchasesProps {
   orgId: number
@@ -167,7 +170,9 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
   const enrollments: any[] = (Array.isArray(enrollmentsResult?.data) ? enrollmentsResult.data : [])
     .filter((e: any) => VISIBLE_STATUSES.has(String(e?.status ?? '').toLowerCase()))
 
-  if (isLoading) {
+  const { purchases: manualOrders, isLoading: ordersLoading } = useMyPurchases(orgId, access_token)
+
+  if (isLoading || ordersLoading) {
     return (
       <div className="bg-white rounded-xl nice-shadow p-12 flex items-center justify-center">
         <Loader2 size={24} className="animate-spin text-gray-300" />
@@ -200,8 +205,10 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
         </div>
       </div>
 
-      {/* Enrollment list */}
-      {enrollments.length === 0 ? (
+      <MyPurchasesSection purchases={manualOrders} orgslug={orgslug} />
+
+      {/* Enrollment list (no "empty" card when there are Pago Móvil orders above) */}
+      {enrollments.length === 0 && manualOrders.length > 0 ? null : enrollments.length === 0 ? (
         <div className="bg-white rounded-xl nice-shadow p-12 flex flex-col items-center justify-center text-center">
           <div className="w-14 h-14 rounded-2xl bg-[#EEEDFF] flex items-center justify-center mb-4">
             <ShoppingBag size={24} className="text-[#6559CA]" strokeWidth={1.5} />

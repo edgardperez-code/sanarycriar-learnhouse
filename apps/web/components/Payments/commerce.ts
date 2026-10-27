@@ -57,7 +57,9 @@ export function providerLabel(provider: string | null | undefined, sc: ScTransla
       return sc('providers.paypal')
     case 'spidi':
       return sc('providers.spidi')
+    // Sanar y Criar: "manual" is Pago Móvil confirmed by hand (cart orders).
     case 'manual':
+      return sc('providers.pago_movil')
     case 'custom':
       return sc('providers.manual')
     case '':

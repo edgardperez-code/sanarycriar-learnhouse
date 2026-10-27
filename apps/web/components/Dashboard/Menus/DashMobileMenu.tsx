@@ -28,6 +28,7 @@ import {
   Code,
   EnvelopeSimple,
   Article,
+  Receipt,
 } from '@phosphor-icons/react'
 import { DiscordIcon } from '@components/Objects/Icons/DiscordIcon'
 import Link from 'next/link'
@@ -46,6 +47,7 @@ import { usePlan } from '@components/Hooks/usePlan'
 import { planMeetsRequirement } from '@services/plans/plans'
 import { FeedbackModal } from '@components/Objects/Modals/FeedbackModal'
 import { useCommandPalette } from '@components/Dashboard/CommandPalette/CommandPaletteContext'
+import { usePendingOrdersCount } from '@components/Dashboard/Pages/Orders/usePendingOrdersCount'
 
 function DashMobileMenu() {
   const org = useOrg() as any
@@ -58,6 +60,8 @@ function DashMobileMenu() {
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
   const [langExpanded, setLangExpanded] = useState(false)
   const [mounted, setMounted] = useState(false)
+  // Sanar y Criar: Pago Móvil orders waiting for confirmation ("Pedidos (3)").
+  const pendingOrders = usePendingOrdersCount()
 
   React.useEffect(() => { setMounted(true) }, [])
 
@@ -228,6 +232,8 @@ function DashMobileMenu() {
                 {isEnabled('boards') && <PanelItem href="/dash/boards" icon={<ChalkboardSimple size={15} weight="fill" />} label="Boards" active={isActive('/dash/boards')} onClick={close} />}
                 {isEnabled('playgrounds') && <PanelItem href="/dash/playgrounds" icon={<Cube size={15} weight="fill" />} label="Playgrounds" active={isActive('/dash/playgrounds')} onClick={close} />}
                 {isEnabled('payments') && <PanelItem href="/dash/payments/overview" icon={<CurrencyCircleDollar size={15} weight="fill" />} label={t('common.payments')} active={isActive('/dash/payments')} onClick={close} />}
+                {/* Sanar y Criar: Pago Móvil orders; the pending count goes in the label. */}
+                {isEnabled('payments') && <PanelItem href="/dash/orders" icon={<Receipt size={15} weight="fill" />} label={pendingOrders > 0 ? `${t('sc_orders.menu_label')} (${pendingOrders})` : t('sc_orders.menu_label')} active={isActive('/dash/orders')} onClick={close} />}
                 {/* Sanar y Criar: newsletter; the API enforces the permission. */}
                 <PanelItem href="/dash/newsletter/popup" icon={<EnvelopeSimple size={15} weight="fill" />} label={t('sc_newsletter.menu_label')} active={isActive('/dash/newsletter')} onClick={close} />
                 {/* Sanar y Criar: blog; the API enforces the permission. */}

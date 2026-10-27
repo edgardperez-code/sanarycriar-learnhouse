@@ -1,8 +1,9 @@
 'use client';
 // Sanar y Criar: payment provider configuration. PayPal is configured with a
 // credentials form (Client ID + Secret + environment + webhook id) instead of
-// the upstream Stripe Connect OAuth popup; Pago Móvil (SPIDI) is announced as
-// coming soon. The stored secret is never shown or sent back to the browser.
+// the upstream Stripe Connect OAuth popup; Pago Móvil (manual, confirmed in
+// Pedidos) has its own card, PagoMovilCard. The stored secret is never shown
+// or sent back to the browser.
 import React, { useMemo, useState } from 'react';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { useLHSession } from '@components/Contexts/LHSessionContext';
@@ -18,7 +19,6 @@ import {
   Loader2,
   Pencil,
   Plug,
-  Smartphone,
   Trash2,
   XCircle,
 } from 'lucide-react';
@@ -34,6 +34,7 @@ import { useLHAnalytics, AnalyticsEvent } from '@services/analytics';
 import { SiPaypal } from '@icons-pack/react-simple-icons';
 import { useScT, ScTranslate } from '@components/Payments/useScT';
 import { describePaymentError } from '@components/Payments/commerce';
+import PagoMovilCard from './PagoMovilCard';
 
 const PAYPAL_DEVELOPER_URL = 'https://developer.paypal.com/dashboard/applications';
 
@@ -96,7 +97,7 @@ const PaymentsConfigurationPage: React.FC = () => {
 
       <div className="space-y-3">
         <PaypalCard config={paypalConfig} orgId={org.id} accessToken={access_token} sc={sc} />
-        <SpidiComingSoonCard sc={sc} />
+        <PagoMovilCard />
       </div>
     </div>
   );
@@ -478,33 +479,6 @@ function PaypalCredentialsForm({ config, orgId, accessToken, sc, onDone, onCance
         </Button>
       </div>
     </form>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Pago Móvil (SPIDI): announced, not available yet
-// ---------------------------------------------------------------------------
-function SpidiComingSoonCard({ sc }: { sc: ScTranslate }) {
-  return (
-    <div className="border border-dashed border-[#BBBBFF] rounded-xl overflow-hidden" aria-disabled="true">
-      <div className="flex flex-wrap gap-3 items-center justify-between px-5 py-4 bg-white opacity-75">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center justify-center w-10 h-10 bg-[#EEEDFF] rounded-lg shrink-0">
-            <Smartphone size={20} className="text-[#6559CA]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-[#190933]">{sc('config.spidi_name')}</span>
-              <span className="text-xs text-[#AC4691] bg-[#F9DDF0] px-2 py-0.5 rounded-full">{sc('config.coming_soon')}</span>
-            </div>
-            <p className="text-sm text-gray-500 mt-0.5">{sc('config.spidi_tagline')}</p>
-          </div>
-        </div>
-        <Button size="sm" variant="outline" className="text-xs rounded-full" disabled>
-          {sc('config.coming_soon')}
-        </Button>
-      </div>
-    </div>
   );
 }
 

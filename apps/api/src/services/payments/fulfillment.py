@@ -330,8 +330,12 @@ async def send_purchase_email(db_session: AsyncSession, order: PaymentsOrder,
 
 
 async def fulfill_order(db_session: AsyncSession, order_id: int, result: Optional[PaymentResult] = None,
-                        *, request: Optional[Request] = None) -> FulfillOutcome:
-    """Mark the order paid and grant access. Safe to call any number of times."""
+                        *, request: Optional[Request] = None, send_email: bool = True) -> FulfillOutcome:
+    """Mark the order paid and grant access. Safe to call any number of times.
+
+    Sanar y Criar: ``send_email=False`` skips the per-order confirmation; a
+    Pago Móvil purchase sends one email for all of its orders instead.
+    """
     outcome = FulfillOutcome()
     order = await _locked_order(db_session, order_id)
     if order is None:
@@ -389,7 +393,8 @@ async def fulfill_order(db_session: AsyncSession, order_id: int, result: Optiona
         user = await db_session.get(User, order.user_id)
         if user is not None and created:
             await _notify_enrolled(order.org_id, user, created)
-        await send_purchase_email(db_session, order, request)
+        if send_email:
+            await send_purchase_email(db_session, order, request)
     return outcome
 
 

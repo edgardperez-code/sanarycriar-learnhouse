@@ -87,6 +87,9 @@ async def reconcile_refunds_once(db_session, *, delay: float = REFUND_CHECK_DELA
             PaymentsOrder.status.in_(PAID_STATUSES),  # type: ignore[attr-defined]
             PaymentsOrder.paid_at >= utcnow() - REFUND_CHECK_LOOKBACK,
             PaymentsOrder.provider_capture_id.is_not(None),  # type: ignore[union-attr]
+            # Sanar y Criar: Pago Móvil has no capture to ask about (its
+            # "capture id" is the bank reference); an admin voids it by hand.
+            PaymentsOrder.provider != "manual",
         ).order_by(PaymentsOrder.id)
     )).scalars().all()
     for order in orders:
@@ -177,6 +180,19 @@ async def _tick() -> None:
     if not _claim_lock():
         return
     from src.core.events.database import _async_session_factory
+
+    # Sanar y Criar: unpaid Pago Móvil purchases past their deadline expire.
+    try:
+        from src.services.payments.purchases import expire_due_purchases
+
+        async with _async_session_factory() as db_session:
+            expired = await expire_due_purchases(db_session)
+        if expired:
+            logger.info("Pago Móvil purchases expired: %s", expired)
+    except asyncio.CancelledError:
+        raise
+    except Exception:
+        logger.exception("Expiring Pago Móvil purchases failed")
 
     try:
         async with _async_session_factory() as db_session:

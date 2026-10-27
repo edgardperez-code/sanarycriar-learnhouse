@@ -19,7 +19,8 @@
     "providers": {
       "paypal": "PayPal",
       "spidi": "Pago Móvil",
-      "manual": "Manual"
+      "manual": "Manual",
+      "pago_movil": "Pago Móvil"
     },
     "status": {
       "active": "Activo",
@@ -64,7 +65,7 @@
     },
     "config": {
       "title": "Métodos de cobro",
-      "subtitle": "Conecta tu cuenta de PayPal para vender. Pago Móvil llegará pronto.",
+      "subtitle": "Conecta PayPal o activa Pago Móvil para cobrar tus cursos y ebooks.",
       "load_error": "No pudimos cargar la configuración de pagos.",
       "paypal_tagline": "Cobra con PayPal o con tarjeta (sin que tu cliente necesite cuenta PayPal).",
       "paypal_developer_link": "Abrir el panel de desarrolladores de PayPal",
@@ -368,7 +369,7 @@
       "and_more_one": "y {{count}} más",
       "and_more_other": "y {{count}} más",
       "payment_pending_title": "Tu pago está en revisión",
-      "payment_pending_description": "PayPal está revisando tu pago. En cuanto se confirme tendrás acceso y te avisaremos por correo."
+      "payment_pending_description": "Estamos revisando tu pago. Te avisaremos por correo en cuanto tengas acceso."
     },
     "purchases": {
       "title": "Mis compras",
@@ -384,7 +385,7 @@
       "read_ebook": "Leer ebook",
       "view_offer": "Ver la oferta",
       "refunded_note": "Esta compra fue reembolsada y ya no da acceso al contenido.",
-      "receipts_note": "Los comprobantes de pago te llegan por correo desde PayPal."
+      "receipts_note": "Te enviamos un correo por cada compra confirmada. Si pagaste con PayPal, también te llega su comprobante."
     },
     "payment_wall": {
       "description": "Este contenido es parte de «{{name}}» y requiere una compra para verlo.",

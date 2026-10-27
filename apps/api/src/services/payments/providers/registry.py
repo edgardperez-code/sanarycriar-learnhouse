@@ -16,6 +16,11 @@ def _ensure_defaults() -> None:
         from src.services.payments.providers.paypal import PayPalProvider
 
         _PROVIDERS["paypal"] = PayPalProvider()
+    # Sanar y Criar: Pago Móvil confirmed by hand (cart purchases only).
+    if "manual" not in _PROVIDERS:
+        from src.services.payments.providers.manual import ManualProvider
+
+        _PROVIDERS["manual"] = ManualProvider()
 
 
 def register_provider(provider: PaymentProvider) -> None:

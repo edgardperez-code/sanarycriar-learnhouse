@@ -33,6 +33,7 @@ import {
   Clock, XCircle, CreditCard, UserPlus, LogIn, Smartphone,
 } from 'lucide-react'
 import { SiPaypal } from '@icons-pack/react-simple-icons'
+import toast from 'react-hot-toast'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useLHAnalytics, useTrackView, AnalyticsEvent } from '@services/analytics'
 import { useScT, ScTranslate } from '@components/Payments/useScT'
@@ -50,6 +51,10 @@ import {
   stripCoursePrefix,
   withRedirect,
 } from '@components/Payments/commerce'
+// Sanar y Criar: Pago Móvil is paid from the cart (contract §D.3).
+import { AddToCartButton } from '@components/Store/Cart/AddToCartButton'
+import { useCart } from '@components/Store/Cart/useCart'
+import { useCartT } from '@components/Store/Cart/useCartT'
 
 interface Resource {
   resource_uuid: string
@@ -208,7 +213,7 @@ function StatusPanel({
 function methodIcon(provider: string, method: string) {
   if (method === 'card') return <CreditCard size={16} />
   if (provider === 'paypal') return <SiPaypal size={15} />
-  if (provider === 'spidi') return <Smartphone size={16} />
+  if (provider === 'spidi' || method === 'pago_movil') return <Smartphone size={16} />
   return <ShieldCheck size={16} />
 }
 
@@ -255,13 +260,26 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
   // Providers able to charge this offer's currency.
   const { providers, isLoading: providersLoading } = useCheckoutProviders(orgId)
   const currency = String(offer?.currency || 'USD').toUpperCase()
+  const chargesCurrency = useCallback(
+    (p: CheckoutProvider) => p.currencies.length === 0 || p.currencies.map((c) => c.toUpperCase()).includes(currency),
+    [currency]
+  )
+  // Sanar y Criar: "manual" (Pago Móvil) never gets a direct-checkout button:
+  // it is paid from the cart, and the offer checkout answers 400 for it.
   const payButtons = useMemo(
     () =>
       providers
-        .filter((p) => p.currencies.length === 0 || p.currencies.map((c) => c.toUpperCase()).includes(currency))
+        .filter((p) => p.provider.toLowerCase() !== 'manual')
+        .filter(chargesCurrency)
         .flatMap((p) => (p.methods.length ? p.methods : ['paypal']).map((method) => ({ provider: p, method }))),
-    [providers, currency]
+    [providers, chargesCurrency]
   )
+  const hasManual =
+    offer?.offer_type !== 'subscription' &&
+    providers.some((p) => p.provider.toLowerCase() === 'manual' && chargesCurrency(p))
+  const { ct } = useCartT()
+  const cart = useCart(orgId)
+  const [pendingPurchase, setPendingPurchase] = useState<{ uuid: string; code: string } | null>(null)
 
   // Does the buyer already own this offer?
   const { data: enrollmentsResult } = useQuery({
@@ -466,6 +484,15 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
         refreshOwnership()
         return
       }
+      // Sanar y Criar: the open payment belongs to a Pago Móvil order: point
+      // to that order (it is confirmed by hand, polling it here is useless).
+      const pendingPurchaseUuid = res.status === 409 && errorCode(res.data) === 'PAYMENT_PENDING'
+        ? errorField(res.data, 'purchase_uuid')
+        : null
+      if (pendingPurchaseUuid) {
+        setPendingPurchase({ uuid: pendingPurchaseUuid, code: errorField(res.data, 'purchase_code') ?? '' })
+        return
+      }
       // Sanar y Criar: a payment of this offer is still under review; show
       // (and poll) that order instead of opening a second charge.
       const pendingOrder = res.status === 409 && errorCode(res.data) === 'PAYMENT_PENDING'
@@ -483,6 +510,21 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
       track(AnalyticsEvent.CheckoutSessionFailed, { failure_reason: 'exception' })
       setCheckoutError(sc('offer_page.start_error'))
     }
+  }
+
+  // Sanar y Criar: "Comprar ahora" = add to the cart and open it (no session
+  // needed yet: the cart asks for it when paying).
+  const buyNow = () => {
+    const result = cart.add(canonicalUuid)
+    if (result === 'full') {
+      toast.error(ct('add.full'))
+      return
+    }
+    if (result === 'invalid') {
+      toast.error(ct('add.invalid'))
+      return
+    }
+    router.push(getUriWithOrg(orgslug, '/store/cart'))
   }
 
   const benefits: string[] = offer?.benefits
@@ -631,7 +673,35 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
       return <OwnedResourceLinks resources={phase.resources.length ? phase.resources : resources} orgslug={orgslug} sc={sc} />
     }
 
-    if (!token) {
+    // Sanar y Criar: already in a Pago Móvil order awaiting confirmation.
+    if (pendingPurchase) {
+      return (
+        <div role="status" className="p-4 bg-amber-50 border border-amber-200 rounded-[20px] space-y-2">
+          <p className="flex items-start gap-2 text-sm font-semibold text-[#190933] leading-snug">
+            <Clock size={16} className="text-amber-700 shrink-0 mt-0.5" />
+            <span>{ct('add.pending_purchase', { code: pendingPurchase.code })}</span>
+          </p>
+          <Link
+            href={getUriWithOrg(orgslug, `/store/purchases/${encodeURIComponent(pendingPurchase.uuid)}`)}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#4F43A4] underline underline-offset-2"
+          >
+            {ct('add.view_order')} <ArrowRight size={13} />
+          </Link>
+        </div>
+      )
+    }
+
+    // Sanar y Criar: wait for the providers before choosing between the
+    // guest card and the cart buttons (anyone can fill a cart).
+    if (!token && providersLoading) {
+      return (
+        <div className="flex items-center justify-center gap-2 py-3 text-sm text-[#584F72]">
+          <Loader2 size={15} className="animate-spin" /> {sc('offer_page.providers_loading')}
+        </div>
+      )
+    }
+
+    if (!token && !hasManual) {
       return (
         <div className="space-y-3">
           <div className="p-4 bg-[#FFFCF9] border border-[#EAE8F2] rounded-[20px]">
@@ -670,7 +740,7 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
       )
     }
 
-    if (payButtons.length === 0) {
+    if (payButtons.length === 0 && !hasManual) {
       return (
         <p className="text-sm text-[#584F72] bg-[#FFFCF9] border border-[#EAE8F2] rounded-[20px] px-4 py-3">
           {sc('offer_page.no_providers')}
@@ -682,6 +752,29 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
     const testMode = payButtons.some((b) => b.provider.test_mode)
     return (
       <div className="space-y-2.5">
+        {/* Sanar y Criar: Pago Móvil (cart) first; PayPal below, if active. */}
+        {hasManual && (
+          <>
+            <button
+              type="button"
+              onClick={buyNow}
+              disabled={!!starting || busy}
+              className="w-full flex items-center justify-center gap-2 min-h-[48px] py-3 px-5 rounded-full font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-[#190933] hover:bg-[#41375B] text-white"
+            >
+              {methodIcon('manual', 'pago_movil')}
+              <span>{ct('add.buy_now')}</span>
+            </button>
+            <AddToCartButton orgslug={orgslug} offerUuid={canonicalUuid} />
+            <p className="text-xs text-center text-[#6D6485] leading-relaxed">{ct('add.pago_movil_hint')}</p>
+            {payButtons.length > 0 && (
+              <p className="flex items-center gap-3 pt-1 text-xs text-[#6D6485]">
+                <span className="h-px flex-1 bg-[#EAE8F2]" aria-hidden="true" />
+                {ct('add.or_paypal')}
+                <span className="h-px flex-1 bg-[#EAE8F2]" aria-hidden="true" />
+              </p>
+            )}
+          </>
+        )}
         {testMode && (
           <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
             {sc('offer_page.test_mode_banner')}
@@ -690,7 +783,7 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
         {payButtons.map(({ provider, method }, index) => {
           const key = `${provider.provider}:${method}`
           const isStarting = starting === key
-          const primary = index === 0
+          const primary = index === 0 && !hasManual
           return (
             <button
               key={key}
@@ -709,6 +802,18 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
           )
         })}
         {hasCard && <p className="text-xs text-center text-[#6D6485]">{sc('offer_page.card_hint')}</p>}
+        {!token && (
+          <p className="text-xs text-center text-[#584F72]">
+            {sc('offer_page.guest_have_account')}{' '}
+            <Link
+              href={loginHref}
+              onClick={() => track(AnalyticsEvent.CheckoutLoginRedirected, { redirect_target: offerPath, target: 'login' })}
+              className="font-semibold text-[#4F43A4] underline inline-flex items-center gap-1"
+            >
+              <LogIn size={12} /> {sc('offer_page.guest_login')}
+            </Link>
+          </p>
+        )}
         {checkoutError && (
           <p role="alert" className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
             {checkoutError}
@@ -822,7 +927,9 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
                   </p>
                 )}
                 <p className="text-xs text-[#6D6485] flex items-center gap-1.5">
-                  <Zap size={12} className="text-[#6559CA]" /> {sc('offer_page.instant_access')}
+                  <Zap size={12} className="text-[#6559CA] shrink-0" />{' '}
+                  {/* Sanar y Criar: Pago Móvil access waits for the confirmation. */}
+                  {hasManual ? ct('add.access_note') : sc('offer_page.instant_access')}
                 </p>
                 <p className="text-xs text-[#6D6485] flex items-center gap-1.5">
                   <BookOpen size={12} className="text-[#6559CA]" /> {sc('offer_page.account_access')}

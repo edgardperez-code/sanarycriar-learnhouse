@@ -13,6 +13,8 @@ import { useOrg } from '@components/Contexts/OrgContext'
 import { useLHAnalytics, useTrackView, AnalyticsEvent } from '@services/analytics'
 import { useScT } from '@components/Payments/useScT'
 import { cssUrl, normalizeProductType, resourceThumbnail } from '@components/Payments/commerce'
+import { useCheckoutProviders } from '@components/Payments/useCheckoutProviders'
+import { AddToCartButton } from '@components/Store/Cart/AddToCartButton'
 
 interface Resource {
   resource_uuid: string
@@ -102,7 +104,7 @@ function CourseBoxes({ resources, orgUuid }: { resources: Resource[]; orgUuid: s
   )
 }
 
-function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslug: string; orgUuid: string; position: number }) {
+function OfferCard({ offer, orgslug, orgUuid, position, showCart = false }: { offer: Offer; orgslug: string; orgUuid: string; position: number; showCart?: boolean }) {
   const { t } = useTranslation()
   const { sc, lng } = useScT()
   const isSubscription = offer.offer_type === 'subscription'
@@ -112,124 +114,137 @@ function OfferCard({ offer, orgslug, orgUuid, position }: { offer: Offer; orgslu
   const router = useRouter()
   const onlyEbooks = resources.length > 0 && resources.every((r) => normalizeProductType(r.product_type) === 'ebook')
 
+  // Sanar y Criar: the card is a box; the link covers its content and the
+  // "Agregar al carrito" button sits below it (a button can't go in a link).
   return (
-    <Link
-      href={getUriWithOrg(orgslug, `/store/offers/${offer.offer_uuid}`)}
-      onClick={() => track(AnalyticsEvent.StoreOfferCardClicked, { offer_type: offer.offer_type, amount: offer.amount, position })}
-    >
-      <div className="group bg-white rounded-[20px] nice-shadow overflow-hidden flex flex-col h-full cursor-pointer transition-all duration-200 hover:scale-[1.01] border border-[#EAE8F2]">
+    <div className="group bg-white rounded-[20px] nice-shadow overflow-hidden flex flex-col h-full transition-all duration-200 hover:scale-[1.01] border border-[#EAE8F2]">
+      <Link
+        href={getUriWithOrg(orgslug, `/store/offers/${offer.offer_uuid}`)}
+        onClick={() => track(AnalyticsEvent.StoreOfferCardClicked, { offer_type: offer.offer_type, amount: offer.amount, position })}
+        className="flex flex-col flex-1 cursor-pointer"
+      >
+        <div className="flex flex-col flex-1">
 
-        {/* Thumbnail area */}
-        <div className="relative aspect-video overflow-hidden flex items-center justify-center bg-[#EEEDFF]">
-          {resources.length > 0 ? (
-            <div className="p-4 w-full">
-              <CourseBoxes resources={resources} orgUuid={orgUuid} />
-            </div>
-          ) : (
-            <ShoppingBag size={28} className="text-[#BBBBFF]" strokeWidth={1.5} />
-          )}
-
-          {/* Type badge */}
-          <div className="absolute top-2.5 start-2.5">
-            {isSubscription ? (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-[#190933]/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                <RefreshCcw size={10} /> {sc('offer_card.subscription')}
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#190933] bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
-                {onlyEbooks ? <BookMarked size={10} /> : <SquareCheck size={10} />}
-                {onlyEbooks ? sc('product.ebook') : sc('store.one_time_badge')}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="p-4 flex flex-col flex-1 gap-2">
-          <h2 className="font-bold text-base text-[#190933] leading-snug group-hover:text-[#4F43A4] transition-colors">
-            {offer.name}
-          </h2>
-          <p className="text-sm text-[#584F72] line-clamp-2 leading-relaxed">{offer.description}</p>
-
-          {/* Included resources list */}
-          {resources.length > 0 && (
-            <div className="space-y-1 mt-0.5">
-              {resources.slice(0, 2).map(r => {
-                const url = getResourceUrl(orgslug, r)
-                const inner = (
-                  <>
-                    {resourceIcon(r)}
-                    <span className="truncate">{r.name}</span>
-                  </>
-                )
-                // The whole card is already a link, and an <a> can't nest
-                // inside another one, so resource links navigate by script.
-                const openResource = (e: React.SyntheticEvent) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  router.push(url!)
-                }
-                return url ? (
-                  <span
-                    key={r.resource_uuid}
-                    role="link"
-                    tabIndex={0}
-                    onClick={openResource}
-                    onKeyDown={e => { if (e.key === 'Enter') openResource(e) }}
-                    className="flex items-center gap-2 text-xs text-[#584F72] hover:text-[#4F43A4] transition-colors"
-                  >
-                    {inner}
-                  </span>
-                ) : (
-                  <div key={r.resource_uuid} className="flex items-center gap-2 text-xs text-[#584F72]">
-                    {inner}
-                  </div>
-                )
-              })}
-              {resources.length > 2 && (
-                <p className="text-xs text-gray-400">{sc('store.more_included', { count: resources.length - 2 })}</p>
-              )}
-            </div>
-          )}
-
-          {benefits.length > 0 && (
-            <div className="space-y-1">
-              {benefits.slice(0, 2).map((b, i) => (
-                <div key={i} className="flex items-start gap-1.5 text-xs text-gray-500">
-                  <Sparkles size={10} className="text-[#7D75E2] mt-0.5 shrink-0" />
-                  <span className="truncate">{b}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Price + CTA */}
-          <div className="mt-auto pt-3 border-t border-[#EAE8F2] flex items-center justify-between">
-            <div>
-              <div className="text-xl font-black text-[#190933]">
-                {formatCurrency(Number(offer.amount), offer.currency, lng)}
+          {/* Thumbnail area */}
+          <div className="relative aspect-video overflow-hidden flex items-center justify-center bg-[#EEEDFF]">
+            {resources.length > 0 ? (
+              <div className="p-4 w-full">
+                <CourseBoxes resources={resources} orgUuid={orgUuid} />
               </div>
-              {offer.price_type === 'customer_choice' && (
-                <p className="text-xs text-gray-400 leading-none">{sc('offer_card.minimum')}</p>
-              )}
-              {isSubscription && (
-                <p className="text-xs text-[#6559CA] leading-none font-medium">{billingIntervalLabel(offer.billing_interval, t)}</p>
+            ) : (
+              <ShoppingBag size={28} className="text-[#BBBBFF]" strokeWidth={1.5} />
+            )}
+
+            {/* Type badge */}
+            <div className="absolute top-2.5 start-2.5">
+              {isSubscription ? (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-[#190933]/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+                  <RefreshCcw size={10} /> {sc('offer_card.subscription')}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#190933] bg-white/90 backdrop-blur-sm rounded-full px-2.5 py-0.5">
+                  {onlyEbooks ? <BookMarked size={10} /> : <SquareCheck size={10} />}
+                  {onlyEbooks ? sc('product.ebook') : sc('store.one_time_badge')}
+                </span>
               )}
             </div>
-            <div className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-colors bg-[#190933] text-white group-hover:bg-[#41375B]">
-              {sc('store.see_details')}
-              <ArrowRight size={13} />
+          </div>
+
+          {/* Body */}
+          <div className="p-4 flex flex-col flex-1 gap-2">
+            <h2 className="font-bold text-base text-[#190933] leading-snug group-hover:text-[#4F43A4] transition-colors">
+              {offer.name}
+            </h2>
+            <p className="text-sm text-[#584F72] line-clamp-2 leading-relaxed">{offer.description}</p>
+
+            {/* Included resources list */}
+            {resources.length > 0 && (
+              <div className="space-y-1 mt-0.5">
+                {resources.slice(0, 2).map(r => {
+                  const url = getResourceUrl(orgslug, r)
+                  const inner = (
+                    <>
+                      {resourceIcon(r)}
+                      <span className="truncate">{r.name}</span>
+                    </>
+                  )
+                  // The whole card is already a link, and an <a> can't nest
+                  // inside another one, so resource links navigate by script.
+                  const openResource = (e: React.SyntheticEvent) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    router.push(url!)
+                  }
+                  return url ? (
+                    <span
+                      key={r.resource_uuid}
+                      role="link"
+                      tabIndex={0}
+                      onClick={openResource}
+                      onKeyDown={e => { if (e.key === 'Enter') openResource(e) }}
+                      className="flex items-center gap-2 text-xs text-[#584F72] hover:text-[#4F43A4] transition-colors"
+                    >
+                      {inner}
+                    </span>
+                  ) : (
+                    <div key={r.resource_uuid} className="flex items-center gap-2 text-xs text-[#584F72]">
+                      {inner}
+                    </div>
+                  )
+                })}
+                {resources.length > 2 && (
+                  <p className="text-xs text-gray-400">{sc('store.more_included', { count: resources.length - 2 })}</p>
+                )}
+              </div>
+            )}
+
+            {benefits.length > 0 && (
+              <div className="space-y-1">
+                {benefits.slice(0, 2).map((b, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-gray-500">
+                    <Sparkles size={10} className="text-[#7D75E2] mt-0.5 shrink-0" />
+                    <span className="truncate">{b}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Price + CTA */}
+            <div className="mt-auto pt-3 border-t border-[#EAE8F2] flex items-center justify-between">
+              <div>
+                <div className="text-xl font-black text-[#190933]">
+                  {formatCurrency(Number(offer.amount), offer.currency, lng)}
+                </div>
+                {offer.price_type === 'customer_choice' && (
+                  <p className="text-xs text-gray-400 leading-none">{sc('offer_card.minimum')}</p>
+                )}
+                {isSubscription && (
+                  <p className="text-xs text-[#6559CA] leading-none font-medium">{billingIntervalLabel(offer.billing_interval, t)}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-colors bg-[#190933] text-white group-hover:bg-[#41375B]">
+                {sc('store.see_details')}
+                <ArrowRight size={13} />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {showCart && (
+        <div className="px-4 pb-4">
+          <AddToCartButton orgslug={orgslug} offerUuid={offer.offer_uuid} />
+        </div>
+      )}
+    </div>
   )
 }
 
 function Store({ orgslug, offers }: StoreProps) {
   const org = useOrg() as any
   const { sc } = useScT()
+  // Sanar y Criar: the cart (Pago Móvil) exists only while the org accepts it.
+  const { providers } = useCheckoutProviders(org?.id)
+  const cartEnabled = providers.some((p) => String(p.provider ?? '').toLowerCase() === 'manual')
 
   useTrackView(AnalyticsEvent.StoreViewed, { offers_count: offers.length, is_empty: offers.length === 0 }, true, 'learner')
 
@@ -265,7 +280,14 @@ function Store({ orgslug, offers }: StoreProps) {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {offers.map((offer, index) => (
-                <OfferCard key={offer.id ?? offer.offer_uuid} offer={offer} orgslug={orgslug} orgUuid={org?.org_uuid ?? ''} position={index} />
+                <OfferCard
+                  key={offer.id ?? offer.offer_uuid}
+                  offer={offer}
+                  orgslug={orgslug}
+                  orgUuid={org?.org_uuid ?? ''}
+                  position={index}
+                  showCart={cartEnabled && offer.offer_type === 'one_time'}
+                />
               ))}
             </div>
           </>

@@ -16,6 +16,8 @@ export interface ResourceAccess {
   offers_count: number
   /** A payment of an offer covering it is under review: do not offer to buy again. */
   payment_pending?: boolean
+  /** Sanar y Criar: the Pago Móvil order that open payment belongs to (null for PayPal). */
+  pending_purchase?: { purchase_uuid: string; code: string } | null
 }
 
 /** Query key prefix; invalidating ['payments', orgId] also refreshes it. */

@@ -21,7 +21,8 @@ export async function generateMetadata({ params }: { params: PageParams }): Prom
   const imageUrl = ogImageUrl || (org ? getOrgThumbnailMediaDirectory(org.org_uuid, org.thumbnail_image) : undefined)
   // Sanar y Criar: Spanish-first storefront metadata.
   const title = buildPageTitle('Tienda', org?.name || 'Sanar y Criar', seoConfig)
-  const description = `Cursos y ebooks de ${org?.name || 'Sanar y Criar'} con acceso inmediato.`
+  // Sanar y Criar: no "acceso inmediato": with Pago Móvil access waits for the confirmation.
+  const description = `Cursos y ebooks de ${org?.name || 'Sanar y Criar'} para aprender a tu ritmo, en tu cuenta y desde cualquier dispositivo.`
   const canonical = await getServerCanonicalUrl(orgslug, '/store')
 
   return {

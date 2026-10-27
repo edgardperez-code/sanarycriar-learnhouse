@@ -11,6 +11,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.payments.payments import PaymentsEnrollment, PaymentsOffer, PaymentsOrder
+from src.db.payments.purchases import PaymentsPurchase, PaymentsPurchaseItem
 from src.db.users import User
 from src.services.payments.common import (
     courses_by_uuid,
@@ -27,6 +28,19 @@ from src.services.payments.common import (
 VISIBLE_ENROLLMENT_STATUSES = ("active", "completed", "refunded")
 # Orders that are actual charges (money moved or was attempted at capture).
 CHARGE_STATUSES = ("paid", "accredited", "pending", "refunded", "failed")
+
+
+async def _purchase_codes(db_session: AsyncSession, order_ids) -> dict[int, str]:
+    """Sanar y Criar: order id -> code of its Pago Móvil purchase (SYC-…)."""
+    ids = [i for i in set(order_ids) if i]
+    if not ids:
+        return {}
+    rows = (await db_session.execute(
+        select(PaymentsPurchaseItem.order_id, PaymentsPurchase.code)
+        .join(PaymentsPurchase, PaymentsPurchase.id == PaymentsPurchaseItem.purchase_id)  # type: ignore[arg-type]
+        .where(PaymentsPurchaseItem.order_id.in_(ids))  # type: ignore[attr-defined]
+    )).all()
+    return {order_id: code for order_id, code in rows}
 
 
 async def _pending_review_enrollment_ids(db_session: AsyncSession, org_id: int,
@@ -67,6 +81,7 @@ async def list_customers(db_session: AsyncSession, org_id: int) -> list[dict]:
     )).all()
     rows = [r for r in rows if r[0].status in VISIBLE_ENROLLMENT_STATUSES or r[0].id in pending_ids]
     orders = await _latest_paid_orders(db_session, [r[0].id for r in rows])
+    codes = await _purchase_codes(db_session, [o.id for o in orders.values()])
     result = []
     for enrollment, user, offer in rows:
         order = orders.get(enrollment.id)
@@ -100,6 +115,7 @@ async def list_customers(db_session: AsyncSession, org_id: int) -> list[dict]:
                 "status": order.status,
                 "method": order.method,
                 **_order_flags(order),
+                "purchase_code": codes.get(order.id),
             } if order else None,
             "stripe": None,
         })
@@ -119,7 +135,8 @@ def _order_flags(order: PaymentsOrder) -> dict:
     }
 
 
-def _charge(order: PaymentsOrder, user: Optional[User], offer: Optional[PaymentsOffer]) -> dict:
+def _charge(order: PaymentsOrder, user: Optional[User], offer: Optional[PaymentsOffer],
+            purchase_code: Optional[str] = None) -> dict:
     name = " ".join(p for p in [(user.first_name if user else ""), (user.last_name if user else "")] if p).strip()
     amount = order.charged_amount if order.charged_amount is not None else order.amount
     return {
@@ -143,6 +160,7 @@ def _charge(order: PaymentsOrder, user: Optional[User], offer: Optional[Payments
         "method": order.method,
         "failure_reason": order.failure_reason,
         **_order_flags(order),
+        "purchase_code": purchase_code,
     }
 
 
@@ -165,7 +183,8 @@ async def _charges(db_session: AsyncSession, org_id: int, *, limit: int,
     if before_id is not None:
         stmt = stmt.where(PaymentsOrder.id < before_id)
     rows = (await db_session.execute(stmt)).all()
-    return [dict(_charge(o, u, f), _cursor=o.id) for o, u, f in rows]
+    codes = await _purchase_codes(db_session, [o.id for o, _, _ in rows])
+    return [dict(_charge(o, u, f, codes.get(o.id)), _cursor=o.id) for o, u, f in rows]
 
 
 async def overview(db_session: AsyncSession, org_id: int) -> dict:

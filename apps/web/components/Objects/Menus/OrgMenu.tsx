@@ -48,6 +48,7 @@ import {
   TooltipTrigger,
 } from '@components/ui/tooltip'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
+import CartHeaderButton from '@components/Store/Cart/CartHeaderButton'
 
 export const OrgMenu = (props: any) => {
   const orgslug = props.orgslug
@@ -358,6 +359,8 @@ export const OrgMenu = (props: any) => {
               </div>
             )}
 
+            {/* Sanar y Criar: cart, only when it has something (also on phones) */}
+            <CartHeaderButton orgslug={orgslug} />
             <div className="hidden md:flex">
               <HeaderProfileBox />
             </div>
@@ -398,6 +401,7 @@ export const OrgMenu = (props: any) => {
             className="flex flex-col px-4 pt-2 pb-6"
           >
             <MenuLinks orgslug={orgslug} variant="mobile" onNavigate={() => setIsMenuOpen(false)} />
+            <CartHeaderButton orgslug={orgslug} variant="mobile" onNavigate={() => setIsMenuOpen(false)} />
             <AuthenticatedClientElement checkMethod="authentication">
               <Link
                 href={getUriWithOrg(orgslug, '/trail')}

@@ -23,10 +23,19 @@ from src.services.payments import checkout as checkout_service
 from src.services.payments import configs as configs_service
 from src.services.payments import groups as groups_service
 from src.services.payments import offers as offers_service
+from src.services.payments import purchases as purchases_service
 from src.services.payments import stats as stats_service
 from src.services.payments.configs import PaymentConfigBody
 from src.services.payments.groups import GroupBody
 from src.services.payments.offers import OfferCreate, OfferUpdate
+from src.services.payments.purchases import (
+    CartBody,
+    CartCheckoutBody,
+    ConfirmBody,
+    ManualSettingsBody,
+    RejectBody,
+    VoidBody,
+)
 
 router = APIRouter()
 
@@ -546,3 +555,158 @@ async def api_course_access(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     return await checkout_service.course_access(db_session, org_id, resource_uuid, user)
+
+
+# ------------------------------------------- Pago Móvil: settings and cart
+# Sanar y Criar: cart purchases paid by Pago Móvil and confirmed by an admin
+# (src/services/payments/purchases.py). Literal /purchases routes (mine,
+# summary) are declared before /purchases/{purchase_uuid}.
+
+
+@router.get("/{org_id}/manual/settings", summary="Pago Móvil settings (admin)")
+async def api_get_manual_settings(
+    org_id: int,
+    _admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.get_manual_settings(db_session, org_id)
+
+
+@router.put("/{org_id}/manual/settings", summary="Update Pago Móvil settings (admin)")
+async def api_update_manual_settings(
+    org_id: int,
+    body: ManualSettingsBody,
+    _admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.update_manual_settings(db_session, org_id, body)
+
+
+@router.post("/{org_id}/cart/quote", summary="Price a cart (public)")
+async def api_cart_quote(
+    request: Request,
+    org_id: int,
+    body: CartBody,
+    _enabled=Depends(require_payments_enabled),
+    user=Depends(get_current_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    from src.services.security.rate_limiting import get_client_ip
+
+    # The storefront asks through Next server actions, so the client IP is
+    # the Next server's: per user with a session, a wide cap per IP without.
+    if purchases_service.is_signed_in(user):
+        _check_rate(f"sc_pay_cart_quote_user:{user.id}", 60, 60)
+    else:
+        _check_rate(f"sc_pay_cart_quote:{get_client_ip(request)}", 600, 60)
+    return await purchases_service.cart_quote(db_session, request, org_id, body.offer_uuids or [], user)
+
+
+@router.post("/{org_id}/cart/checkout", status_code=201, summary="Create a Pago Móvil purchase from a cart")
+async def api_cart_checkout(
+    request: Request,
+    org_id: int,
+    body: CartCheckoutBody,
+    user=Depends(get_authenticated_non_api_token_user),
+    _enabled=Depends(require_payments_enabled),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    _check_rate(f"sc_pay_cart_checkout:{user.id}", 10, 600)
+    return await purchases_service.cart_checkout(db_session, request, org_id, body, user)
+
+
+@router.get("/{org_id}/purchases/mine", summary="The current user's Pago Móvil purchases")
+async def api_my_purchases(
+    request: Request,
+    org_id: int,
+    user=Depends(get_authenticated_non_api_token_user),
+    _enabled=Depends(require_payments_enabled),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.my_purchases(db_session, request, org_id, user)
+
+
+@router.get("/{org_id}/purchases/summary", summary="Pending Pago Móvil purchases count (admin)")
+async def api_purchases_summary(
+    org_id: int,
+    _admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.purchases_summary(db_session, org_id)
+
+
+@router.get("/{org_id}/purchases", summary="Pago Móvil purchases (admin)")
+async def api_list_purchases(
+    request: Request,
+    org_id: int,
+    status: str = Query(default="pending"),
+    q: Optional[str] = Query(default=None),
+    limit: int = Query(default=25, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    _admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.list_purchases(
+        db_session, request, org_id, status=status, q=q, limit=limit, offset=offset
+    )
+
+
+@router.get("/{org_id}/purchases/{purchase_uuid}", summary="One purchase (buyer or admin)")
+async def api_get_purchase(
+    request: Request,
+    org_id: int,
+    purchase_uuid: str,
+    user=Depends(get_authenticated_non_api_token_user),
+    _enabled=Depends(require_payments_enabled),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.get_purchase(db_session, request, org_id, purchase_uuid, user)
+
+
+@router.post("/{org_id}/purchases/{purchase_uuid}/cancel", summary="Cancel an unpaid purchase (buyer)")
+async def api_cancel_purchase(
+    request: Request,
+    org_id: int,
+    purchase_uuid: str,
+    user=Depends(get_authenticated_non_api_token_user),
+    _enabled=Depends(require_payments_enabled),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    _check_rate(f"sc_pay_purchase_cancel:{user.id}", 20, 600)
+    return await purchases_service.cancel_purchase(db_session, request, org_id, purchase_uuid, user)
+
+
+@router.post("/{org_id}/purchases/{purchase_uuid}/confirm", summary="Mark a purchase paid (admin)")
+async def api_confirm_purchase(
+    request: Request,
+    org_id: int,
+    purchase_uuid: str,
+    body: ConfirmBody,
+    admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.confirm_purchase(db_session, request, org_id, purchase_uuid, body, admin)
+
+
+@router.post("/{org_id}/purchases/{purchase_uuid}/reject", summary="Reject a purchase (admin)")
+async def api_reject_purchase(
+    request: Request,
+    org_id: int,
+    purchase_uuid: str,
+    body: RejectBody,
+    admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.reject_purchase(db_session, request, org_id, purchase_uuid, body, admin)
+
+
+@router.post("/{org_id}/purchases/{purchase_uuid}/void", summary="Void a paid purchase (admin)")
+async def api_void_purchase(
+    request: Request,
+    org_id: int,
+    purchase_uuid: str,
+    body: VoidBody,
+    admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.void_purchase(db_session, request, org_id, purchase_uuid, body, admin)

@@ -23,6 +23,7 @@ import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import { useCourseAccess } from '@components/Hooks/useCourseAccess'
 import { useScT } from '@components/Payments/useScT'
 import { productTypeOfCourse, withRedirect } from '@components/Payments/commerce'
+import { PendingPaymentCard } from '@components/Store/Cart/PendingPaymentCard'
 // Sanar y Criar: free courses with history get "Continuar" + a confirmed leave.
 import {
   LeaveCourseDialog,
@@ -539,16 +540,11 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
     const loginHref = getUriWithOrg(orgslug, withRedirect('/login', coursePath))
     // Sanar y Criar: a payment under review is shown instead of the offers,
     // so the buyer is not charged twice while PayPal confirms the first one.
+    // A Pago Móvil order also names its code and links to it.
     if (access?.payment_pending) {
       return (
         <div className="space-y-3">
-          <div role="status" className="p-4 bg-amber-50 border border-amber-200 rounded-[20px] space-y-1">
-            <div className="flex items-center gap-2">
-              <ClockIcon className="w-4 h-4 text-amber-700" />
-              <h3 className="text-[#190933] font-semibold text-sm">{sc('course_actions.payment_pending_title')}</h3>
-            </div>
-            <p className="text-xs text-[#584F72] leading-relaxed">{sc('course_actions.payment_pending_description')}</p>
-          </div>
+          <PendingPaymentCard access={access} orgslug={orgslug} />
         </div>
       )
     }

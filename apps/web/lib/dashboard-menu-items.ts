@@ -14,6 +14,7 @@ import {
   Code,
   EnvelopeSimple,
   Article,
+  Receipt,
 } from '@phosphor-icons/react'
 
 export interface DashboardMenuItem {
@@ -96,6 +97,8 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     labelKey: 'common.payments',
     featureKey: 'payments',
   },
+  // Sanar y Criar: Pago Móvil orders of the cart ("Pedidos"), next to payments.
+  { id: 'orders', href: '/dash/orders', icon: Receipt, labelKey: 'sc_orders.menu_label', featureKey: 'payments' },
   // Sanar y Criar: newsletter (sign-up pop-up + subscribers). No feature gate.
   {
     id: 'newsletter',

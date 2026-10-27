@@ -102,6 +102,11 @@ def startup_app(app: FastAPI) -> Callable:
         from src.services.backfill.scheduler import start_scheduler as start_backfill
         start_backfill()
 
+        # Sanar y Criar: payment indexes that create_all cannot add to tables
+        # that already exist (production runs no Alembic). Never raises.
+        from src.services.payments.schema import ensure_payments_indexes
+        await ensure_payments_indexes()
+
         # Sanar y Criar: every 5 minutes, reconcile open payment orders with
         # the provider (lost webhooks, closed tabs). Never raises.
         from src.services.payments.reconcile import start_scheduler as start_payments_reconcile
