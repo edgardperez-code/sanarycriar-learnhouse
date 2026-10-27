@@ -5,6 +5,8 @@
 static site read the public catalog from the browser. Those origins get
 ``GET``/``HEAD`` only and never ``Access-Control-Allow-Credentials``, so a
 browser will not attach cookies for them nor expose a credentialed response.
+The one exception is a credential-less ``POST`` to the newsletter sign-up
+(``/api/v1/newsletter/{org_id}/subscribe``, exact path match).
 Origins already admitted by the main (credentialed) CORS policy are left to
 it untouched.
 """
@@ -21,9 +23,16 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 ENV_VAR = "LEARNHOUSE_EXTRA_CORS_ORIGINS"
 
 _ALLOWED_METHODS = ("GET", "HEAD", "OPTIONS")
+# Sanar y Criar: the only credential-less write the static site makes (newsletter
+# sign-up). Exact path match, POST only.
+_WRITE_PATHS = (re.compile(r"^/api/v1/newsletter/\d+/subscribe$"),)
 # CORS-safelisted request headers (plus the ones fetch adds by itself).
 _ALLOWED_HEADERS = frozenset({"accept", "accept-language", "content-language", "content-type"})
 _MAX_AGE = "600"
+
+
+def _is_write_path(path: str) -> bool:
+    return any(p.fullmatch(path) for p in _WRITE_PATHS)
 
 
 def parse_extra_origins(raw: Optional[str] = None) -> list[str]:
@@ -73,11 +82,12 @@ class ExtraOriginsCORSMiddleware:
             return
 
         method = scope["method"].upper()
+        path = scope.get("path", "")
         if method == "OPTIONS" and "access-control-request-method" in headers:
-            await self._preflight(origin, headers)(scope, receive, send)
+            await self._preflight(origin, headers, path)(scope, receive, send)
             return
 
-        if method not in ("GET", "HEAD"):
+        if not (method in ("GET", "HEAD") or (method == "POST" and _is_write_path(path))):
             # No CORS headers: the browser will not expose the response.
             await self.app(scope, receive, send)
             return
@@ -94,7 +104,8 @@ class ExtraOriginsCORSMiddleware:
         await self.app(scope, receive, send_with_cors)
 
     @staticmethod
-    def _preflight(origin: str, headers: Headers) -> PlainTextResponse:
+    def _preflight(origin: str, headers: Headers, path: str) -> PlainTextResponse:
+        allowed = _ALLOWED_METHODS + (("POST",) if _is_write_path(path) else ())
         requested_method = headers.get("access-control-request-method", "").upper()
         requested_headers = [
             h.strip().lower()
@@ -102,13 +113,13 @@ class ExtraOriginsCORSMiddleware:
             if h.strip()
         ]
         response_headers = {"Vary": "Origin"}
-        if requested_method not in _ALLOWED_METHODS or any(
+        if requested_method not in allowed or any(
             h not in _ALLOWED_HEADERS for h in requested_headers
         ):
             return PlainTextResponse("Disallowed CORS request", status_code=400, headers=response_headers)
         response_headers.update({
             "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Methods": ", ".join(_ALLOWED_METHODS),
+            "Access-Control-Allow-Methods": ", ".join(allowed),
             "Access-Control-Max-Age": _MAX_AGE,
         })
         if requested_headers:

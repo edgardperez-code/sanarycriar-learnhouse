@@ -1,6 +1,6 @@
 'use client';
 import { updateProfile } from '@services/settings/profile'
-import { getUser } from '@services/users/users'
+import { getMyProfile } from '@services/users/users'
 import React, { useEffect, useState, useCallback } from 'react'
 import { Formik, Form } from 'formik'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
@@ -591,7 +591,9 @@ function AccountGeneral() {
     const fetchUserData = async () => {
       if (session?.data?.user?.id) {
         try {
-          const data = await getUser(session.data.user.id, access_token);
+          // Own profile: the public lookup by id leaves out the email, and the
+          // form cannot be saved without it.
+          const data = await getMyProfile(access_token);
           setUserData(data);
         } catch (error) {
           console.error('Error fetching user data:', error);
@@ -746,7 +748,7 @@ function AccountGeneral() {
             } else {
               toast.success(t('user.settings.general.profile_updated'))
             }
-            const refreshedUser = await getUser(userData.id, access_token)
+            const refreshedUser = await getMyProfile(access_token)
             setUserData(refreshedUser)
           } catch {
             toast.error(t('user.settings.general.update_failed'), { id: loadingToast })

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@components/ui/button"
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { updateProfile } from '@services/settings/profile'
-import { getUser } from '@services/users/users'
+import { getMyProfile } from '@services/users/users'
 import { toast } from 'react-hot-toast'
 
 import { useTranslation } from 'react-i18next'
@@ -185,8 +185,8 @@ const UserProfileBuilder = () => {
       if (session?.data?.user?.id && access_token) {
         try {
           setIsLoading(true)
-          const userData = await getUser(session.data.user.id, access_token)
-          
+          const userData = await getMyProfile(access_token)
+
           if (userData.profile) {
             try {
               const profileSections = typeof userData.profile === 'string'
@@ -316,13 +316,16 @@ const UserProfileBuilder = () => {
     const loadingToast = toast.loading(t('user.settings.profile_builder.saving'))
 
     try {
-      // Get fresh user data before update
-      const userData = await getUser(session.data.user.id, access_token)
-      
-      // Update only the profile field
-      userData.profile = profileData
+      // Fresh own profile: the update requires the username and the email,
+      // which the public lookup by id does not include.
+      const userData = await getMyProfile(access_token)
 
-      const res = await updateProfile(userData, userData.id, access_token)
+      // Update only the profile field (the API applies just the fields sent)
+      const res = await updateProfile(
+        { username: userData.username, email: userData.email, profile: profileData },
+        userData.id,
+        access_token
+      )
 
       if (res.status === 200) {
         toast.success(t('user.settings.profile_builder.toasts.save_success'), { id: loadingToast })

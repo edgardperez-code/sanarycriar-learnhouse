@@ -22,6 +22,22 @@ export async function getUser(user_id: string, access_token: string) {
 }
 
 /**
+ * Get the signed-in user's own profile.
+ *
+ * Use this, not getUser, for screens that edit your own account: the lookups
+ * by id/uuid/username return the public view, which leaves out the email that
+ * profile updates require.
+ */
+export async function getMyProfile(access_token: string) {
+  const result = await fetch(
+    `${getAPIUrl()}users/profile`,
+    RequestBodyWithAuthHeader('GET', null, null, access_token)
+  )
+  const res = await errorHandling(result)
+  return res
+}
+
+/**
  * Get user by username.
  *
  * SECURITY: Requires authentication to prevent user enumeration attacks.

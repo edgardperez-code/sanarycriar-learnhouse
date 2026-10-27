@@ -100,6 +100,9 @@ def _install_stub_modules(monkeypatch: pytest.MonkeyPatch) -> None:
         # Sanar y Criar: payments and playback progress.
         "payments",
         "progress",
+        # Sanar y Criar: newsletter and blog.
+        "newsletter",
+        "blog",
     ]:
         install_router_module(f"src.routers.{name}", f"src.routers.{name}")
     install_router_module(
@@ -443,6 +446,12 @@ class TestRootRouter:
         progress = next(call for call in calls if call["router_name"] == "src.routers.progress")
         assert progress["prefix"] == "/progress"
         assert _dependency_names(progress) == ["get_authenticated_non_api_token_user"]
+        # Sanar y Criar: the blog's public listing/detail are anonymous, so no
+        # router-level auth; every admin handler declares its own dependency.
+        blog = next(call for call in calls if call["router_name"] == "src.routers.blog")
+        assert blog["prefix"] == "/blog"
+        assert blog["tags"] == ["blog"]
+        assert _dependency_names(blog) == []
 
     async def test_get_non_api_token_user_delegates(self, root_router):
         with patch.object(

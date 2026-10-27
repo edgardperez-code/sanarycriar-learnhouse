@@ -29,6 +29,7 @@ from src.security.csrf import CSRFProtectionMiddleware
 from src.router import v1_router
 from src.routers.content_files import router as content_files_router
 from src.routers.local_content import router as local_content_router
+from src.services.blog.ai import scrub_sentry_event
 
 
 learnhouse_config: LearnHouseConfig = get_learnhouse_config()
@@ -114,7 +115,13 @@ def _before_send(event, hint):
     transaction = event.get("transaction") or ""
     if transaction in _HEALTH_TRANSACTIONS:
         return None
-    return event
+    # Sanar y Criar: no body or local variables of the blog's AI routes (the owner's texts).
+    return scrub_sentry_event(event)
+
+
+def _before_send_transaction(event, hint):
+    # Sanar y Criar: transactions carry the request too.
+    return scrub_sentry_event(event)
 
 
 if learnhouse_config.general_config.sentry_config.dsn:
@@ -134,6 +141,7 @@ if learnhouse_config.general_config.sentry_config.dsn:
         profile_session_sample_rate=1.0 if learnhouse_config.general_config.development_mode else 0.1,
         profile_lifecycle="trace",
         before_send=_before_send,
+        before_send_transaction=_before_send_transaction,
         integrations=[
             LoggingIntegration(
                 level=logging.INFO,

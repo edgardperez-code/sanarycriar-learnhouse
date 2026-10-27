@@ -18,6 +18,8 @@ from src.routers import api_tokens
 from src.routers import webhooks
 # Sanar y Criar: our own payments (PayPal) and playback progress modules.
 from src.routers import payments as payments_router_module
+from src.routers import newsletter as newsletter_router_module
+from src.routers import blog as blog_router_module
 from src.routers import progress as progress_router_module
 from src.routers.integrations import zapier as zapier_integration
 from src.routers.ai import ai, magicblocks, courseplanning, rag, images, quiz, assignment_gen, scenario, audio
@@ -406,6 +408,12 @@ register_ee_routers(v1_router)
 # return-page capture and the provider webhooks are public; every handler
 # declares its own auth level.
 v1_router.include_router(payments_router_module.router, prefix="/payments", tags=["payments"])
+# Sanar y Criar: newsletter. No router-level auth: the public config and the
+# sign-up are anonymous; every admin handler declares its own dependency.
+v1_router.include_router(newsletter_router_module.router, prefix="/newsletter", tags=["newsletter"])
+# Sanar y Criar: blog. No router-level auth: the public listing/detail are
+# anonymous; every admin handler declares its own dependency.
+v1_router.include_router(blog_router_module.router, prefix="/blog", tags=["blog"])
 
 v1_router.include_router(
     health.router,

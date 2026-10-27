@@ -12,6 +12,8 @@ import {
   Headphones,
   ChartBar,
   Code,
+  EnvelopeSimple,
+  Article,
 } from '@phosphor-icons/react'
 
 export interface DashboardMenuItem {
@@ -94,6 +96,15 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     labelKey: 'common.payments',
     featureKey: 'payments',
   },
+  // Sanar y Criar: newsletter (sign-up pop-up + subscribers). No feature gate.
+  {
+    id: 'newsletter',
+    href: '/dash/newsletter/popup',
+    icon: EnvelopeSimple,
+    labelKey: 'sc_newsletter.menu_label',
+  },
+  // Sanar y Criar: blog (articles of the marketing site, with AI). No feature gate.
+  { id: 'blog', href: '/dash/blog', icon: Article, labelKey: 'sc_blog.menu_label' },
   {
     id: 'organization',
     href: '/dash/org/settings/general',

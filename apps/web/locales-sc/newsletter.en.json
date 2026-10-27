@@ -1,0 +1,122 @@
+{
+  "sc_newsletter": {
+    "menu_label": "Newsletter",
+    "breadcrumb": "Newsletter",
+    "tab_popup": "Pop-up",
+    "tab_subscribers": "Subscribers",
+    "popup_title": "Pop-up",
+    "popup_subtitle": "Invite your website visitors to subscribe to your newsletter.",
+    "subscribers_title": "Subscribers",
+    "subscribers_subtitle": "The people who left their email on your website.",
+    "open_resend": "Send a newsletter in Resend",
+    "load_error": "We couldn't load this section. Reload the page.",
+    "forbidden": "Only the organization's admins can see this section.",
+    "char_count": "{{count}}/{{max}}",
+    "popup": {
+      "status_on": "On",
+      "status_off": "Off",
+      "enabled_label": "Show the pop-up on the website",
+      "enabled_hint": "If you turn it off, the pop-up stops appearing. The footer form stays available.",
+      "texts_title": "Texts",
+      "title_label": "Title",
+      "body_label": "Text",
+      "button_text": "Button text",
+      "dismiss_text": "Close text",
+      "success_label": "Thank-you message",
+      "success_hint": "Shown when someone subscribes.",
+      "privacy_label": "Privacy note",
+      "privacy_hint": "Appears under the button, next to a link to your privacy policy. You can leave it empty.",
+      "timing_title": "When it appears",
+      "delay_label": "Delay (seconds)",
+      "delay_hint": "0 = it appears as soon as the page opens.",
+      "days_label": "Days before showing it again",
+      "days_hint": "If someone closes it, they won't see it again for this many days. If they subscribe, they won't see it again in that browser.",
+      "test_hint": "To see it again in your browser after closing it, open the website in a private window.",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Changes saved. They're already live on the website.",
+      "save_error": "We couldn't save the changes. Try again.",
+      "restore_defaults": "Restore suggested texts",
+      "restored": "Suggested texts restored. Save to apply them.",
+      "unsaved": "You have unsaved changes.",
+      "error_required": "This field is required.",
+      "error_too_long": "Up to {{max}} characters.",
+      "error_range": "Enter a whole number between {{min}} and {{max}}."
+    },
+    "resend": {
+      "on": "New subscribers are copied to your Resend contacts. From Resend → Broadcasts you can send them the newsletter; Resend adds the unsubscribe link.",
+      "off": "Resend isn't configured in this environment. Emails are saved here and stay unsynced."
+    },
+    "preview": {
+      "title": "Preview",
+      "desktop": "Computer",
+      "mobile": "Phone",
+      "show_form": "Form",
+      "show_success": "Thank you",
+      "email_label": "Your email",
+      "email_placeholder": "you@email.com",
+      "privacy_link": "Privacy policy",
+      "disabled_note": "The pop-up is off: it doesn't appear on the website.",
+      "approx_note": "Approximate preview: on the website it uses the site's colors and fonts."
+    },
+    "subscribers": {
+      "search_label": "Search subscribers",
+      "search_placeholder": "Search by email",
+      "export": "Export CSV",
+      "exporting": "Exporting…",
+      "export_error": "We couldn't export the list. Try again.",
+      "total_one": "{{count}} subscriber",
+      "total_other": "{{count}} subscribers",
+      "unsynced_one": "{{count}} not synced with Resend",
+      "unsynced_other": "{{count}} not synced with Resend",
+      "sync": "Sync with Resend",
+      "syncing": "Syncing…",
+      "sync_done": "Synced: {{synced}}. Failed: {{failed}}. Pending: {{remaining}}.",
+      "sync_error": "We couldn't sync. Try again.",
+      "sync_error_hint": "Sync error: {{error}}",
+      "empty_title": "No subscribers yet",
+      "empty_body": "When someone leaves their email on your website, it will show up here.",
+      "no_results": "No email matches “{{q}}”.",
+      "col_email": "Email",
+      "col_date": "Date",
+      "col_source": "Source",
+      "col_page": "Page",
+      "col_resend": "Resend",
+      "col_actions": "Actions",
+      "delete": "Delete",
+      "delete_aria": "Delete {{email}}",
+      "delete_title": "Remove this email from the newsletter?",
+      "delete_body": "{{email}} will be removed from this list and, if it was synced, from your Resend contacts too. This can't be undone.",
+      "delete_confirm": "Delete",
+      "deleted": "Email deleted.",
+      "deleted_local_only": "It was removed from the list, but we couldn't remove it from Resend. Delete it there too.",
+      "delete_error": "We couldn't delete the email. Try again.",
+      "prev": "Previous",
+      "next": "Next",
+      "page_of": "Page {{page}} of {{pages}}"
+    },
+    "source": {
+      "popup": "Pop-up",
+      "footer": "Footer",
+      "other": "Other"
+    },
+    "sync_status": {
+      "synced": "Synced",
+      "pending": "Pending",
+      "error": "Error",
+      "skipped": "No Resend"
+    },
+    "search": {
+      "popup": {
+        "title": "Newsletter: pop-up",
+        "description": "Turn on and edit the website's sign-up pop-up",
+        "keywords": "newsletter, pop-up, popup, subscription, email, sign-up"
+      },
+      "subscribers": {
+        "title": "Newsletter: subscribers",
+        "description": "List of subscribed emails and CSV export",
+        "keywords": "newsletter, subscribers, emails, export, csv, resend"
+      }
+    }
+  }
+}

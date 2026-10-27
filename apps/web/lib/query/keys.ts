@@ -118,4 +118,18 @@ export const queryKeys = {
     customers: (orgId: number) => ['payments', orgId, 'customers'] as const,
     groups: (orgId: number) => ['payments', orgId, 'groups'] as const,
   },
+  // Sanar y Criar: newsletter (sign-up pop-up settings and subscriber list).
+  // Invalidate ['newsletter', orgId, 'subscribers'] to refresh every page.
+  newsletter: {
+    settings: (orgId: number) => ['newsletter', orgId, 'settings'] as const,
+    subscribers: (orgId: number, page: number, q: string) => ['newsletter', orgId, 'subscribers', page, q] as const,
+  },
+  // Sanar y Criar: blog. Invalidate ['blog', orgId, 'posts'] to refresh every list page.
+  blog: {
+    config: (orgId: number) => ['blog', orgId, 'config'] as const,
+    posts: (orgId: number, page: number, q: string, status: string) => ['blog', orgId, 'posts', page, q, status] as const,
+    post: (orgId: number, postId: number) => ['blog', orgId, 'post', postId] as const,
+    job: (orgId: number, jobId: number) => ['blog', orgId, 'job', jobId] as const,
+    activeJob: (orgId: number) => ['blog', orgId, 'job', 'active'] as const,
+  },
 }

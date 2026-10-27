@@ -1,0 +1,122 @@
+{
+  "sc_newsletter": {
+    "menu_label": "Boletín",
+    "breadcrumb": "Boletín",
+    "tab_popup": "Ventana emergente",
+    "tab_subscribers": "Suscriptores",
+    "popup_title": "Ventana emergente",
+    "popup_subtitle": "Invita a quien visita tu sitio web a suscribirse a tu boletín.",
+    "subscribers_title": "Suscriptores",
+    "subscribers_subtitle": "Las personas que dejaron su correo en tu sitio web.",
+    "open_resend": "Enviar un boletín en Resend",
+    "load_error": "No pudimos cargar esta sección. Recarga la página.",
+    "forbidden": "Solo las administradoras de la organización pueden ver esta sección.",
+    "char_count": "{{count}}/{{max}}",
+    "popup": {
+      "status_on": "Activa",
+      "status_off": "Desactivada",
+      "enabled_label": "Mostrar la ventana en el sitio web",
+      "enabled_hint": "Si la apagas, la ventana deja de aparecer. El formulario del pie de página sigue disponible.",
+      "texts_title": "Textos",
+      "title_label": "Título",
+      "body_label": "Texto",
+      "button_text": "Texto del botón",
+      "dismiss_text": "Texto para cerrar",
+      "success_label": "Mensaje de agradecimiento",
+      "success_hint": "Se muestra cuando alguien se suscribe.",
+      "privacy_label": "Nota de privacidad",
+      "privacy_hint": "Aparece bajo el botón, junto a un enlace a tu política de privacidad. Puedes dejarla vacía.",
+      "timing_title": "Cuándo aparece",
+      "delay_label": "Retraso (segundos)",
+      "delay_hint": "0 = aparece apenas se abre la página.",
+      "days_label": "Días sin volver a mostrarla",
+      "days_hint": "Si alguien la cierra, no la vuelve a ver durante estos días. Si se suscribe, no la vuelve a ver en ese navegador.",
+      "test_hint": "Para volver a verla en tu navegador después de cerrarla, abre el sitio en una ventana privada.",
+      "save": "Guardar cambios",
+      "saving": "Guardando…",
+      "saved": "Cambios guardados. Ya se ven en el sitio web.",
+      "save_error": "No pudimos guardar los cambios. Intenta de nuevo.",
+      "restore_defaults": "Restaurar textos sugeridos",
+      "restored": "Textos sugeridos restaurados. Guarda para aplicarlos.",
+      "unsaved": "Tienes cambios sin guardar.",
+      "error_required": "Este campo es obligatorio.",
+      "error_too_long": "Máximo {{max}} caracteres.",
+      "error_range": "Escribe un número entero entre {{min}} y {{max}}."
+    },
+    "resend": {
+      "on": "Los nuevos suscriptores se copian a tus contactos de Resend. Desde Resend → Broadcasts puedes enviarles el boletín; Resend agrega el enlace para darse de baja.",
+      "off": "Resend no está configurado en este entorno. Los correos se guardan aquí y quedan sin sincronizar."
+    },
+    "preview": {
+      "title": "Vista previa",
+      "desktop": "Computadora",
+      "mobile": "Celular",
+      "show_form": "Formulario",
+      "show_success": "Agradecimiento",
+      "email_label": "Tu correo electrónico",
+      "email_placeholder": "tu@correo.com",
+      "privacy_link": "Política de privacidad",
+      "disabled_note": "La ventana está desactivada: no aparece en el sitio web.",
+      "approx_note": "Vista aproximada: en el sitio web se ve con sus colores y tipografías."
+    },
+    "subscribers": {
+      "search_label": "Buscar suscriptores",
+      "search_placeholder": "Buscar por correo",
+      "export": "Exportar CSV",
+      "exporting": "Exportando…",
+      "export_error": "No pudimos exportar la lista. Intenta de nuevo.",
+      "total_one": "{{count}} suscriptor",
+      "total_other": "{{count}} suscriptores",
+      "unsynced_one": "{{count}} sin sincronizar con Resend",
+      "unsynced_other": "{{count}} sin sincronizar con Resend",
+      "sync": "Sincronizar con Resend",
+      "syncing": "Sincronizando…",
+      "sync_done": "Sincronizados: {{synced}}. Con error: {{failed}}. Pendientes: {{remaining}}.",
+      "sync_error": "No pudimos sincronizar. Intenta de nuevo.",
+      "sync_error_hint": "Error al sincronizar: {{error}}",
+      "empty_title": "Todavía no hay suscriptores",
+      "empty_body": "Cuando alguien deje su correo en tu sitio web, aparecerá aquí.",
+      "no_results": "Ningún correo coincide con “{{q}}”.",
+      "col_email": "Correo",
+      "col_date": "Fecha",
+      "col_source": "Origen",
+      "col_page": "Página",
+      "col_resend": "Resend",
+      "col_actions": "Acciones",
+      "delete": "Eliminar",
+      "delete_aria": "Eliminar {{email}}",
+      "delete_title": "¿Eliminar este correo del boletín?",
+      "delete_body": "Se borrará {{email}} de esta lista y, si estaba sincronizado, también de tus contactos de Resend. No se puede deshacer.",
+      "delete_confirm": "Eliminar",
+      "deleted": "Correo eliminado.",
+      "deleted_local_only": "Se borró de la lista, pero no pudimos borrarlo de Resend. Bórralo también allí.",
+      "delete_error": "No pudimos eliminar el correo. Intenta de nuevo.",
+      "prev": "Anterior",
+      "next": "Siguiente",
+      "page_of": "Página {{page}} de {{pages}}"
+    },
+    "source": {
+      "popup": "Ventana",
+      "footer": "Pie de página",
+      "other": "Otro"
+    },
+    "sync_status": {
+      "synced": "Sincronizado",
+      "pending": "Pendiente",
+      "error": "Error",
+      "skipped": "Sin Resend"
+    },
+    "search": {
+      "popup": {
+        "title": "Boletín: ventana emergente",
+        "description": "Activa y edita la ventana de suscripción del sitio web",
+        "keywords": "boletín, newsletter, ventana, popup, suscripción, correo"
+      },
+      "subscribers": {
+        "title": "Boletín: suscriptores",
+        "description": "Lista de correos suscritos y exportación a CSV",
+        "keywords": "boletín, newsletter, suscriptores, correos, exportar, csv, resend"
+      }
+    }
+  }
+}

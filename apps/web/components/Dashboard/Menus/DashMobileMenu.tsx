@@ -26,6 +26,8 @@ import {
   CaretDown,
   MagnifyingGlass,
   Code,
+  EnvelopeSimple,
+  Article,
 } from '@phosphor-icons/react'
 import { DiscordIcon } from '@components/Objects/Icons/DiscordIcon'
 import Link from 'next/link'
@@ -226,6 +228,10 @@ function DashMobileMenu() {
                 {isEnabled('boards') && <PanelItem href="/dash/boards" icon={<ChalkboardSimple size={15} weight="fill" />} label="Boards" active={isActive('/dash/boards')} onClick={close} />}
                 {isEnabled('playgrounds') && <PanelItem href="/dash/playgrounds" icon={<Cube size={15} weight="fill" />} label="Playgrounds" active={isActive('/dash/playgrounds')} onClick={close} />}
                 {isEnabled('payments') && <PanelItem href="/dash/payments/overview" icon={<CurrencyCircleDollar size={15} weight="fill" />} label={t('common.payments')} active={isActive('/dash/payments')} onClick={close} />}
+                {/* Sanar y Criar: newsletter; the API enforces the permission. */}
+                <PanelItem href="/dash/newsletter/popup" icon={<EnvelopeSimple size={15} weight="fill" />} label={t('sc_newsletter.menu_label')} active={isActive('/dash/newsletter')} onClick={close} />
+                {/* Sanar y Criar: blog; the API enforces the permission. */}
+                <PanelItem href="/dash/blog" icon={<Article size={15} weight="fill" />} label={t('sc_blog.menu_label')} active={isActive('/dash/blog')} onClick={close} />
                 <PanelItem href="/dash/analytics" icon={<ChartBar size={15} weight="fill" />} label="Analytics" active={isActive('/dash/analytics')} onClick={close} />
                 <PanelItem href="/dash/org/settings/general" icon={<Buildings size={15} weight="fill" />} label={t('common.organization')} active={isActive('/dash/org')} onClick={close} />
                 <PanelItem href="/dash/developers/api" icon={<Code size={15} weight="fill" />} label={t('dashboard.developers.breadcrumb', { defaultValue: 'Developers' })} active={isActive('/dash/developers')} onClick={close} />

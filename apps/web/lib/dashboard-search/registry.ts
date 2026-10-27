@@ -12,6 +12,8 @@ import { searchMeta as analytics } from '@/app/orgs/[orgslug]/dash/analytics/pag
 import { searchMetas as users } from '@/app/orgs/[orgslug]/dash/users/page.search'
 import { searchMetas as org } from '@/app/orgs/[orgslug]/dash/org/page.search'
 import { searchMetas as payments } from '@/app/orgs/[orgslug]/dash/payments/page.search'
+import { searchMetas as newsletter } from '@/app/orgs/[orgslug]/dash/newsletter/page.search'
+import { searchMetas as blog } from '@/app/orgs/[orgslug]/dash/blog/page.search'
 import { searchMetas as account } from '@/app/orgs/[orgslug]/(withmenu)/account/page.search'
 
 export const dashboardPages: SearchMeta[] = [
@@ -27,5 +29,7 @@ export const dashboardPages: SearchMeta[] = [
   ...users,
   ...org,
   ...payments,
+  ...newsletter,
+  ...blog,
   ...account,
 ]

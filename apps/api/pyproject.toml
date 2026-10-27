@@ -49,6 +49,10 @@ dependencies = [
     "pgvector==0.5.1",
     "pypdf==6.21.2",
     "regex==2026.9.29",
+    # Sanar y Criar: blog (Claude for the AI drafts, Markdown rendering, HTML sanitizing).
+    "anthropic==2.1.0",
+    "markdown-it-py==4.2.0",
+    "nh3==0.3.7",
 ]
 
 [tool.ruff]

@@ -42,6 +42,8 @@ import {
   Plus,
   Code,
   Lightning,
+  EnvelopeSimple,
+  Article,
 } from '@phosphor-icons/react'
 import { motion } from 'motion/react'
 import { DiscordIcon } from '@components/Objects/Icons/DiscordIcon'
@@ -611,6 +613,19 @@ function DashLeftMenu() {
                 active={isActivePath('/dash/payments')}
               />
             )}
+
+            {/* Sanar y Criar: newsletter (sign-up pop-up + subscribers). Always
+                shown; the API enforces the org-admin permission. */}
+            <MenuLink
+              href="/dash/newsletter/popup"
+              icon={<EnvelopeSimple size={20} weight="fill" />}
+              label={t('sc_newsletter.menu_label')}
+              isCollapsed={isCollapsed}
+              active={isActivePath('/dash/newsletter')}
+            />
+
+            {/* Sanar y Criar: blog (articles of the marketing site, with AI). Always shown; the API enforces the org-admin permission. */}
+            <MenuLink href="/dash/blog" icon={<Article size={20} weight="fill" />} label={t('sc_blog.menu_label')} isCollapsed={isCollapsed} active={isActivePath('/dash/blog')} />
 
             {/* Organization with hover menu */}
             <HoverMenu
