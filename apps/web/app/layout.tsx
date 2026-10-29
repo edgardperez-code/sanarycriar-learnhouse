@@ -43,15 +43,15 @@ const tajawal = Tajawal({
   preload: false,
 })
 
-// Sanar y Criar: brand icons (the "SyC" monogram of the marketing site). An
+// Sanar y Criar: brand icons (the round pink icon of the marketing site). An
 // org favicon uploaded from the dashboard still wins (app/orgs/[orgslug]/layout.tsx).
 export const metadata: Metadata = {
   icons: {
     icon: [
-      { url: '/sc-favicon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: '48x48' },
+      { url: '/favicon.ico?v=2', sizes: '16x16 32x32 48x48' },
+      { url: '/sc-icon-192.png?v=2', sizes: '192x192', type: 'image/png' },
     ],
-    apple: '/sc-apple-touch-icon.png',
+    apple: '/sc-apple-touch-icon.png?v=2',
   },
 }
 
