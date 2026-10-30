@@ -9,7 +9,11 @@ import React from 'react'
 import Link from 'next/link'
 import { BookOpen, Download, ArrowRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { getCourseThumbnailMediaDirectory } from '@services/media/media'
+import { getActivityMediaDirectory, getCourseThumbnailMediaDirectory } from '@services/media/media'
+import { getActivityWithAuthHeader } from '@services/courses/activities'
+import { useQuery } from '@tanstack/react-query'
+import { useLHSession } from '@components/Contexts/LHSessionContext'
+import { pdfDownloadUrl } from './pdfDownload'
 import { useCourseProgress } from '@/hooks/queries/useCourseProgress'
 import { useCourseAccess } from '@components/Hooks/useCourseAccess'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
@@ -97,7 +101,33 @@ export default function EbookHero({
     ? getCourseThumbnailMediaDirectory(orgUuid, course.course_uuid, course.thumbnail_image)
     : null
   const readHref = pdf ? activityHref(orgslug, course.course_uuid, pdf.activity_uuid, savedPage ? `?page=${savedPage}` : '') : null
-  const downloadHref = pdf ? activityHref(orgslug, course.course_uuid, pdf.activity_uuid, '?download=1') : null
+  // Sanar y Criar: link straight to the file with `?download=1` (an attachment
+  // every phone saves). The course page is rendered from the public course
+  // tree, where paid activities carry no filename, so a reader asks the API
+  // for the activity. Until it answers, the link goes to the reader page,
+  // which starts the same download.
+  const session = useLHSession() as any
+  const accessToken: string | undefined = session?.data?.tokens?.access_token
+  const treeFilename: string | undefined = pdf?.content?.filename
+  const { data: fetchedFilename } = useQuery({
+    queryKey: ['sc', 'ebook-pdf-filename', pdf?.activity_uuid, session?.data?.user?.user_uuid ?? 'anonymous'],
+    queryFn: async () => {
+      const res = await getActivityWithAuthHeader(cleanActivityUuid(pdf.activity_uuid), null, accessToken)
+      return (res?.content?.filename as string | undefined) ?? null
+    },
+    enabled: hasAccess && !!pdf?.activity_uuid && !treeFilename && !!accessToken,
+    staleTime: 5 * 60_000,
+    retry: 1,
+  })
+  const filename = treeFilename || fetchedFilename
+  const pdfFile = filename && orgUuid
+    ? getActivityMediaDirectory(orgUuid, course.course_uuid, pdf.activity_uuid, filename, 'documentpdf')
+    : null
+  const downloadHref = pdfFile
+    ? pdfDownloadUrl(pdfFile, pdf?.name || course?.name)
+    : pdf
+      ? activityHref(orgslug, course.course_uuid, pdf.activity_uuid, '?download=1')
+      : null
 
   return (
     <section className="overflow-hidden rounded-[20px] border border-[#EAE8F2] bg-[#FFFCF9]">
@@ -153,14 +183,13 @@ export default function EbookHero({
                   : t('sc_learning.ebook.read_now', 'Leer ahora')}
                 <ArrowRight size={16} strokeWidth={2} className="rtl:rotate-180" />
               </Link>
-              <Link
+              <a
                 href={downloadHref}
-                prefetch={false}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-[#BBBBFF] bg-white px-7 py-3 text-base font-semibold text-[#190933] transition-colors hover:border-[#7D75E2] hover:bg-[#EEEDFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7D75E2] focus-visible:ring-offset-2"
               >
                 <Download size={18} strokeWidth={1.75} />
                 {t('sc_learning.ebook.download', 'Descargar PDF')}
-              </Link>
+              </a>
             </div>
           ) : pdf ? (
             <p className="mt-6 rounded-[12px] bg-[#EEEDFF] px-4 py-3 text-sm leading-relaxed text-[#41375B]">

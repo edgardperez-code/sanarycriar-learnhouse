@@ -107,6 +107,26 @@ def content_cache_control(is_public: bool) -> str:
     return PUBLIC_CACHE_CONTROL if is_public else PRIVATE_CACHE_CONTROL
 
 
+def attachment_disposition(file_path: str, name: str | None) -> str:
+    """Sanar y Criar: ``Content-Disposition: attachment`` for ``?download=1``.
+
+    Phones (and in-app browsers) ignore ``<a download>`` and script-driven blob
+    saves, but every browser saves a plain link answered with ``attachment``.
+    ``name`` is the suggested filename (the activity name); the extension is
+    always the stored file's, so a crafted name cannot change the file type.
+    """
+    from urllib.parse import quote
+
+    ext = Path(file_path).suffix.lower()
+    base = (name or "").replace("\x00", "")
+    base = "".join(ch for ch in base if ch.isprintable() and ch not in '\\/:*?"<>|;').strip()[:120]
+    if base.lower().endswith(ext):
+        base = base[: -len(ext)].strip()
+    filename = f"{base or Path(file_path).stem}{ext}"
+    ascii_name = "".join(ch if ch.isascii() and ch.isprintable() else "_" for ch in filename)
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename, safe='')}"
+
+
 def _get_mime_type(file_path: str) -> str:
     ext = Path(file_path).suffix.lower()
     return MIME_TYPES.get(ext, 'application/octet-stream')
@@ -347,6 +367,8 @@ async def _check_content_access(
 async def serve_content_file(
     request: Request,
     file_path: str,
+    download: bool = False,
+    name: str | None = None,
     current_user: PublicUser | AnonymousUser | APITokenUser = Depends(get_current_user),
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -390,7 +412,9 @@ async def serve_content_file(
         "Content-Type": mime_type,
         "Cache-Control": content_cache_control(is_public),
         "X-Content-Type-Options": "nosniff",
-        "Content-Disposition": _content_disposition(mime_type, safe_path),
+        "Content-Disposition": (
+            attachment_disposition(safe_path, name) if download else _content_disposition(mime_type, safe_path)
+        ),
         **_security_headers(mime_type),
     }
 

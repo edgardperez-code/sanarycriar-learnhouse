@@ -8,12 +8,7 @@ import { positiveIntParam } from '@/lib/copilot/sources'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { useProgressSaver } from '@components/SanarYCriar/useProgressSaver'
 
-// Filename for the saved copy: the activity's name, so learners don't end up
-// with a folder of opaque upload ids.
-function downloadName(activity: any) {
-  const base = String(activity?.name || 'document').replace(/[\\/:*?"<>|]+/g, ' ').trim() || 'document'
-  return base.toLowerCase().endsWith('.pdf') ? base : `${base}.pdf`
-}
+import { pdfDownloadUrl } from '@components/SanarYCriar/pdfDownload'
 
 const noSubscription = () => () => {}
 
@@ -84,37 +79,13 @@ function DocumentPdfActivity({
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
-  // The file lives on the media origin, where a plain <a download> is ignored
-  // and the browser would just open it. Fetch it and save the blob instead:
-  // with the learner's cookies for the API, without them for a CDN that answers
-  // `Access-Control-Allow-Origin: *` (which rejects credentialed requests).
-  // Last resort is a new tab.
-  const fetchPdf = async () => {
-    for (const credentials of ['include', 'omit'] as const) {
-      try {
-        const res = await fetch(pdfUrl!, { credentials })
-        if (res.ok) return await res.blob()
-      } catch {
-        /* CORS rejection: try the next mode */
-      }
-    }
-    throw new Error('download failed')
-  }
-
-  const handleDownload = async () => {
+  // Sanar y Criar: a plain navigation to the file with `?download=1`; the API
+  // answers `Content-Disposition: attachment`, which every browser (phones
+  // included) saves, and the current page stays where it is. The earlier
+  // fetch-a-blob approach was ignored or blocked on phones.
+  const handleDownload = () => {
     if (!pdfUrl) return
-    try {
-      const objectUrl = URL.createObjectURL(await fetchPdf())
-      const link = document.createElement('a')
-      link.href = objectUrl
-      link.download = downloadName(activity)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
-    } catch {
-      window.open(pdfUrl, '_blank', 'noopener,noreferrer')
-    }
+    window.location.assign(pdfDownloadUrl(pdfUrl, activity?.name))
   }
 
   // Sanar y Criar: "Descargar PDF" on the ebook page lands here with

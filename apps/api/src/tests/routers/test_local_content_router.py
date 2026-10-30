@@ -447,3 +447,44 @@ class TestLocalContentRouter:
         assert head_invalid_response.status_code == 400
         if symlink_response is not None:
             assert symlink_response.status_code == 400
+
+
+class TestLocalContentDownload:
+    """Sanar y Criar: `?download=1` answers with an attachment (phones save it)."""
+
+    async def _get(self, client, org, course, tmp_path, query):
+        from src.routers import local_content
+
+        content_root = tmp_path / "content"
+        file_path = content_root / "orgs" / org.org_uuid / "courses" / course.course_uuid / "guia.pdf"
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_bytes(b"%PDF-1.4")
+        original_dir = local_content.CONTENT_DIR
+        local_content.CONTENT_DIR = content_root
+        try:
+            return await client.get(f"/content/orgs/{org.org_uuid}/courses/{course.course_uuid}/guia.pdf{query}")
+        finally:
+            local_content.CONTENT_DIR = original_dir
+
+    async def test_inline_by_default(self, client, org, course, tmp_path):
+        response = await self._get(client, org, course, tmp_path, "")
+        assert response.status_code == 200
+        assert "attachment" not in response.headers.get("content-disposition", "")
+
+    async def test_download_uses_activity_name(self, client, org, course, tmp_path):
+        response = await self._get(client, org, course, tmp_path, "?download=1&name=L%C3%ADmites%20sin%20culpa")
+        assert response.status_code == 200
+        disposition = response.headers["content-disposition"]
+        assert disposition.startswith("attachment;")
+        assert 'filename="L_mites sin culpa.pdf"' in disposition
+        assert "filename*=UTF-8''L%C3%ADmites%20sin%20culpa.pdf" in disposition
+
+    async def test_download_name_cannot_change_type(self, client, org, course, tmp_path):
+        response = await self._get(client, org, course, tmp_path, '?download=1&name=..%2F%22evil%22%3B.exe')
+        disposition = response.headers["content-disposition"]
+        assert disposition.endswith(".pdf")
+        assert ".exe.pdf" in disposition and '"evil"' not in disposition and "/" not in disposition.split("filename=")[1].split(";")[0]
+
+    async def test_download_without_name_keeps_stored_name(self, client, org, course, tmp_path):
+        response = await self._get(client, org, course, tmp_path, "?download=1")
+        assert 'filename="guia.pdf"' in response.headers["content-disposition"]

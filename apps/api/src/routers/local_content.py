@@ -27,7 +27,7 @@ from src.db.organizations import Organization
 from src.db.podcasts.episodes import PodcastEpisode
 from src.db.podcasts.podcasts import Podcast
 from src.db.users import AnonymousUser, PublicUser, APITokenUser
-from src.routers.content_files import content_cache_control
+from src.routers.content_files import attachment_disposition, content_cache_control
 from src.security.auth import get_current_user
 from src.services.courses.activities.access import verify_activity_reader_access_by_uuid
 from src.security.submission_file_access import (
@@ -279,6 +279,8 @@ _MIME_TYPES = {
 async def serve_local_content(
     request: Request,
     file_path: str,
+    download: bool = False,
+    name: str | None = None,
     current_user: PublicUser | AnonymousUser | APITokenUser = Depends(get_current_user),
     db_session: AsyncSession = Depends(get_db_session),
 ):
@@ -325,6 +327,8 @@ async def serve_local_content(
         headers={
             "Cache-Control": content_cache_control(is_public),
             "X-Content-Type-Options": "nosniff",
+            # Sanar y Criar: `?download=1` saves the file instead of opening it.
+            **({"Content-Disposition": attachment_disposition(safe_real, name)} if download else {}),
         },
     )
 
