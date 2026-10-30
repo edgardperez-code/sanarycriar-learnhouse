@@ -115,7 +115,8 @@ export default function EbookHero({
       const res = await getActivityWithAuthHeader(cleanActivityUuid(pdf.activity_uuid), null, accessToken)
       return (res?.content?.filename as string | undefined) ?? null
     },
-    enabled: hasAccess && !!pdf?.activity_uuid && !treeFilename && !!accessToken,
+    // Free ebooks are readable without a session, so ask even without a token.
+    enabled: hasAccess && !!pdf?.activity_uuid && !treeFilename && session?.status !== 'loading',
     staleTime: 5 * 60_000,
     retry: 1,
   })

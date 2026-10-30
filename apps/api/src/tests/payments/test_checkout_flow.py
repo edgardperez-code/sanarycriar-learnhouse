@@ -434,6 +434,25 @@ class TestRoutesAndOffers:
             public = await client.get(f"{BASE}/offers/{ref}/public")
             assert public.status_code == 200 and public.json()["offer_uuid"] == offer["offer_uuid"]
 
+    async def test_free_listing_lists_only_uncovered_courses(self, client, current, admin_user, db, course, offer):
+        # Sanar y Criar: a course sold by a live offer is not free; once the
+        # offer is archived (and the course is public) the site lists it free.
+        course.public = True
+        db.add(course)
+        await db.commit()
+        current.set(None)
+        free = await client.get(f"{BASE}/offers/free-listing")
+        assert free.status_code == 200
+        assert course.course_uuid not in [c["course_uuid"] for c in free.json()]
+
+        current.set(admin_user)
+        assert (await client.delete(f"{BASE}/offers/{offer['id']}")).status_code == 200
+        current.set(None)
+        items = (await client.get(f"{BASE}/offers/free-listing")).json()
+        listed = [c for c in items if c["course_uuid"] == course.course_uuid]
+        assert len(listed) == 1
+        assert listed[0]["product_type"] == "course" and "course_url" in listed[0] and "description" in listed[0]
+
     async def test_archive_returns_200_and_hides_offer(self, client, current, admin_user, course, offer):
         current.set(admin_user)
         response = await client.delete(f"{BASE}/offers/{offer['id']}")

@@ -402,6 +402,38 @@ async def public_listing(db_session: AsyncSession, request: Optional[Request], o
     return [_public_offer(o, r) for o, r in payloads if r]
 
 
+async def free_listing(db_session: AsyncSession, request: Optional[Request], org_id: int) -> list[dict]:
+    """Sanar y Criar: published public courses that no live offer covers.
+
+    The paywall treats them as free (see access.py), so the marketing site
+    lists them next to the offers with a "read for free" link to the course.
+    """
+    from src.db.courses.courses import Course
+
+    org = await get_org_or_404(db_session, org_id)
+    offers = (await db_session.execute(
+        select(PaymentsOffer).where(
+            PaymentsOffer.org_id == org_id,
+            PaymentsOffer.archived == False,  # noqa: E712
+        )
+    )).scalars().all()
+    covered = {u for uuids in (await offer_resource_map(db_session, offers)).values() for u in uuids}
+    courses = (await db_session.execute(
+        select(Course).where(
+            Course.org_id == org_id,
+            Course.published == True,  # noqa: E712
+            Course.public == True,  # noqa: E712
+        ).order_by(Course.id)
+    )).scalars().all()
+    items = []
+    for course in courses:
+        if course.course_uuid in covered:
+            continue
+        summary = resource_summary(course, org.org_uuid, request)
+        items.append({**summary, "description": course.description or ""})
+    return items
+
+
 async def public_offer(db_session: AsyncSession, request: Optional[Request], org_id: int, ref: str) -> dict:
     from src.services.payments.common import get_offer_by_ref
 

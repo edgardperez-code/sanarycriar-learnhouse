@@ -209,6 +209,17 @@ async def api_public_listing(
     return await offers_service.public_listing(db_session, request, org_id)
 
 
+@router.get("/{org_id}/offers/free-listing", summary="Free courses and ebooks (public)")
+async def api_free_listing(
+    request: Request,
+    org_id: int,
+    _enabled=Depends(require_payments_enabled),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    # Sanar y Criar: published public courses no live offer covers.
+    return await offers_service.free_listing(db_session, request, org_id)
+
+
 @router.get("/{org_id}/offers/by-resource", summary="Offers covering a course (public)")
 async def api_offers_by_resource(
     org_id: int,
