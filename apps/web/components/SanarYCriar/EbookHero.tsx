@@ -109,7 +109,10 @@ export default function EbookHero({
                 src={coverUrl}
                 alt={t('sc_learning.ebook.cover_alt', 'Portada de {{name}}', { name: course?.name || '' })}
                 fetchPriority="high"
-                className="absolute inset-0 h-full w-full object-contain"
+                // Sanar y Criar: the course thumbnail is 16:9 (store cards and the
+                // site catalog); ebook thumbnails carry the cover in the middle, so
+                // the portrait frame crops the sides instead of letterboxing it.
+                className="absolute inset-0 h-full w-full object-cover object-center"
               />
             ) : (
               <div className="absolute inset-0 grid place-items-center text-[#6559CA]">
