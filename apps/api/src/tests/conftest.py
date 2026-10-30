@@ -494,6 +494,14 @@ def no_legacy_link_markers():
 
 
 @pytest.fixture(autouse=True)
+def sc_email_verification_off(monkeypatch):
+    """Sanar y Criar: upstream tests run with upstream behaviour (OSS signups
+    verified, free courses open). Our tests set ``SC_EMAIL_VERIFICATION=1``
+    (see ``tests/payments/test_free_verified.py``)."""
+    monkeypatch.setenv("SC_EMAIL_VERIFICATION", "0")
+
+
+@pytest.fixture(autouse=True)
 def rag_dispatch():
     """Keep content saves from starting real AI indexing runs.
 

@@ -7,6 +7,10 @@ import { verifyEmail } from '@services/auth/auth'
 import { useTranslation } from 'react-i18next'
 import AuthLayout from '@components/Auth/AuthLayout'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
+// Sanar y Criar: after verifying, back to the ebook/course that asked for it.
+import { getUriWithOrg } from '@services/config/config'
+import { pathAfterVerify, takeReturnPath, verifyErrorKey } from '@components/SanarYCriar/freeAccessGate'
+import { useLearningT } from '@components/SanarYCriar/useLearningT'
 
 interface VerifyEmailClientProps {
     org: any
@@ -14,6 +18,7 @@ interface VerifyEmailClientProps {
 
 function VerifyEmailClient({ org }: VerifyEmailClientProps) {
     const { t } = useTranslation();
+    const { lt } = useLearningT()
     const { track } = useLHAnalytics('public')
     const searchParams = useSearchParams()
     const token = searchParams.get('token') || ''
@@ -24,6 +29,9 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
     const [showMessage, setShowMessage] = useState(false)
+    // Sanar y Criar: ?redirect, else the page remembered by FreeAccessCard /
+    // signup, else /home (upstream).
+    const [nextHref, setNextHref] = useState('/home')
 
     // The verification token is single-use: the backend consumes (deletes) it the
     // moment it succeeds and auto-signs the user in. So this request must fire
@@ -57,6 +65,9 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
                     // shows a phantom drop for every verified user. `method`
                     // distinguishes this from a credentials login.
                     track(AnalyticsEvent.LoginSucceeded, { method: 'email_verification' })
+                    const nextPath = pathAfterVerify(searchParams.get('redirect'), takeReturnPath())
+                    const target = nextPath !== '/home' && org?.slug ? getUriWithOrg(org.slug, nextPath) : nextPath
+                    setNextHref(target)
                     setSuccess(true)
                     setShowMessage(true)
                     // Verification also signs the user in (session cookies were
@@ -65,16 +76,17 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
                     // fresh, now-verified user lands somewhere useful. A full
                     // navigation lets auth bootstrap from the new cookies.
                     setTimeout(() => {
-                        window.location.assign('/home')
+                        window.location.assign(target)
                     }, 1200)
                 } else {
                     track(AnalyticsEvent.EmailVerificationCompleted, { result: 'fail' })
-                    setError(res.error || t('auth.verification_failed'))
+                    // Sanar y Criar: Spanish copy per status, not the API's English detail.
+                    setError(lt(verifyErrorKey(res.status)))
                     setShowMessage(true)
                 }
             } catch {
                 track(AnalyticsEvent.EmailVerificationCompleted, { result: 'fail' })
-                setError(t('auth.verification_failed'))
+                setError(lt(verifyErrorKey(0)))
                 setShowMessage(true)
             } finally {
                 setIsVerifying(false)
@@ -111,7 +123,7 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
                                 </span>
                                 {success && (
                                     <span className="text-sm ms-2">
-                                        · <Link href="/home" className="underline hover:no-underline">{t('auth.continue_to_dashboard', { defaultValue: 'Continue to your dashboard' })}</Link>
+                                        · <Link href={nextHref} className="underline hover:no-underline">{nextHref === '/home' ? t('auth.continue_to_dashboard', { defaultValue: 'Continue to your dashboard' }) : lt('verify.continue')}</Link>
                                     </span>
                                 )}
                             </div>
@@ -169,14 +181,14 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
                                     </div>
                                     <div>
                                         <h2 className="font-bold text-lg text-black">{t('auth.email_verified_success')}</h2>
-                                        <p className="text-sm text-black/45 font-medium mt-1">{t('auth.email_verified_message')}</p>
+                                        <p className="text-sm text-black/45 font-medium mt-1">{nextHref === '/home' ? lt('verify.success_message_home') : lt('verify.success_message')}</p>
                                     </div>
                                 </div>
                                 <Link
-                                    href="/home"
+                                    href={nextHref}
                                     className="box-border w-full inline-flex h-[44px] rounded-lg items-center justify-center bg-black hover:bg-black/85 text-white px-[15px] font-bold text-[14px] leading-none transition-all"
                                 >
-                                    {t('auth.continue_to_dashboard', { defaultValue: 'Continue to your dashboard' })}
+                                    {nextHref === '/home' ? t('auth.continue_to_dashboard', { defaultValue: 'Continue to your dashboard' }) : lt('verify.continue')}
                                 </Link>
                             </div>
                         )}

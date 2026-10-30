@@ -7156,6 +7156,37 @@
     "pdf": {
       "no_viewer": "Este navegador no puede mostrar el PDF dentro de la página. Descárgalo o ábrelo con tu lector de PDF para leerlo con comodidad.",
       "open": "Abrir el PDF"
+    },
+    "free_gate": {
+      "login_title": "Este ebook es gratis",
+      "login_title_course": "Este curso es gratis",
+      "login_text": "Crea tu cuenta gratis (o inicia sesión) para leerlo y descargarlo. Solo te pediremos verificar tu correo.",
+      "login_text_course": "Crea tu cuenta gratis (o inicia sesión) para verlo. Solo te pediremos verificar tu correo.",
+      "signup": "Crear cuenta gratis",
+      "login": "Ya tengo cuenta",
+      "verify_title": "Verifica tu correo para descargarlo",
+      "verify_title_course": "Verifica tu correo para empezarlo",
+      "verify_text": "Te enviamos un enlace a {{email}}. Ábrelo desde tu correo y vuelve aquí.",
+      "verify_text_no_email": "Te enviamos un enlace a tu correo. Ábrelo desde tu correo y vuelve aquí.",
+      "resend": "Reenviar el correo",
+      "resending": "Enviando…",
+      "resent": "Listo, te lo reenviamos.",
+      "resend_error": "No pudimos reenviar el correo. Inténtalo de nuevo en un momento.",
+      "verified": "Ya lo verifiqué",
+      "checking": "Comprobando…",
+      "still_unverified": "Tu correo todavía no aparece verificado. Abre el enlace que te enviamos y vuelve a intentarlo.",
+      "resend_rate_limited": "Ya te enviamos varios correos. Espera unos minutos y vuelve a intentarlo.",
+      "check_error": "No pudimos comprobarlo. Revisa tu conexión e inténtalo de nuevo."
+    },
+    "verify": {
+      "signup_sent": "Te enviamos un correo para verificar tu cuenta. Ábrelo y toca el enlace.",
+      "success_message": "Tu correo quedó verificado y ya iniciaste sesión. Te llevamos de vuelta.",
+      "continue": "Continuar",
+      "success_message_home": "Tu correo quedó verificado y ya iniciaste sesión.",
+      "error_invalid_link": "El enlace no es válido, ya se usó o caducó. Inicia sesión y pide un correo nuevo desde la página del ebook o del curso.",
+      "error_rate_limited": "Hubo demasiados intentos. Espera unos minutos y vuelve a abrir el enlace.",
+      "error_generic": "No pudimos verificar tu correo. Inténtalo de nuevo en un momento.",
+      "error_network": "No pudimos conectar. Revisa tu conexión y vuelve a abrir el enlace."
     }
   },
   "sc_fixes": {

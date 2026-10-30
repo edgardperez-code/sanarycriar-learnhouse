@@ -7,7 +7,17 @@ import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { getResourceAccess } from '@services/payments/checkout'
 import { toCourseResourceUuid } from '@components/Payments/commerce'
 
-export type AccessReason = 'free' | 'purchased' | 'admin' | 'author' | 'anonymous' | 'none'
+export type AccessReason =
+  | 'free'
+  | 'purchased'
+  | 'admin'
+  | 'author'
+  | 'anonymous'
+  | 'none'
+  // Sanar y Criar: free content needs an account ("login_required") with a
+  // verified email ("verify_email"); see components/SanarYCriar/freeAccessGate.ts.
+  | 'login_required'
+  | 'verify_email'
 
 export interface ResourceAccess {
   for_sale: boolean

@@ -19,6 +19,8 @@ import { useCourseAccess } from '@components/Hooks/useCourseAccess'
 import useAdminStatus from '@components/Hooks/useAdminStatus'
 import { activityHref } from './ContinueLearningCard'
 import { cleanActivityUuid, flattenCourseActivities, isEbookCourse } from './progressLocal'
+import { type FreeGateReason, freeGateReason } from './freeAccessGate'
+import FreeAccessCard from './FreeAccessCard'
 import './sc-learning.css'
 
 /** The ebook's PDF activity (first PDF document, else first document). */
@@ -38,6 +40,8 @@ export interface EbookAccess {
   loading: boolean
   /** Org admin or course author: sees setup hints. */
   isStaff: boolean
+  /** Free ebook that needs an account / a verified email first. */
+  gate?: FreeGateReason | null
 }
 
 /**
@@ -53,7 +57,7 @@ export function useEbookAccess(course: any): EbookAccess {
   if (!isEbook) return { pdf: null, hasAccess: false, loading: false, isStaff: false }
   if (access) {
     const isStaff = access.reason === 'admin' || access.reason === 'author'
-    return { pdf, hasAccess: access.has_access, loading: false, isStaff }
+    return { pdf, hasAccess: access.has_access, loading: false, isStaff, gate: freeGateReason(access) }
   }
   if (isError) {
     const hasAccess = !!pdf && pdf.content?.paid_access !== false && !pdf.is_locked
@@ -68,8 +72,11 @@ export function useEbookAccess(course: any): EbookAccess {
  * Courses always render the children.
  */
 export function EbookActionsGate({ course, children }: { course: any; children: React.ReactNode }) {
-  const { hasAccess, loading } = useEbookAccess(course)
+  const { hasAccess, loading, gate } = useEbookAccess(course)
   if (!isEbookCourse(course)) return <>{children}</>
+  // Free ebook behind sign-up / verification: the card lives in EbookHero, and
+  // there is nothing to buy, so the side box stays empty.
+  if (gate) return null
   // While loading, CoursesActions shows its own placeholder.
   if (loading || !hasAccess) return <>{children}</>
   return null
@@ -85,7 +92,7 @@ export default function EbookHero({
   orgUuid?: string
 }) {
   const { t } = useTranslation()
-  const { pdf, hasAccess, loading, isStaff: isCourseStaff } = useEbookAccess(course)
+  const { pdf, hasAccess, loading, isStaff: isCourseStaff, gate } = useEbookAccess(course)
   // Dashboard users see how to fix a missing PDF (free ebooks report no role).
   const { isAdmin } = useAdminStatus()
   const isStaff = isCourseStaff || isAdmin === true
@@ -171,6 +178,14 @@ export default function EbookHero({
               <div className="h-12 w-full animate-pulse rounded-full bg-[#EEEDFF] sm:w-44" />
               <div className="h-12 w-full animate-pulse rounded-full bg-[#EEEDFF] sm:w-44" />
             </div>
+          ) : gate && pdf ? (
+            <FreeAccessCard
+              reason={gate}
+              orgslug={orgslug}
+              coursePath={`/course/${String(course?.course_uuid ?? '').replace('course_', '')}`}
+              isEbook
+              className="mt-6"
+            />
           ) : hasAccess && readHref && downloadHref ? (
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link

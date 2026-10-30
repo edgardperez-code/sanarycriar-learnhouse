@@ -277,6 +277,13 @@ async def signWithGoogle(
         await db_session.commit()
         await db_session.refresh(user)
 
+    if untrusted_account:
+        # Sanar y Criar: the email just became verified; recompute cached
+        # free-course access (see services/payments/access.py).
+        from src.services.payments.access import bump_access_version
+
+        bump_access_version()
+
     if untrusted_password and user.id is not None:
         from src.security.auth import revoke_user_sessions_before
 

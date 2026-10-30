@@ -704,7 +704,7 @@ function ActivityClient(props: ActivityClientProps) {
                       {activity && activity.published == true && (
                         <>
                           {activity.content.paid_access == false ? (
-                            <PaidCourseActivityDisclaimer course={course} />
+                            <PaidCourseActivityDisclaimer course={course} reason={activity.content.reason} />
                           ) : (
                             <motion.div
                               initial={isInitialRender.current ? false : { scale: 0.95, opacity: 0 }}
@@ -1002,7 +1002,7 @@ function ActivityClient(props: ActivityClientProps) {
                       ) : activity.published == true ? (
                         <>
                           {activity.content.paid_access == false ? (
-                            <PaidCourseActivityDisclaimer course={course} />
+                            <PaidCourseActivityDisclaimer course={course} reason={activity.content.reason} />
                           ) : (
                             // Video activities sit on a dark theater band (theater.css).
                             <div className={activity.activity_type === 'TYPE_VIDEO' ? 'lh-theater-band py-8 sm:py-12' : ''}>

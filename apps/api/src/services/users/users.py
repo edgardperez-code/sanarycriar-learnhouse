@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -15,6 +16,7 @@ from src.security.features_utils.usage import (
     increase_feature_usage,
 )
 from src.core.deployment_mode import get_deployment_mode
+from src.services.users.sc_verification import password_signup_needs_verification
 from src.services.users.usergroups import add_users_to_usergroup
 from src.services.users.emails import (
     send_account_creation_email,
@@ -176,6 +178,34 @@ async def _get_welcome_cta_url(
         return None
 
 
+_SC_VERIFICATION_MAIL_TIMEOUT_S = 4.0
+
+
+async def _sc_send_verification(
+    request: Request, db_session: AsyncSession, user: User, org_id: int | None
+) -> None:
+    """Sanar y Criar: send the verification mail without failing the signup."""
+    from src.services.users.email_verification import send_verification_email
+
+    # The account is already committed: a slow mail provider must not push the
+    # signup past the web gateway's timeout (8 s). On timeout the worker thread
+    # still delivers the mail; the web offers "resend" either way.
+    try:
+        await asyncio.wait_for(
+            send_verification_email(request, db_session, user, org_id),
+            timeout=_SC_VERIFICATION_MAIL_TIMEOUT_S,
+        )
+    except asyncio.TimeoutError:
+        logging.getLogger(__name__).warning(
+            "Verification email still sending after %ss; signup answered",
+            _SC_VERIFICATION_MAIL_TIMEOUT_S,
+        )
+    except Exception:
+        logging.getLogger(__name__).warning(
+            "Could not send the verification email after signup", exc_info=True
+        )
+
+
 async def create_user(
     request: Request,
     db_session: AsyncSession,
@@ -216,7 +246,10 @@ async def create_user(
     user.password = security_hash_password(user_object.password) if user_object.password else ""
 
     # OAuth users and OSS mode get auto-verified email
-    if is_oauth or get_deployment_mode() != 'saas':
+    # Sanar y Criar: except password signups, which verify first (free
+    # content requires a verified email; see sc_verification).
+    sc_verify = password_signup_needs_verification(user_object.password, is_oauth)
+    if is_oauth or (get_deployment_mode() != 'saas' and not sc_verify):
         user.email_verified = True
         user.email_verified_at = datetime.now(timezone.utc).isoformat()
         user.signup_method = signup_provider if is_oauth else "email"
@@ -348,6 +381,11 @@ async def create_user(
         # Import here to avoid circular imports
         from src.services.users.email_verification import send_verification_email
         await send_verification_email(request, db_session, user, org_id)
+    elif sc_verify:
+        # Sanar y Criar: the verification mail doubles as the welcome (no
+        # second mail). A mail failure must not fail a signup that is already
+        # committed; the web offers "resend".
+        await _sc_send_verification(request, db_session, user, org_id)
 
     return user_read
 
@@ -466,7 +504,9 @@ async def create_user_without_org(
     user.password = security_hash_password(user_object.password) if user_object.password else ""
 
     # OAuth users and OSS mode get auto-verified email
-    if is_oauth or get_deployment_mode() != 'saas':
+    # Sanar y Criar: except password signups (see create_user).
+    sc_verify = password_signup_needs_verification(user_object.password, is_oauth)
+    if is_oauth or (get_deployment_mode() != 'saas' and not sc_verify):
         user.email_verified = True
         user.email_verified_at = datetime.now(timezone.utc).isoformat()
         user.signup_method = signup_provider if is_oauth else "email"
@@ -521,7 +561,9 @@ async def create_user_without_org(
 
     # OAuth users get welcome email (already verified)
     # Non-OAuth SaaS users get verification email (no org needed)
-    if is_oauth or get_deployment_mode() != 'saas':
+    if sc_verify and get_deployment_mode() != 'saas':
+        await _sc_send_verification(request, db_session, user, None)
+    elif is_oauth or get_deployment_mode() != 'saas':
         send_account_creation_email(
             user=user_read,
             email=user_read.email,

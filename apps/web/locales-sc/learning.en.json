@@ -1,0 +1,83 @@
+{
+  "sc_learning": {
+    "resume": {
+      "toast": "Resuming at {{time}}",
+      "restart": "Start from the beginning",
+      "dismiss": "Dismiss"
+    },
+    "continue": {
+      "eyebrow": "Continue where you left off",
+      "next_eyebrow": "Keep going with the next lesson",
+      "review_eyebrow": "You finished the last lesson",
+      "chapter": "Chapter {{number}} · {{name}}",
+      "position": "At {{time}} of {{total}}",
+      "position_no_total": "At {{time}}",
+      "page": "Page {{page}}",
+      "progress_label": "{{percent}}% watched",
+      "button": "Continue",
+      "next_button": "Start lesson",
+      "review_button": "Watch again"
+    },
+    "dropdown": {
+      "watched": "{{percent}}% watched",
+      "view_all": "View all lessons"
+    },
+    "trail": {
+      "read_ebook": "Read ebook",
+      "completed": "Completed"
+    },
+    "ebook": {
+      "eyebrow": "PDF ebook",
+      "cover_alt": "Cover of {{name}}",
+      "format": "Read it right here, on your phone or computer, or download it to keep it with you.",
+      "read_now": "Read now",
+      "continue_reading": "Keep reading (p. {{page}})",
+      "download": "Download PDF",
+      "locked_hint": "Once it's yours, you can read it here and download it as a PDF.",
+      "no_pdf": "This ebook will be available very soon.",
+      "no_pdf_staff": "This ebook has no PDF yet. Add it as a PDF document activity from the course dashboard."
+    },
+    "product_type": {
+      "label": "Product type",
+      "course": "Course",
+      "ebook": "Ebook",
+      "help_course": "Course with video lessons, progress and \"Continue where you left off\".",
+      "help_ebook": "The page shows the cover, the description and the \"Read now\" and \"Download PDF\" buttons instead of the lesson list. Add a PDF document activity with the book."
+    },
+    "pdf": {
+      "no_viewer": "This browser can't show the PDF inside the page. Download it or open it with your PDF reader to read it comfortably.",
+      "open": "Open the PDF"
+    },
+    "free_gate": {
+      "login_title": "This ebook is free",
+      "login_title_course": "This course is free",
+      "login_text": "Create your free account (or log in) to read and download it. We will only ask you to verify your email.",
+      "login_text_course": "Create your free account (or log in) to watch it. We will only ask you to verify your email.",
+      "signup": "Create free account",
+      "login": "I already have an account",
+      "verify_title": "Verify your email to download it",
+      "verify_title_course": "Verify your email to start it",
+      "verify_text": "We sent a link to {{email}}. Open it from your email and come back here.",
+      "verify_text_no_email": "We sent a link to your email. Open it from your email and come back here.",
+      "resend": "Resend the email",
+      "resending": "Sending…",
+      "resent": "Done, we sent it again.",
+      "resend_error": "We could not resend the email. Please try again in a moment.",
+      "verified": "I already verified it",
+      "checking": "Checking…",
+      "still_unverified": "Your email does not show as verified yet. Open the link we sent you and try again.",
+      "resend_rate_limited": "We already sent you several emails. Wait a few minutes and try again.",
+      "check_error": "We could not check it. Check your connection and try again."
+    },
+    "verify": {
+      "signup_sent": "We sent you an email to verify your account. Open it and tap the link.",
+      "success_message": "Your email is verified and you are signed in. Taking you back.",
+      "continue": "Continue",
+      "success_message_home": "Your email is verified and you are signed in.",
+      "error_invalid_link": "The link is not valid, was already used or has expired. Log in and request a new email from the ebook or course page.",
+      "error_rate_limited": "There were too many attempts. Wait a few minutes and open the link again.",
+      "error_generic": "We could not verify your email. Please try again in a moment.",
+      "error_network": "We could not connect. Check your connection and open the link again."
+    }
+  }
+}

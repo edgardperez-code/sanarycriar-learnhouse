@@ -28,9 +28,14 @@ class TestApiTokensAndPaywall:
         assert (access.for_sale, access.has_access, access.reason) == (True, False, "none")
         assert await check_activity_paid_access(None, activity.id, _org_token(), db) is False
 
-    async def test_org_api_token_still_reads_free_courses(self, db, course, activity):
+    async def test_org_api_token_and_free_courses(self, db, course, activity, monkeypatch):
+        # Upstream behaviour (switch off): free is open, tokens included.
         access = await get_course_access(db, _org_token(), course)
         assert (access.for_sale, access.has_access, access.reason) == (False, True, "free")
+        # Ours: free needs a signed-in, verified account; a token is neither.
+        monkeypatch.setenv("SC_EMAIL_VERIFICATION", "1")
+        access = await get_course_access(db, _org_token(), course)
+        assert (access.for_sale, access.has_access, access.reason) == (False, False, "login_required")
 
     async def test_token_principals_cannot_capture_an_order(self, client, current, db, outsider, offer, fake_paypal):
         data, _ = await _checkout_and_approve(client, current, outsider, offer, fake_paypal)

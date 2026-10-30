@@ -4,6 +4,7 @@ Email verification service for verifying user email addresses.
 Uses Redis to store verification tokens with 1-hour TTL.
 Supports both org-based and org-less (platform) signups.
 """
+import asyncio
 from datetime import datetime, timezone
 import json
 import os
@@ -173,7 +174,10 @@ async def send_verification_email(
         base_url = get_base_url_from_request(request)
 
     # Send verification email
-    email_sent = send_email_verification_email(
+    # Sanar y Criar: in a worker thread; the provider call (and its retry)
+    # blocks and must not stall the event loop.
+    email_sent = await asyncio.to_thread(
+        send_email_verification_email,
         token=token,
         user=user_read,
         organization=org_read,
@@ -278,6 +282,11 @@ async def verify_email_token(
 
     # Delete used token
     r.delete(redis_key)
+
+    # Sanar y Criar: free courses need a verified email; drop cached denials.
+    from src.services.payments.access import bump_access_version
+
+    bump_access_version()
 
     # Dispatch webhook; resolve org_id from org_uuid
     if org_uuid != NO_ORG_UUID:

@@ -558,7 +558,17 @@ async def api_cancel_order(
 # ------------------------------------------------------------------ access
 
 
-@router.get("/{org_id}/access", summary="Whether the caller may consume a course")
+@router.get(
+    "/{org_id}/access",
+    summary="Whether the caller may consume a course",
+    description=(
+        "Returns `{for_sale, has_access, reason, offers_count, payment_pending}`. "
+        "`reason`: `free` (free course, verified account), `purchased`, `admin`, "
+        "`author`, `anonymous` / `none` (for sale, not bought), "
+        "`login_required` (free course, caller not signed in) or "
+        "`verify_email` (free course, account email not verified yet)."
+    ),
+)
 async def api_course_access(
     org_id: int,
     resource_uuid: str = Query(...),

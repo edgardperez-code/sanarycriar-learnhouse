@@ -21,6 +21,9 @@ import { useCourseAccess } from '@components/Hooks/useCourseAccess'
 import { useScT } from '@components/Payments/useScT'
 import { productTypeOfCourse, withRedirect } from '@components/Payments/commerce'
 import { PendingPaymentCard } from '@components/Store/Cart/PendingPaymentCard'
+// Sanar y Criar: free content needs an account with a verified email.
+import FreeAccessCard from '@components/SanarYCriar/FreeAccessCard'
+import { freeGateReason } from '@components/SanarYCriar/freeAccessGate'
 // Sanar y Criar: free courses with history get "Continuar" + a confirmed leave.
 import {
   LeaveCourseDialog,
@@ -310,6 +313,16 @@ const CourseActionsMobile = ({ courseuuid, orgslug, course, trailData }: CourseA
 
   if (isLoading || isAccessLoading) {
     return <div className="animate-pulse h-16 bg-gray-100 rounded-lg mt-4 mb-8" />
+  }
+
+  // Sanar y Criar: free course behind sign-up / email verification.
+  const freeGate = forSale ? null : freeGateReason(access)
+  if (freeGate) {
+    return (
+      <div className="my-6 mx-2">
+        <FreeAccessCard reason={freeGate} orgslug={orgslug} coursePath={coursePath} isEbook={isEbook} compact />
+      </div>
+    )
   }
 
   // Show join organization prompt for authenticated users who are not part of the org

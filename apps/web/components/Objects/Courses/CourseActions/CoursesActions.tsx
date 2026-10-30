@@ -33,6 +33,9 @@ import {
 } from '@components/ScFixes/FreeCourseContinue'
 import { useFixesT } from '@components/ScFixes/useFixesT'
 import { sessionUserKey } from '@components/SanarYCriar/progressLocal'
+// Sanar y Criar: free content needs an account with a verified email.
+import FreeAccessCard from '@components/SanarYCriar/FreeAccessCard'
+import { freeGateReason } from '@components/SanarYCriar/freeAccessGate'
 
 interface CourseRun {
   status: string
@@ -580,6 +583,17 @@ function CoursesActions({ courseuuid, orgslug, course, trailData }: CourseAction
             </Link>
           </p>
         )}
+        {renderContributorButton()}
+      </div>
+    )
+  }
+
+  // Sanar y Criar: free course behind sign-up / email verification.
+  const freeGate = freeGateReason(access)
+  if (freeGate) {
+    return (
+      <div className="space-y-3">
+        <FreeAccessCard reason={freeGate} orgslug={orgslug} coursePath={coursePath} isEbook={isEbook} compact />
         {renderContributorButton()}
       </div>
     )

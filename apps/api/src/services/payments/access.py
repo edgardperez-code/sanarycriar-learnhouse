@@ -7,6 +7,10 @@ sale, access is granted to org admins/maintainers, the course's active
 authors, and users with an ``active``/``completed`` enrollment in ANY offer
 covering it, archived offers included, so past buyers keep what they bought.
 
+A free course is free but not anonymous: it needs a signed-in account whose
+email is verified (reason ``login_required`` / ``verify_email`` otherwise).
+Admins and authors pass. ``SC_EMAIL_VERIFICATION=0`` opens it to everyone.
+
 ``check_activity_paid_access`` is what the core paywall hook
 (``src.core.ee_hooks.check_ee_activity_paid_access``) calls on every activity
 read, chapter tree, media stream and file request, so it is memoized on
@@ -37,7 +41,8 @@ from src.db.resource_authors import (
     ResourceAuthorshipEnum,
     ResourceAuthorshipStatusEnum,
 )
-from src.db.users import AnonymousUser, APITokenUser, SuperadminAPITokenUser
+from src.db.users import AnonymousUser, APITokenUser, SuperadminAPITokenUser, User
+from src.services.users.sc_verification import sc_email_verification_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +57,17 @@ _CACHE_TTL_SECONDS = 60
 _VERSION_KEY = "sc_pay:access_version"
 _MEMO_ATTR = "_sc_pay_access_memo"
 
-AccessReason = Literal["free", "purchased", "admin", "author", "anonymous", "none"]
+AccessReason = Literal[
+    "free", "purchased", "admin", "author", "anonymous", "none",
+    # Free course: sign in first / verify the account's email first.
+    "login_required", "verify_email",
+]
+
+# Free-course denials and how an endpoint that serves content reports them.
+FREE_GATE_ERRORS = {
+    "login_required": (401, "LOGIN_REQUIRED", "Inicia sesión para acceder a este contenido gratuito"),
+    "verify_email": (403, "EMAIL_NOT_VERIFIED", "Verifica tu correo para acceder a este contenido gratuito"),
+}
 
 
 @dataclass
@@ -131,11 +146,44 @@ async def is_active_course_author(db_session: AsyncSession, user_id: int, course
     return row is not None
 
 
+async def _free_course_access(db_session: AsyncSession, user, course: Course) -> CourseAccess:
+    """A course no live offer covers: a verified account reads it for free."""
+    if not sc_email_verification_enabled():
+        return CourseAccess(False, True, "free", 0)
+    if user is None or isinstance(user, (AnonymousUser, APITokenUser)):
+        return CourseAccess(False, False, "login_required", 0)
+    if isinstance(user, SuperadminAPITokenUser):
+        return CourseAccess(False, True, "admin", 0)
+
+    from src.security.org_auth import is_org_admin
+
+    user_id = int(getattr(user, "id", 0) or 0)
+    if not user_id:
+        return CourseAccess(False, False, "login_required", 0)
+    if await is_org_admin(user_id, course.org_id, db_session):
+        return CourseAccess(False, True, "admin", 0)
+    if await is_active_course_author(db_session, user_id, course.course_uuid):
+        return CourseAccess(False, True, "author", 0)
+    # The session object may not carry ``email_verified`` (PublicUser) or carry
+    # a stale one, so read the row. Callers cache the decision per request and
+    # for 60 s in Redis (``course_access_decision``).
+    verified = (await db_session.execute(
+        select(User.email_verified).where(User.id == user_id)
+    )).scalar()
+    if not verified:
+        # A course whose offers were all archived counts as free, but whoever
+        # bought it keeps it, verified or not.
+        if await has_paid_enrollment(db_session, user_id, course.course_uuid, course.org_id):
+            return CourseAccess(False, True, "purchased", 0)
+        return CourseAccess(False, False, "verify_email", 0)
+    return CourseAccess(False, True, "free", 0)
+
+
 async def get_course_access(db_session: AsyncSession, user, course: Course) -> CourseAccess:
     """Full access decision for ``user`` on ``course`` (uncached)."""
     offers_count = await count_active_offers(db_session, course.course_uuid, course.org_id)
     if offers_count == 0:
-        return CourseAccess(False, True, "free", 0)
+        return await _free_course_access(db_session, user, course)
     if user is None or isinstance(user, AnonymousUser):
         return CourseAccess(True, False, "anonymous", offers_count)
     if isinstance(user, APITokenUser):
@@ -180,7 +228,8 @@ def _access_version(client) -> str:
 
 
 def bump_access_version() -> None:
-    """Invalidate every cached access decision (offer, group or purchase change)."""
+    """Invalidate every cached access decision (offer, group, purchase or
+    email verification change)."""
     client = _cache_client()
     if client is None:
         return
@@ -216,8 +265,17 @@ def _memo(request: Optional[Request]) -> Optional[dict]:
     return memo
 
 
-async def has_course_access(request: Optional[Request], db_session: AsyncSession, user,
-                            course: Course) -> bool:
+def _decode_decision(raw) -> tuple[bool, str]:
+    """``"1|free"`` -> ``(True, "free")``; a bare ``"1"``/``"0"`` (entries
+    written before reasons were cached) has an empty reason."""
+    text = raw.decode() if isinstance(raw, bytes) else str(raw)
+    flag, _, reason = text.partition("|")
+    return flag == "1", reason
+
+
+async def course_access_decision(request: Optional[Request], db_session: AsyncSession, user,
+                                 course: Course) -> tuple[bool, str]:
+    """``(has_access, reason)``, memoized per request and cached 60 s."""
     memo = _memo(request)
     principal = _principal_key(user)
     memo_key = ("course", course.id, principal)
@@ -228,27 +286,45 @@ async def has_course_access(request: Optional[Request], db_session: AsyncSession
     redis_key = None
     if client is not None:
         try:
-            redis_key = f"sc_pay:access:v{_access_version(client)}:{course.id}:{principal}"
+            # "access2": entries cached before free courses needed a verified
+            # account (bare "0"/"1", no reason) are never read again.
+            redis_key = f"sc_pay:access2:v{_access_version(client)}:{course.id}:{principal}"
             cached = client.get(redis_key)
             if cached is not None:
-                value = (cached.decode() if isinstance(cached, bytes) else str(cached)) == "1"
+                decision = _decode_decision(cached)
                 if memo is not None:
-                    memo[memo_key] = value
-                return value
+                    memo[memo_key] = decision
+                return decision
         except Exception:
             redis_key = None
             logger.debug("Payments access cache read failed", exc_info=True)
 
-    value = (await get_course_access(db_session, user, course)).has_access
+    access = await get_course_access(db_session, user, course)
+    decision = (access.has_access, access.reason)
 
     if memo is not None:
-        memo[memo_key] = value
+        memo[memo_key] = decision
     if client is not None and redis_key is not None:
         try:
-            client.setex(redis_key, _CACHE_TTL_SECONDS, "1" if value else "0")
+            flag = "1" if access.has_access else "0"
+            client.setex(redis_key, _CACHE_TTL_SECONDS, f"{flag}|{access.reason}")
         except Exception:
             logger.debug("Payments access cache write failed", exc_info=True)
-    return value
+    return decision
+
+
+async def has_course_access(request: Optional[Request], db_session: AsyncSession, user,
+                            course: Course) -> bool:
+    return (await course_access_decision(request, db_session, user, course))[0]
+
+
+def free_gate_exception(reason: str) -> Optional[HTTPException]:
+    """The 401/403 for a free course the caller may not read yet, else None."""
+    spec = FREE_GATE_ERRORS.get(reason)
+    if spec is None:
+        return None
+    status_code, code, message = spec
+    return HTTPException(status_code=status_code, detail={"code": code, "message": message})
 
 
 async def check_activity_paid_access(request: Optional[Request], activity_id: int, user,
@@ -280,6 +356,12 @@ async def check_enrollment_access(element_uuid: str, user_id: int, db_session: A
 async def require_paid_access_for_course(request: Optional[Request], user, course: Course,
                                          db_session: AsyncSession) -> None:
     """402 ``{code: PAYMENT_REQUIRED}`` when the course is for sale and ``user``
-    has no access (used to gate "start course")."""
-    if not await has_course_access(request, db_session, user, course):
-        raise HTTPException(status_code=402, detail={"code": "PAYMENT_REQUIRED"})
+    has no access (used to gate "start course"). On a free course: 401
+    ``LOGIN_REQUIRED`` or 403 ``EMAIL_NOT_VERIFIED`` (``FREE_GATE_ERRORS``)."""
+    allowed, reason = await course_access_decision(request, db_session, user, course)
+    if allowed:
+        return
+    gate = free_gate_exception(reason)
+    if gate is not None:
+        raise gate
+    raise HTTPException(status_code=402, detail={"code": "PAYMENT_REQUIRED"})

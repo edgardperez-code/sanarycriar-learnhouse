@@ -54,6 +54,8 @@ async def _enroll(db, user_id, offer, status="active") -> PaymentsEnrollment:
 
 class TestCourseAccess:
     async def test_free_course_without_offers(self, db, course, activity, regular_user):
+        # SC_EMAIL_VERIFICATION=0 here (root conftest); the verified-account
+        # rule is covered in test_free_verified.py.
         access = await get_course_access(db, AnonymousUser(), course)
         assert access.as_dict() == {"for_sale": False, "has_access": True, "reason": "free", "offers_count": 0}
         assert await check_activity_paid_access(None, activity.id, AnonymousUser(), db) is True

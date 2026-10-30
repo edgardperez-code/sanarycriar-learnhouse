@@ -26,6 +26,11 @@ import CustomSignupFields, {
 } from '@components/Auth/CustomSignupFields'
 import { readSignupFields, type SignupFieldItem } from '@services/settings/org'
 import { safeInternalPath } from '@services/security/url'
+// Sanar y Criar: unverified accounts get our own "check your email" copy, and
+// the ?redirect is remembered for /verify-email (the email link has none).
+import { currentAuthRedirect } from '@components/Payments/useAuthRedirect'
+import { rememberReturnPath } from '@components/SanarYCriar/freeAccessGate'
+import { useLearningT } from '@components/SanarYCriar/useLearningT'
 
 const validate = (values: any, t: any, customFields: SignupFieldItem[]) => {
   const errors: any = {}
@@ -71,6 +76,7 @@ interface OpenSignUpComponentProps {
 
 function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
   const { t } = useTranslation()
+  const { lt } = useLearningT()
   const loginHref = useAuthRedirectHref('/login')
   const { track } = useLHAnalytics('public')
   const [isSubmitting, setIsSubmitting] = React.useState(false)
@@ -123,6 +129,7 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
         let message = await res.json().catch(() => ({}))
         if (res.status == 200) {
           track(AnalyticsEvent.SignupSucceeded, { email_verified: message.email_verified })
+          if (message.email_verified === false) rememberReturnPath(currentAuthRedirect())
           setMessage(message)
         } else {
           // Surface the backend's actual error detail for ANY non-2xx (incl. 409
@@ -198,7 +205,7 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
               <div className="font-semibold text-sm">{t('auth.check_email_for_verification')}</div>
             </div>
             <p className="text-xs text-green-600">
-              {t('auth.verification_email_sent_message')}
+              {lt('verify.signup_sent')}
             </p>
             {/* Resend, so a user whose email doesn't arrive isn't stuck. */}
             {resendState === 'sent' ? (

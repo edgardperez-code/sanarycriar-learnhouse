@@ -407,6 +407,7 @@ async def free_listing(db_session: AsyncSession, request: Optional[Request], org
 
     The paywall treats them as free (see access.py), so the marketing site
     lists them next to the offers with a "read for free" link to the course.
+    Free still means a signed-in account with a verified email to read them.
     """
     from src.db.courses.courses import Course
 

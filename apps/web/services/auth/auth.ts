@@ -228,7 +228,7 @@ export async function verifyEmail(
   token: string,
   userUuid: string,
   orgUuid: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; status?: number }> {
   try {
     const HeadersConfig = new Headers({ 'Content-Type': 'application/json' })
 
@@ -254,6 +254,8 @@ export async function verifyEmail(
       return {
         success: false,
         error: getErrorMessage(data?.detail, 'Verification failed'),
+        // Sanar y Criar: lets the page show its own Spanish copy per status.
+        status: response.status,
       }
     }
   } catch {
@@ -267,7 +269,7 @@ export async function verifyEmail(
 export async function resendVerificationEmail(
   email: string,
   orgId?: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; status?: number }> {
   try {
     const HeadersConfig = new Headers({ 'Content-Type': 'application/json' })
 
@@ -288,6 +290,8 @@ export async function resendVerificationEmail(
       return {
         success: false,
         error: getErrorMessage(data?.detail, 'Failed to resend verification email'),
+        // Sanar y Criar: lets callers tell a rate limit (429) from other errors.
+        status: response.status,
       }
     }
   } catch {

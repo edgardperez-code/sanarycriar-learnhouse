@@ -155,6 +155,16 @@ async def _reader_state(
     return "locked"
 
 
+async def _free_gate_reason(request: Request, course: Course, current_user,
+                            db_session: AsyncSession) -> str | None:
+    """Sanar y Criar: ``login_required``/``verify_email`` when the paywall
+    denial comes from a free course (cached with the paywall decision)."""
+    from src.services.payments.access import FREE_GATE_ERRORS, course_access_decision
+
+    _allowed, reason = await course_access_decision(request, db_session, current_user, course)
+    return reason if reason in FREE_GATE_ERRORS else None
+
+
 async def verify_activity_reader_access(
     request: Request,
     activity: Activity,
@@ -184,6 +194,13 @@ async def verify_activity_reader_access(
     if state == "draft":
         raise HTTPException(status_code=404, detail="Activity not found")
     if state == "unpaid":
+        # Sanar y Criar: a free course denies with 401/403 (sign in / verify
+        # email), not 402.
+        gate = await _free_gate_reason(request, course, current_user, db_session)
+        if gate:
+            from src.services.payments.access import free_gate_exception
+
+            raise free_gate_exception(gate)
         raise HTTPException(status_code=402, detail="This activity requires a purchase")
     if state == "locked":
         raise HTTPException(status_code=403, detail="This activity is locked")
@@ -238,5 +255,10 @@ async def redact_activity_for_reader(
         raise HTTPException(status_code=404, detail="Activity not found")
     if state == "unpaid":
         activity_read.content = {"paid_access": False}
+        # Sanar y Criar: say why a free course is closed (login_required /
+        # verify_email) so the reader can ask for that instead of a purchase.
+        gate = await _free_gate_reason(request, course, current_user, db_session)
+        if gate:
+            activity_read.content["reason"] = gate
         activity_read.details = None
     return activity_read
