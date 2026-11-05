@@ -177,6 +177,11 @@ async def reconcile_once(db_session) -> dict:
 
 
 async def _tick() -> None:
+    # Sanar y Criar: a payments column change the startup could not make
+    # (Zelle and Binance purchases need it) is tried again here.
+    from src.services.payments.schema import retry_columns_if_needed
+
+    await retry_columns_if_needed()
     if not _claim_lock():
         return
     from src.core.events.database import _async_session_factory

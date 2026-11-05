@@ -1,10 +1,13 @@
-"""Sanar y Criar: cart purchases paid by Pago Móvil (manual confirmation).
+"""Sanar y Criar: cart purchases paid by hand (manual confirmation).
 
 A purchase (``sc_pay_purchase``, public code ``SYC-XXXXXX``) groups one child
 order per offer (``sc_pay_order`` with ``provider="manual"``) through
-``sc_pay_purchase_item``. Only an org admin turns a purchase ``paid``; the
-child orders then go through the same fulfillment as PayPal ones, so the
-paywall, "Mis compras", customers and transactions keep working unchanged.
+``sc_pay_purchase_item``. Its ``method`` says how the buyer pays: Pago Móvil
+or a bank transfer (bolívares at ``fx_rate``), Zelle (US$) or Binance (USDT);
+see ``services/payments/manual_methods.py``. Only an org admin turns a
+purchase ``paid``; the child orders then go through the same fulfillment as
+PayPal ones, so the paywall, "Mis compras", customers and transactions keep
+working unchanged.
 
 ``sc_pay_fx_rate`` keeps the last good BCV rate of each day, the fallback
 when the rate source is down. Same conventions as ``payments.py``: VARCHAR
@@ -34,8 +37,12 @@ from src.db.payments.payments import _created_column, _updated_column, utcnow
 
 class PaymentsPurchase(SQLModel, table=True):
     """One cart checkout. Status: pending | paid | rejected | cancelled |
-    expired | voided. ``amount`` is the USD total of its items and
-    ``amount_ves`` that total at ``fx_rate`` (rounded half up to 0.01)."""
+    expired | voided. ``amount`` is the USD total of its items and, for the
+    methods paid in bolívares, ``amount_ves`` that total at ``fx_rate``
+    (rounded half up to 0.01). Zelle and Binance purchases have no rate:
+    ``fx_rate``, ``fx_source`` and ``amount_ves`` are null. A table created
+    before these methods gets the nullable columns (and the longer
+    ``bank_reference``) from services/payments/schema.py at startup."""
 
     __tablename__ = "sc_pay_purchase"
     __table_args__ = (
@@ -62,12 +69,13 @@ class PaymentsPurchase(SQLModel, table=True):
     status: str = Field(default="pending", sa_column=Column(String(16), nullable=False, default="pending"))
     currency: str = Field(default="USD", sa_column=Column(String(3), nullable=False, default="USD"))
     amount: Decimal = Field(sa_column=Column(Numeric(12, 2), nullable=False))
-    fx_rate: Decimal = Field(sa_column=Column(Numeric(18, 6), nullable=False))
-    fx_source: str = Field(sa_column=Column(String(16), nullable=False))
+    fx_rate: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(18, 6), nullable=True))
+    fx_source: Optional[str] = Field(default=None, sa_column=Column(String(16), nullable=True))
     fx_date: Optional[date] = Field(default=None, sa_column=Column(Date, nullable=True))
-    amount_ves: Decimal = Field(sa_column=Column(Numeric(16, 2), nullable=False))
+    amount_ves: Optional[Decimal] = Field(default=None, sa_column=Column(Numeric(16, 2), nullable=True))
     expires_at: datetime = Field(sa_column=Column(DateTime(timezone=True), nullable=False))
-    bank_reference: Optional[str] = Field(default=None, sa_column=Column(String(32), nullable=True, index=True))
+    # The bank reference, Zelle confirmation or Binance order id / TxID.
+    bank_reference: Optional[str] = Field(default=None, sa_column=Column(String(100), nullable=True, index=True))
     note: Optional[str] = Field(default=None, sa_column=Column(String(500), nullable=True))
     reject_reason: Optional[str] = Field(default=None, sa_column=Column(String(300), nullable=True))
     confirmed_by_user_id: Optional[int] = Field(
@@ -78,7 +86,7 @@ class PaymentsPurchase(SQLModel, table=True):
         default=None, sa_column=Column(DateTime(timezone=True), nullable=True)
     )
     closed_at: Optional[datetime] = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
-    # Pago Móvil details shown when the purchase was created (audit trail).
+    # The method's details shown when the purchase was created (audit trail).
     payment_details: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))
     # Internal notes: emails scheduled, reference_reused, stale rate...
     raw: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False))

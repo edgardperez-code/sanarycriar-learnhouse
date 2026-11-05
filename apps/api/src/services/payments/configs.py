@@ -219,17 +219,24 @@ async def delete_config(db_session: AsyncSession, org_id: int, config_id: int) -
 
 
 async def checkout_providers(db_session: AsyncSession, org_id: int) -> list[dict]:
+    from src.services.payments.manual_methods import ready_methods
+
     configs = (await db_session.execute(
-        select(PaymentsConfig).where(
-            PaymentsConfig.org_id == org_id,
-            PaymentsConfig.active == True,  # noqa: E712
-            PaymentsConfig.enabled == True,  # noqa: E712
-        ).order_by(PaymentsConfig.id)
+        select(PaymentsConfig).where(PaymentsConfig.org_id == org_id).order_by(PaymentsConfig.id)
     )).scalars().all()
     result = []
     for cfg in configs:
         provider = get_provider(cfg.provider)
         if provider is None:
+            continue
+        if cfg.provider == MANUAL_PROVIDER:
+            # Sanar y Criar: listed while any manual method (Pago Móvil,
+            # transferencia, Zelle, Binance) is on and complete; the row's own
+            # columns are Pago Móvil's only.
+            methods = ready_methods(cfg)
+        else:
+            methods = list(provider.methods) if cfg.active and cfg.enabled else []
+        if not methods:
             continue
         settings = provider.public_settings(cfg)
         result.append({
@@ -239,7 +246,7 @@ async def checkout_providers(db_session: AsyncSession, org_id: int) -> list[dict
             # Sandbox on a production instance: only the team can buy (tests).
             "test_mode": is_test_mode(cfg),
             "client_id": settings.get("client_id"),
-            "methods": list(provider.methods),
+            "methods": methods,
             "currencies": sorted(provider.supported_currencies),
         })
     return result
