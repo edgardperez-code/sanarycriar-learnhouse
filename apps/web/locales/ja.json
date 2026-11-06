@@ -298,10 +298,11 @@
     "password_strength_fair": "普通",
     "password_strength_good": "良い",
     "password_strength_strong": "強い",
-    "password_req_min_length": "8文字以上",
+    "password_req_min_length": "6文字以上",
     "password_req_uppercase": "大文字を1文字以上 (A-Z)",
     "password_req_lowercase": "小文字を1文字以上 (a-z)",
     "password_req_number": "数字を1文字以上 (0-9)",
+    "password_req_letter": "文字(英字など)を1文字以上",
     "password_req_special": "特殊文字を1文字以上 (!@#$%...)",
     "welcome_back": "おかえりなさい",
     "enter_credentials": "アカウントにアクセスするには認証情報を入力してください",
@@ -382,7 +383,7 @@
   "validation": {
     "required": "必須項目です",
     "invalid_email": "無効なメールアドレスです",
-    "password_min_length": "パスワードは8文字以上である必要があります",
+    "password_min_length": "パスワードは6文字以上である必要があります",
     "username_min_length": "ユーザー名は4文字以上である必要があります",
     "title_required": "タイトルは必須です",
     "content_required": "内容は必須です"

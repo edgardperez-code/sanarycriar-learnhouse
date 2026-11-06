@@ -282,7 +282,7 @@
     "check_email": "Kiểm tra email của bạn",
     "check_email_description": "Chúng tôi đã gửi một liên kết xác minh đến địa chỉ email của bạn. Vui lòng xác minh email của bạn để tiếp tục.",
     "password_requirements": "Yêu cầu mật khẩu",
-    "password_min_length": "Ít nhất 8 ký tự",
+    "password_min_length": "Ít nhất 6 ký tự",
     "password_uppercase": "Ít nhất một chữ cái viết hoa",
     "password_lowercase": "Ít nhất một chữ cái viết thường",
     "password_number": "Ít nhất một chữ số",
@@ -316,8 +316,9 @@
     "email_verified_success": "Đã xác minh email!",
     "login_failed": "Đăng nhập thất bại",
     "password_req_lowercase": "Ít nhất một chữ cái viết thường (a-z)",
-    "password_req_min_length": "Ít nhất 8 ký tự",
+    "password_req_min_length": "Ít nhất 6 ký tự",
     "password_req_number": "Ít nhất một chữ số (0-9)",
+    "password_req_letter": "Ít nhất một chữ cái",
     "password_req_special": "Ít nhất một ký tự đặc biệt (!@#$%...)",
     "password_req_uppercase": "Ít nhất một chữ cái viết hoa (A-Z)",
     "password_requirements_not_met": "Mật khẩu không đáp ứng yêu cầu",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "Bắt buộc",
     "invalid_email": "Địa chỉ email không hợp lệ",
-    "password_min_length": "Mật khẩu phải có ít nhất 8 ký tự",
+    "password_min_length": "Mật khẩu phải có ít nhất 6 ký tự",
     "username_min_length": "Tên người dùng phải có ít nhất 4 ký tự",
     "title_required": "Tiêu đề là bắt buộc",
     "content_required": "Nội dung là bắt buộc"

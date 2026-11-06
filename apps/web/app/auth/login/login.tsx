@@ -25,6 +25,7 @@ import { safeInternalPath } from '@services/security/url'
 // Sanar y Criar: the gift page's banner when ?redirect is /regalo….
 import { regaloPathFrom } from '@components/SanarYCriar/regalo'
 import RegaloAuthBanner from '@components/SanarYCriar/RegaloAuthBanner'
+import { MIN_PASSWORD_LENGTH } from '@components/SanarYCriar/passwordRules'
 
 interface LoginClientProps {
   org: any
@@ -295,7 +296,8 @@ const LoginClient = (props: LoginClientProps) => {
 
     if (!values.password) {
       errors.password = t('validation.required')
-    } else if (values.password.length < 8) {
+    } else if (values.password.length < MIN_PASSWORD_LENGTH) {
+      // Sanar y Criar: 6, the sign-up minimum (components/SanarYCriar/passwordRules.ts).
       errors.password = t('validation.password_min_length')
     }
 

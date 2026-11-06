@@ -298,10 +298,11 @@
     "password_strength_fair": "보통",
     "password_strength_good": "좋음",
     "password_strength_strong": "강함",
-    "password_req_min_length": "최소 8자 이상",
+    "password_req_min_length": "최소 6자 이상",
     "password_req_uppercase": "대문자 1개 이상 (A-Z)",
     "password_req_lowercase": "소문자 1개 이상 (a-z)",
     "password_req_number": "숫자 1개 이상 (0-9)",
+    "password_req_letter": "문자 1개 이상",
     "password_req_special": "특수문자 1개 이상 (!@#$%...)",
     "welcome_back": "다시 오신 것을 환영합니다",
     "enter_credentials": "계정에 액세스하려면 자격 증명을 입력하세요",
@@ -382,7 +383,7 @@
   "validation": {
     "required": "필수 항목입니다",
     "invalid_email": "유효하지 않은 이메일 주소입니다",
-    "password_min_length": "비밀번호는 최소 8자 이상이어야 합니다",
+    "password_min_length": "비밀번호는 최소 6자 이상이어야 합니다",
     "username_min_length": "사용자 이름은 최소 4자 이상이어야 합니다",
     "title_required": "제목은 필수입니다",
     "content_required": "내용은 필수입니다"

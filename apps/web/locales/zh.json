@@ -298,10 +298,11 @@
     "password_strength_fair": "一般",
     "password_strength_good": "良好",
     "password_strength_strong": "强",
-    "password_req_min_length": "至少8个字符",
+    "password_req_min_length": "至少6个字符",
     "password_req_uppercase": "至少一个大写字母 (A-Z)",
     "password_req_lowercase": "至少一个小写字母 (a-z)",
     "password_req_number": "至少一个数字 (0-9)",
+    "password_req_letter": "至少一个字母",
     "password_req_special": "至少一个特殊字符 (!@#$%...)",
     "welcome_back": "欢迎回来",
     "enter_credentials": "输入您的凭据以访问您的帐户",
@@ -382,7 +383,7 @@
   "validation": {
     "required": "必填",
     "invalid_email": "电子邮件无效",
-    "password_min_length": "密码必须至少包含 8 个字符",
+    "password_min_length": "密码必须至少包含 6 个字符",
     "username_min_length": "用户名必须至少包含 4 个字符",
     "title_required": "标题必填",
     "content_required": "内容必填"

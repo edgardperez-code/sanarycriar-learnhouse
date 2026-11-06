@@ -298,10 +298,11 @@
     "password_strength_fair": "Redelijk",
     "password_strength_good": "Goed",
     "password_strength_strong": "Sterk",
-    "password_req_min_length": "Minimaal 8 tekens",
+    "password_req_min_length": "Minimaal 6 tekens",
     "password_req_uppercase": "Minimaal één hoofdletter (A-Z)",
     "password_req_lowercase": "Minimaal één kleine letter (a-z)",
     "password_req_number": "Minimaal één cijfer (0-9)",
+    "password_req_letter": "Minimaal één letter",
     "password_req_special": "Minimaal één speciaal teken (!@#$%...)",
     "welcome_back": "Welkom terug",
     "enter_credentials": "Voer je gegevens in om toegang te krijgen tot je account",
@@ -372,7 +373,7 @@
   "validation": {
     "required": "Verplicht",
     "invalid_email": "Ongeldig e-mailadres",
-    "password_min_length": "Wachtwoord moet minimaal 8 tekens lang zijn",
+    "password_min_length": "Wachtwoord moet minimaal 6 tekens lang zijn",
     "username_min_length": "Gebruikersnaam moet minimaal 4 tekens lang zijn",
     "title_required": "Titel is verplicht",
     "content_required": "Inhoud is verplicht"

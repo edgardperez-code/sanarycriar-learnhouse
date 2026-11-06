@@ -282,7 +282,7 @@
     "check_email": "Проверьте свою почту",
     "check_email_description": "Мы отправили ссылку для подтверждения на ваш email. Пожалуйста, подтвердите свой email, чтобы продолжить.",
     "password_requirements": "Требования к паролю",
-    "password_min_length": "Минимум 8 символов",
+    "password_min_length": "Минимум 6 символов",
     "password_uppercase": "Минимум одна заглавная буква",
     "password_lowercase": "Минимум одна строчная буква",
     "password_number": "Минимум одна цифра",
@@ -326,8 +326,9 @@
     "email_verified_success": "Email подтверждён!",
     "login_failed": "Ошибка входа",
     "password_req_lowercase": "Минимум одна строчная буква (a-z)",
-    "password_req_min_length": "Минимум 8 символов",
+    "password_req_min_length": "Минимум 6 символов",
     "password_req_number": "Минимум одна цифра (0-9)",
+    "password_req_letter": "Минимум одна буква",
     "password_req_special": "Минимум один специальный символ (!@#$%...)",
     "password_req_uppercase": "Минимум одна заглавная буква (A-Z)",
     "password_requirements_not_met": "Пароль не соответствует требованиям",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "Обязательно",
     "invalid_email": "Неверный адрес электронной почты",
-    "password_min_length": "Пароль должен состоять минимум из 8 символов",
+    "password_min_length": "Пароль должен состоять минимум из 6 символов",
     "username_min_length": "Имя пользователя должно состоять минимум из 4 символов",
     "title_required": "Заголовок обязателен",
     "content_required": "Содержание обязательно"

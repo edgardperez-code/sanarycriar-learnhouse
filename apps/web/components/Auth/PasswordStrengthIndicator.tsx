@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react'
 import { Check, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { PASSWORD_RULES, passwordErrors } from '@components/SanarYCriar/passwordRules'
 
 interface PasswordRequirement {
     id: string
@@ -20,33 +21,11 @@ export function PasswordStrengthIndicator({
 }: PasswordStrengthIndicatorProps) {
     const { t } = useTranslation()
 
-    const requirements: PasswordRequirement[] = useMemo(() => [
-        {
-            id: 'minLength',
-            label: t('auth.password_req_min_length'),
-            validator: (pwd: string) => pwd.length >= 8,
-        },
-        {
-            id: 'uppercase',
-            label: t('auth.password_req_uppercase'),
-            validator: (pwd: string) => /[A-Z]/.test(pwd),
-        },
-        {
-            id: 'lowercase',
-            label: t('auth.password_req_lowercase'),
-            validator: (pwd: string) => /[a-z]/.test(pwd),
-        },
-        {
-            id: 'number',
-            label: t('auth.password_req_number'),
-            validator: (pwd: string) => /[0-9]/.test(pwd),
-        },
-        {
-            id: 'special',
-            label: t('auth.password_req_special'),
-            validator: (pwd: string) => /[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(pwd),
-        },
-    ], [t])
+    // Sanar y Criar: the simple rule (6+ characters, a letter, a number).
+    const requirements: PasswordRequirement[] = useMemo(
+        () => PASSWORD_RULES.map((rule) => ({ id: rule.id, label: t(rule.labelKey), validator: rule.test })),
+        [t],
+    )
 
     const validCount = useMemo(() => {
         return requirements.filter(req => req.validator(password)).length
@@ -129,24 +108,7 @@ export function validatePasswordStrength(password: string): {
     isValid: boolean
     errors: string[]
 } {
-    const errors: string[] = []
-
-    if (password.length < 8) {
-        errors.push('Password must be at least 8 characters')
-    }
-    if (!/[A-Z]/.test(password)) {
-        errors.push('Password must contain at least one uppercase letter')
-    }
-    if (!/[a-z]/.test(password)) {
-        errors.push('Password must contain at least one lowercase letter')
-    }
-    if (!/[0-9]/.test(password)) {
-        errors.push('Password must contain at least one number')
-    }
-    if (!/[!@#$%^&*()_+\-=\[\]{}|;':",./<>?]/.test(password)) {
-        errors.push('Password must contain at least one special character')
-    }
-
+    const errors = passwordErrors(password)
     return {
         isValid: errors.length === 0,
         errors,

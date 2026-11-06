@@ -311,10 +311,11 @@
     "password_strength_fair": "متوسط",
     "password_strength_good": "خوب",
     "password_strength_strong": "قوی",
-    "password_req_min_length": "حداقل ۸ کاراکتر",
+    "password_req_min_length": "حداقل ۶ کاراکتر",
     "password_req_uppercase": "حداقل یک حرف بزرگ (A-Z)",
     "password_req_lowercase": "حداقل یک حرف کوچک (a-z)",
     "password_req_number": "حداقل یک عدد (0-9)",
+    "password_req_letter": "حداقل یک حرف",
     "password_req_special": "حداقل یک کاراکتر ویژه (!@#$%...)",
     "sign_in_with_sso": "ورود با SSO",
     "sso_error": "احراز هویت SSO ناموفق بود. لطفاً دوباره تلاش کنید.",
@@ -373,7 +374,7 @@
   "validation": {
     "required": "الزامی",
     "invalid_email": "آدرس ایمیل نامعتبر",
-    "password_min_length": "رمز عبور باید حداقل ۸ کاراکتر باشد",
+    "password_min_length": "رمز عبور باید حداقل ۶ کاراکتر باشد",
     "username_min_length": "نام کاربری باید حداقل ۴ کاراکتر باشد",
     "title_required": "عنوان الزامی است",
     "content_required": "محتوا الزامی است"

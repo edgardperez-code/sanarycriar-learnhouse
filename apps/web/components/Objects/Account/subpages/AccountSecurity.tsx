@@ -28,6 +28,7 @@ import { signOut } from '@components/Contexts/AuthContext'
 import { getUriWithoutOrg, getAPIUrl } from '@services/config/config'
 import { RequestBodyWithAuthHeader, getResponseMetadata } from '@services/utils/ts/requests'
 import * as Yup from 'yup'
+import { MIN_PASSWORD_LENGTH } from '@components/SanarYCriar/passwordRules'
 import { useTranslation } from 'react-i18next'
 import AccountDangerZone from '@components/Objects/Account/subpages/AccountDangerZone'
 
@@ -35,7 +36,10 @@ const validationSchema = Yup.object().shape({
   old_password: Yup.string().required('validation.required'),
   new_password: Yup.string()
     .required('validation.required')
-    .min(8, 'validation.password_min_length'),
+    // Sanar y Criar: same simple rule as sign-up (components/SanarYCriar/passwordRules.ts).
+    .min(MIN_PASSWORD_LENGTH, 'validation.password_min_length')
+    .test('letter', 'auth.password_requirements_not_met', (value) => /\p{L}/u.test(value ?? ''))
+    .test('number', 'auth.password_requirements_not_met', (value) => /[0-9]/.test(value ?? '')),
 })
 
 // ---------------------------------------------------------------------------

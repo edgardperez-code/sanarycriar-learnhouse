@@ -282,7 +282,7 @@
     "check_email": "Sprawdź swój email",
     "check_email_description": "Wysłaliśmy link weryfikacyjny na Twój adres email. Proszę zweryfikować swój email, aby kontynuować.",
     "password_requirements": "Wymagania dotyczące hasła",
-    "password_min_length": "Co najmniej 8 znaków",
+    "password_min_length": "Co najmniej 6 znaków",
     "password_uppercase": "Co najmniej jedna wielka litera",
     "password_lowercase": "Co najmniej jedna mała litera",
     "password_number": "Co najmniej jedna cyfra",
@@ -317,8 +317,9 @@
     "email_verified_success": "E-mail zweryfikowany!",
     "login_failed": "Logowanie nie powiodło się",
     "password_req_lowercase": "Co najmniej jedna mała litera (a-z)",
-    "password_req_min_length": "Co najmniej 8 znaków",
+    "password_req_min_length": "Co najmniej 6 znaków",
     "password_req_number": "Co najmniej jedna cyfra (0-9)",
+    "password_req_letter": "Co najmniej jedna litera",
     "password_req_special": "Co najmniej jeden znak specjalny (!@#$%...)",
     "password_req_uppercase": "Co najmniej jedna wielka litera (A-Z)",
     "password_requirements_not_met": "Hasło nie spełnia wymagań",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "Wymagane",
     "invalid_email": "Niepoprawny adres email",
-    "password_min_length": "Hasło musi mieć co najmniej 8 znaków",
+    "password_min_length": "Hasło musi mieć co najmniej 6 znaków",
     "username_min_length": "Nazwa użytkownika musi mieć co najmniej 4 znaki",
     "title_required": "Tytuł jest wymagany",
     "content_required": "Treść jest wymagana"

@@ -282,7 +282,7 @@
     "check_email": "আপনার ইমেল চেক করুন",
     "check_email_description": "আমরা আপনার ইমেল ঠিকানায় একটি যাচাইকরণ লিঙ্ক পাঠিয়েছি। চালিয়ে যেতে অনুগ্রহ করে আপনার ইমেল যাচাই করুন।",
     "password_requirements": "পাসওয়ার্ড প্রয়োজনীয়তা",
-    "password_min_length": "কমপক্ষে ৮টি অক্ষর",
+    "password_min_length": "কমপক্ষে ৬টি অক্ষর",
     "password_uppercase": "কমপক্ষে একটি বড় হাতের অক্ষর",
     "password_lowercase": "কমপক্ষে একটি ছোট হাতের অক্ষর",
     "password_number": "কমপক্ষে একটি সংখ্যা",
@@ -317,8 +317,9 @@
     "email_verified_success": "ইমেল যাচাই হয়েছে!",
     "login_failed": "লগইন ব্যর্থ",
     "password_req_lowercase": "কমপক্ষে একটি ছোট হাতের অক্ষর (a-z)",
-    "password_req_min_length": "কমপক্ষে ৮টি অক্ষর",
+    "password_req_min_length": "কমপক্ষে ৬টি অক্ষর",
     "password_req_number": "কমপক্ষে একটি সংখ্যা (0-9)",
+    "password_req_letter": "কমপক্ষে একটি অক্ষর (বর্ণ)",
     "password_req_special": "কমপক্ষে একটি বিশেষ অক্ষর (!@#$%...)",
     "password_req_uppercase": "কমপক্ষে একটি বড় হাতের অক্ষর (A-Z)",
     "password_requirements_not_met": "পাসওয়ার্ড প্রয়োজনীয়তা পূরণ করছে না",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "প্রয়োজন",
     "invalid_email": "অবৈধ ইমেল",
-    "password_min_length": "পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে",
+    "password_min_length": "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে",
     "username_min_length": "ব্যবহারকারীর নাম কমপক্ষে ৪ অক্ষরের হতে হবে",
     "title_required": "শিরোনাম প্রয়োজন",
     "content_required": "বিষয়বস্তু প্রয়োজন"

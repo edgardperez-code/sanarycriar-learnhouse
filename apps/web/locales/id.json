@@ -282,7 +282,7 @@
     "check_email": "Periksa email Anda",
     "check_email_description": "Kami telah mengirim tautan verifikasi ke alamat email Anda. Silakan verifikasi email Anda untuk melanjutkan.",
     "password_requirements": "Persyaratan kata sandi",
-    "password_min_length": "Minimal 8 karakter",
+    "password_min_length": "Minimal 6 karakter",
     "password_uppercase": "Minimal satu huruf besar",
     "password_lowercase": "Minimal satu huruf kecil",
     "password_number": "Minimal satu angka",
@@ -327,8 +327,9 @@
     "email_verified_success": "Email Diverifikasi!",
     "login_failed": "Gagal Masuk",
     "password_req_lowercase": "Setidaknya satu huruf kecil (a-z)",
-    "password_req_min_length": "Minimal 8 karakter",
+    "password_req_min_length": "Minimal 6 karakter",
     "password_req_number": "Setidaknya satu angka (0-9)",
+    "password_req_letter": "Setidaknya satu huruf",
     "password_req_special": "Setidaknya satu karakter khusus (!@#$%...)",
     "password_req_uppercase": "Setidaknya satu huruf besar (A-Z)",
     "password_requirements_not_met": "Kata sandi tidak memenuhi persyaratan",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "Wajib isi",
     "invalid_email": "Alamat email tidak valid",
-    "password_min_length": "Kata sandi harus minimal 8 karakter",
+    "password_min_length": "Kata sandi harus minimal 6 karakter",
     "username_min_length": "Nama pengguna harus minimal 4 karakter",
     "title_required": "Judul wajib diisi",
     "content_required": "Konten wajib diisi"

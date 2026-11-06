@@ -282,7 +282,7 @@
     "check_email": "अपना ईमेल जांचें",
     "check_email_description": "हमने आपके ईमेल पते पर एक सत्यापन लिंक भेजा है। जारी रखने के लिए कृपया अपना ईमेल सत्यापित करें।",
     "password_requirements": "पासवर्ड आवश्यकताएं",
-    "password_min_length": "कम से कम 8 अक्षर",
+    "password_min_length": "कम से कम 6 अक्षर",
     "password_uppercase": "कम से कम एक बड़ा अक्षर",
     "password_lowercase": "कम से कम एक छोटा अक्षर",
     "password_number": "कम से कम एक अंक",
@@ -326,8 +326,9 @@
     "email_verified_success": "ईमेल सत्यापित!",
     "login_failed": "लॉगिन विफल",
     "password_req_lowercase": "कम से कम एक छोटा अक्षर (a-z)",
-    "password_req_min_length": "कम से कम 8 अक्षर",
+    "password_req_min_length": "कम से कम 6 अक्षर",
     "password_req_number": "कम से कम एक अंक (0-9)",
+    "password_req_letter": "कम से कम एक अक्षर (वर्ण)",
     "password_req_special": "कम से कम एक विशेष अक्षर (!@#$%...)",
     "password_req_uppercase": "कम से कम एक बड़ा अक्षर (A-Z)",
     "password_requirements_not_met": "पासवर्ड आवश्यकताओं को पूरा नहीं करता",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "आवश्यक",
     "invalid_email": "अमान्य ईमेल पता",
-    "password_min_length": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए",
+    "password_min_length": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए",
     "username_min_length": "उपयोगकर्ता नाम कम से कम 4 अक्षरों का होना चाहिए",
     "title_required": "शीर्षक आवश्यक है",
     "content_required": "सामग्री आवश्यक है"

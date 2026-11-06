@@ -310,10 +310,11 @@
     "password_strength_fair": "Priemerné",
     "password_strength_good": "Dobré",
     "password_strength_strong": "Silné",
-    "password_req_min_length": "Aspoň 8 znakov",
+    "password_req_min_length": "Aspoň 6 znakov",
     "password_req_uppercase": "Aspoň jedno veľké písmeno (A-Z)",
     "password_req_lowercase": "Aspoň jedno malé písmeno (a-z)",
     "password_req_number": "Aspoň jedna číslica (0-9)",
+    "password_req_letter": "Aspoň jedno písmeno",
     "password_req_special": "Aspoň jeden špeciálny znak (!@#$%...)",
     "sign_in_with_sso": "Prihlásiť sa cez SSO",
     "sso_error": "SSO autentifikácia zlyhala. Skúste to znova.",
@@ -372,7 +373,7 @@
   "validation": {
     "required": "Povinné",
     "invalid_email": "Neplatná e-mailová adresa",
-    "password_min_length": "Heslo musí mať aspoň 8 znakov",
+    "password_min_length": "Heslo musí mať aspoň 6 znakov",
     "username_min_length": "Používateľské meno musí mať aspoň 4 znaky",
     "title_required": "Názov je povinný",
     "content_required": "Obsah je povinný"

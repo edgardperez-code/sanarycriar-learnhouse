@@ -282,7 +282,7 @@
     "check_email": "ตรวจสอบอีเมลของคุณ",
     "check_email_description": "เราได้ส่งลิงก์ยืนยันไปยังที่อยู่อีเมลของคุณแล้ว กรุณายืนยันอีเมลของคุณเพื่อดำเนินการต่อ",
     "password_requirements": "ข้อกำหนดรหัสผ่าน",
-    "password_min_length": "อย่างน้อย 8 ตัวอักษร",
+    "password_min_length": "อย่างน้อย 6 ตัวอักษร",
     "password_uppercase": "อย่างน้อยหนึ่งตัวอักษรพิมพ์ใหญ่",
     "password_lowercase": "อย่างน้อยหนึ่งตัวอักษรพิมพ์เล็ก",
     "password_number": "อย่างน้อยหนึ่งตัวเลข",
@@ -316,8 +316,9 @@
     "email_verified_success": "ยืนยันอีเมลแล้ว!",
     "login_failed": "เข้าสู่ระบบไม่สำเร็จ",
     "password_req_lowercase": "ตัวอักษรพิมพ์เล็กอย่างน้อยหนึ่งตัว (a-z)",
-    "password_req_min_length": "อย่างน้อย 8 ตัวอักษร",
+    "password_req_min_length": "อย่างน้อย 6 ตัวอักษร",
     "password_req_number": "ตัวเลขอย่างน้อยหนึ่งตัว (0-9)",
+    "password_req_letter": "ตัวอักษรอย่างน้อยหนึ่งตัว",
     "password_req_special": "อักขระพิเศษอย่างน้อยหนึ่งตัว (!@#$%...)",
     "password_req_uppercase": "ตัวอักษรพิมพ์ใหญ่อย่างน้อยหนึ่งตัว (A-Z)",
     "password_requirements_not_met": "รหัสผ่านไม่ตรงตามข้อกำหนด",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "จำเป็น",
     "invalid_email": "อีเมลไม่ถูกต้อง",
-    "password_min_length": "รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร",
+    "password_min_length": "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร",
     "username_min_length": "ชื่อผู้ใช้ต้องมีความยาวอย่างน้อย 4 ตัวอักษร",
     "title_required": "จำเป็นต้องระบุชื่อเรื่อง",
     "content_required": "จำเป็นต้องระบุเนื้อหา"

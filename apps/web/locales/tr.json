@@ -282,7 +282,7 @@
     "check_email": "E-postanızı kontrol edin",
     "check_email_description": "E-posta adresinize bir doğrulama bağlantısı gönderdik. Devam etmek için lütfen e-postanızı doğrulayın.",
     "password_requirements": "Şifre gereksinimleri",
-    "password_min_length": "En az 8 karakter",
+    "password_min_length": "En az 6 karakter",
     "password_uppercase": "En az bir büyük harf",
     "password_lowercase": "En az bir küçük harf",
     "password_number": "En az bir rakam",
@@ -327,8 +327,9 @@
     "email_verified_success": "E-posta Doğrulandı!",
     "login_failed": "Giriş Başarısız",
     "password_req_lowercase": "En az bir küçük harf (a-z)",
-    "password_req_min_length": "En az 8 karakter",
+    "password_req_min_length": "En az 6 karakter",
     "password_req_number": "En az bir rakam (0-9)",
+    "password_req_letter": "En az bir harf",
     "password_req_special": "En az bir özel karakter (!@#$%...)",
     "password_req_uppercase": "En az bir büyük harf (A-Z)",
     "password_requirements_not_met": "Şifre gereksinimleri karşılamıyor",
@@ -394,7 +395,7 @@
   "validation": {
     "required": "Gerekli",
     "invalid_email": "Geçersiz e-posta adresi",
-    "password_min_length": "Şifre en az 8 karakter olmalıdır",
+    "password_min_length": "Şifre en az 6 karakter olmalıdır",
     "username_min_length": "Kullanıcı adı en az 4 karakter olmalıdır",
     "title_required": "Başlık gerekli",
     "content_required": "İçerik gerekli"

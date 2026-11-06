@@ -298,10 +298,11 @@
     "password_strength_fair": "Regular",
     "password_strength_good": "Boa",
     "password_strength_strong": "Forte",
-    "password_req_min_length": "Pelo menos 8 caracteres",
+    "password_req_min_length": "Pelo menos 6 caracteres",
     "password_req_uppercase": "Pelo menos uma letra maiúscula (A-Z)",
     "password_req_lowercase": "Pelo menos uma letra minúscula (a-z)",
     "password_req_number": "Pelo menos um número (0-9)",
+    "password_req_letter": "Pelo menos uma letra",
     "password_req_special": "Pelo menos um caractere especial (!@#$%...)",
     "welcome_back": "Bem-vindo de volta",
     "enter_credentials": "Digite suas credenciais para acessar sua conta",
@@ -372,7 +373,7 @@
   "validation": {
     "required": "Obrigatório",
     "invalid_email": "Endereço de e-mail inválido",
-    "password_min_length": "A senha deve ter pelo menos 8 caracteres",
+    "password_min_length": "A senha deve ter pelo menos 6 caracteres",
     "username_min_length": "O nome de usuário deve ter pelo menos 4 caracteres",
     "title_required": "O título é obrigatório",
     "content_required": "O conteúdo é obrigatório"

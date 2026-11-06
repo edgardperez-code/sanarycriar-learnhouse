@@ -310,10 +310,11 @@
     "password_strength_fair": "Середній",
     "password_strength_good": "Добрий",
     "password_strength_strong": "Сильний",
-    "password_req_min_length": "Мінімум 8 символів",
+    "password_req_min_length": "Мінімум 6 символів",
     "password_req_uppercase": "Принаймні одна велика літера (A-Z)",
     "password_req_lowercase": "Принаймні одна мала літера (a-z)",
     "password_req_number": "Принаймні одне число (0-9)",
+    "password_req_letter": "Принаймні одна літера",
     "password_req_special": "Принаймні один спеціальний символ (!@#$%...)",
     "sign_in_with_sso": "Увійти через SSO",
     "sso_error": "Помилка автентифікації SSO. Спробуйте ще раз.",
@@ -372,7 +373,7 @@
   "validation": {
     "required": "Обов’язково",
     "invalid_email": "Неправильна адреса електронної пошти",
-    "password_min_length": "Пароль має бути не менше 8 символів",
+    "password_min_length": "Пароль має бути не менше 6 символів",
     "username_min_length": "Ім'я користувача має бути не менше 4 символів",
     "title_required": "Необхідно вказати назву",
     "content_required": "Потрібен контент"
