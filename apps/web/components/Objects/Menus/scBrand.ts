@@ -11,6 +11,10 @@ export const SC_PROFESSIONAL = {
   license: 'FPV 8.914',
 }
 
+// Hilda's WhatsApp for wa.me links (country code, digits only), e.g. the
+// "book an online session" button of /regalo.
+export const SC_WHATSAPP_NUMBER = '584248824634'
+
 // Marketing site (Astro) with the legal pages.
 const DEFAULT_SITE_URL = 'https://www.sanarycriarve.com'
 

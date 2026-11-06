@@ -1158,6 +1158,8 @@ async def update_user_role(
             send_role_changed_email(
                 email=role_change_user.email,
                 username=role_change_user.username,
+                # Sanar y Criar: the mail greets by first name, never the username.
+                first_name=role_change_user.first_name or "",
                 org_name=org.name,
                 new_role_name=role.name,
                 cta_url=org_base_url.rstrip("/") or "/",

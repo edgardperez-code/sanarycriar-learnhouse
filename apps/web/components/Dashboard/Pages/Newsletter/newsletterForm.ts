@@ -41,11 +41,19 @@ export type NewsletterAdminSettings = NewsletterSettingsDraft & {
 }
 
 export type NewsletterSyncStatus = 'synced' | 'pending' | 'error' | 'skipped'
-export type NewsletterSource = 'popup' | 'footer' | 'other'
+/**
+ * Where the subscription came from (SOURCES in the API's subscribers.py).
+ * "popup" (the earlier pop-up), "footer" and "cartas" (home letters form)
+ * are the website's own forms; "test", "guia-gratis" and "ventana-web" (the
+ * welcome pop-up) are the platform's /regalo page after signing up from them.
+ */
+export type NewsletterSource = 'popup' | 'footer' | 'cartas' | 'test' | 'guia-gratis' | 'ventana-web' | 'other'
 
 export type NewsletterSubscriber = {
   id: number
   email: string
+  /** First name, when the subscription came with one (null for older rows). */
+  name: string | null
   source: NewsletterSource | string
   page_path: string | null
   sync_status: NewsletterSyncStatus | string

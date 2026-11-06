@@ -90,19 +90,22 @@ def send_magic_login_email(
         _email_layout,
     )
 
-    from src.services.email.safe_text import email_org_name, email_user_name
+    from src.services.email.safe_text import email_org_name
+    from src.services.email.sc_greeting import named_copy
 
     # Names are attacker-controllable; never relay a link or header break.
     org_name = email_org_name(org_name) if org_name else None
     safe_token = quote(token, safe="")
     login_url = html.escape(f"{base_url.rstrip('/')}/auth/magic?token={safe_token}")
-    safe_name = html.escape(email_user_name(user.username) if user.username else user.email)
     white_label = bool(org_name)
     # Sanar y Criar: org-less mail names our platform, not LearnHouse.
     brand = html.escape(org_name) if org_name else PLATFORM_NAME
 
     heading = t(lang, "magic_login.heading", brand=brand)
-    body_text = t(lang, "magic_login.body", username=safe_name)
+    # Sanar y Criar: greets by first name (link-free, escaped), else with no
+    # name; never by the generated username or the address (was username,
+    # else email).
+    body_text = named_copy(lang, "magic_login.body", user.first_name)
     cta = t(lang, "magic_login.cta")
     copy_paste = t(lang, "email_verification.copy_paste")
 

@@ -12,6 +12,8 @@ import { joinOrg } from '@services/organizations/orgs'
 import { getUriWithOrg } from '@services/config/config'
 // Sanar y Criar: after joining, go back to the offer/course that sent us here.
 import { currentAuthRedirect } from '@components/Payments/useAuthRedirect'
+import { redirectFromSearch } from '@components/Payments/commerce'
+import { regaloPathFrom } from '@components/SanarYCriar/regalo'
 import { getErrorMessage } from '@services/utils/ts/errorMessage'
 import { useTranslation } from 'react-i18next'
 import AuthLayout from '@components/Auth/AuthLayout'
@@ -39,12 +41,19 @@ function SignUpClient(props: SignUpClientProps) {
   // signed-in visitor has nothing to sign up for and no org to join → send them to
   // the hub instead of a broken "Join <nothing>" screen.
   const hasOrgToJoin = !!props.org
+  // Sanar y Criar: a signed-in visitor sent here from the test or the free
+  // ebook (?redirect=/regalo…) has no account to create: straight to /regalo
+  // instead of the "Unirse a la organización" screen.
+  const regaloPath = isAuthenticated ? regaloPathFrom(redirectFromSearch(searchParams)) : null
+  const orgSlug: string | undefined = props.org?.slug
 
   useEffect(() => {
-    if (isAuthenticated && !hasOrgToJoin) {
+    if (regaloPath) {
+      router.replace(getUriWithOrg(orgSlug ?? '', regaloPath))
+    } else if (isAuthenticated && !hasOrgToJoin) {
       router.replace('/home')
     }
-  }, [isAuthenticated, hasOrgToJoin, router])
+  }, [isAuthenticated, hasOrgToJoin, router, regaloPath, orgSlug])
 
   useEffect(() => {
     // On the org-less apex (learn.io/signup) props.org is null; guard it and
@@ -78,7 +87,13 @@ function SignUpClient(props: SignUpClientProps) {
           <Loader2 size={22} className="animate-spin text-black/30" />
         </div>
       )}
-      {session.status !== 'loading' && joinMethod == 'open' &&
+      {/* Sanar y Criar: signed in, on the way to /regalo (effect above). */}
+      {session.status !== 'loading' && regaloPath && (
+        <div className="flex-1 flex items-center justify-center px-6 md:px-12 lg:px-20">
+          <Loader2 size={22} className="animate-spin text-black/30" />
+        </div>
+      )}
+      {session.status !== 'loading' && !regaloPath && joinMethod == 'open' &&
         (isAuthenticated ? (
           hasOrgToJoin ? (
             <LoggedInJoinScreen inviteCode={inviteCode} org={props.org} />
@@ -93,7 +108,7 @@ function SignUpClient(props: SignUpClientProps) {
             <OpenSignUpComponent org={props.org} />
           </div>
         ))}
-      {session.status !== 'loading' && joinMethod == 'inviteOnly' &&
+      {session.status !== 'loading' && !regaloPath && joinMethod == 'inviteOnly' &&
         (inviteCode ? (
           session.status == 'authenticated' ? (
             <LoggedInJoinScreen inviteCode={inviteCode} org={props.org} />

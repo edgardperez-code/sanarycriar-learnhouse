@@ -3,7 +3,7 @@ import logging
 from datetime import timedelta, datetime, timezone
 from typing import Literal, Optional
 from fastapi import Depends, APIRouter, HTTPException, Response, status, Request, Form
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from sqlalchemy import func
 from sqlmodel import select
 from src.db.users import AnonymousUser, User, UserRead
@@ -51,6 +51,7 @@ from src.services.users.email_verification import (
     verify_email_token,
     resend_verification_email,
 )
+from src.services.users.sc_return_path import safe_return_path
 from src.services.auth.session import issue_session_or_challenge
 from src.security.session_context import (
     AUTH_METHOD_GOOGLE,
@@ -1428,6 +1429,15 @@ async def api_verify_email(
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
     org_id: Optional[int] = None
+    # Sanar y Criar: page the new link sends the user back to (``/regalo?…``
+    # only); it replaces the one kept at signup. Anything unsafe, of any type,
+    # is dropped silently and never fails the request.
+    return_path: Optional[str] = None
+
+    @field_validator("return_path", mode="before")
+    @classmethod
+    def _safe_return_path(cls, value):
+        return safe_return_path(value)
 
 
 @router.post(
@@ -1456,5 +1466,6 @@ async def api_resend_verification_email(
         db_session=db_session,
         email=body.email,
         org_id=body.org_id,
+        return_path=body.return_path,
     )
     return {"message": result}

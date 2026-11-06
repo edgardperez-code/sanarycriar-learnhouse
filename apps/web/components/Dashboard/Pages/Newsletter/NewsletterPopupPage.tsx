@@ -1,7 +1,10 @@
 'use client'
 // Sanar y Criar: "Ventana emergente" tab of the newsletter section. Edits the
-// sign-up pop-up shown on the marketing site (www): on/off, texts, delay and
-// how long a "no" lasts, with a live mock next to the form.
+// welcome pop-up shown on the marketing site (www): on/off, texts, delay and
+// how long a "no" lasts, with a live mock next to the form. The pop-up offers
+// the free guide and its button leads to the sign-up, so it has no thank-you
+// view: success_message is not in the form, but the saved value still goes
+// back in every save (the API requires it).
 import React, { useMemo, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -214,7 +217,6 @@ export default function NewsletterPopupPage() {
   const [edits, setEdits] = useState<NewsletterSettingsDraft | null>(null)
   const [saving, setSaving] = useState(false)
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
-  const [view, setView] = useState<'form' | 'success'>('form')
 
   const saved = useMemo(() => (settings ? draftFromSettings(settings) : null), [settings])
   const draft = edits ?? saved
@@ -304,6 +306,7 @@ export default function NewsletterPopupPage() {
           <TextField
             field="title"
             label={nl('popup.title_label')}
+            hint={nl('popup.title_hint')}
             value={draft.title}
             error={errorFor('title')}
             onChange={(v) => update('title', v)}
@@ -312,6 +315,7 @@ export default function NewsletterPopupPage() {
           <TextField
             field="body"
             label={nl('popup.body_label')}
+            hint={nl('popup.body_hint')}
             multiline
             rows={4}
             value={draft.body}
@@ -337,17 +341,6 @@ export default function NewsletterPopupPage() {
               nl={nl}
             />
           </div>
-          <TextField
-            field="success_message"
-            label={nl('popup.success_label')}
-            hint={nl('popup.success_hint')}
-            multiline
-            rows={2}
-            value={draft.success_message}
-            error={errorFor('success_message')}
-            onChange={(v) => update('success_message', v)}
-            nl={nl}
-          />
           <TextField
             field="privacy_note"
             label={nl('popup.privacy_label')}
@@ -429,26 +422,16 @@ export default function NewsletterPopupPage() {
         <Section className="lg:max-h-[calc(100vh-19rem)] lg:overflow-y-auto">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold text-[#190933]">{nl('preview.title')}</h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <Segmented
-                value={device}
-                onChange={setDevice}
-                options={[
-                  { value: 'desktop', label: nl('preview.desktop'), icon: <Monitor size={13} aria-hidden /> },
-                  { value: 'mobile', label: nl('preview.mobile'), icon: <Smartphone size={13} aria-hidden /> },
-                ]}
-              />
-              <Segmented
-                value={view}
-                onChange={setView}
-                options={[
-                  { value: 'form', label: nl('preview.show_form') },
-                  { value: 'success', label: nl('preview.show_success') },
-                ]}
-              />
-            </div>
+            <Segmented
+              value={device}
+              onChange={setDevice}
+              options={[
+                { value: 'desktop', label: nl('preview.desktop'), icon: <Monitor size={13} aria-hidden /> },
+                { value: 'mobile', label: nl('preview.mobile'), icon: <Smartphone size={13} aria-hidden /> },
+              ]}
+            />
           </div>
-          <NewsletterPopupPreview draft={draft} device={device} view={view} />
+          <NewsletterPopupPreview draft={draft} device={device} />
         </Section>
       </div>
     </div>

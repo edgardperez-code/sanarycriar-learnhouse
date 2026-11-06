@@ -3,6 +3,9 @@
 Auth levels used below:
 - admin: org admin/maintainer (superadmin included) with a real session.
   Unlike payments there is no feature toggle to check.
+- signed-in: any real session (no API token), whatever the role; only the
+  platform calls it (same origin, so it is not in the static site's CORS
+  write paths).
 - public: anonymous. Never reads the session (no ``get_current_user``), so
   the static site can call it without credentials.
 
@@ -22,12 +25,12 @@ from src.services.newsletter import settings as settings_service
 from src.services.newsletter import subscribers as subscribers_service
 from src.services.newsletter.common import install_access_log_redaction
 from src.services.newsletter.settings import SettingsBody
-from src.services.newsletter.subscribers import SubscribeBody
+from src.services.newsletter.subscribers import SubscribeBody, SubscribeMeBody
 
 router = APIRouter()
 
-# Sanar y Criar: ``GET /subscribers?q=`` carries part of an e-mail address;
-# keep it out of uvicorn's access log.
+# Sanar y Criar: ``GET /subscribers?q=`` carries part of an e-mail address or
+# a name; keep it out of uvicorn's access log.
 install_access_log_redaction()
 
 
@@ -48,6 +51,15 @@ async def require_newsletter_admin(
 
     await get_org_or_404(db_session, org_id)
     await require_org_admin(current_user.id, org_id, db_session)
+    return current_user
+
+
+async def require_newsletter_user(current_user=Depends(get_current_user)):
+    """A real signed-in account, any role (the service checks the org and the e-mail)."""
+    if current_user is None or isinstance(current_user, AnonymousUser):
+        raise HTTPException(status_code=401, detail="Authentication required")
+    if isinstance(current_user, (APITokenUser, SuperadminAPITokenUser)):
+        raise HTTPException(status_code=403, detail="API tokens cannot subscribe to the newsletter")
     return current_user
 
 
@@ -73,6 +85,19 @@ async def api_subscribe(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     return await subscribers_service.subscribe(db_session, request, org_id, body)
+
+
+# --------------------------------------------------------------- signed-in
+
+
+@router.post("/{org_id}/subscribe/me", summary="Subscribe the signed-in user to the newsletter")
+async def api_subscribe_me(
+    org_id: int,
+    body: SubscribeMeBody,
+    current_user=Depends(require_newsletter_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await subscribers_service.subscribe_me(db_session, org_id, current_user, body)
 
 
 # ---------------------------------------------------------------- settings

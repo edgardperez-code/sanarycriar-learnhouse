@@ -21,6 +21,15 @@ export function useAuthRedirectHref(path: string): string {
   return withRedirect(path, redirectFromSearch(search))
 }
 
+/**
+ * The current page's sanitized ?redirect / ?next, or null (also during
+ * SSR/hydration), e.g. to tell a sign-up for /regalo apart.
+ */
+export function useAuthRedirect(): string | null {
+  const search = useSyncExternalStore(noopSubscribe, readSearch, serverSearch)
+  return redirectFromSearch(search)
+}
+
 const readPathname = () => window.location.pathname
 const serverPathname = () => null
 

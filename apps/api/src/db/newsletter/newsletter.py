@@ -73,7 +73,12 @@ class NewsletterSettings(SQLModel, table=True):
 class NewsletterSubscriber(SQLModel, table=True):
     """One e-mail address subscribed to an org's newsletter.
 
-    ``source``: ``popup`` | ``footer`` | ``other``.
+    ``source`` (where the first sign-up came from): ``popup`` (the site's
+    former pop-up) | ``footer`` | ``cartas`` (letters form on the home page) |
+    ``test`` (parenting test) | ``guia-gratis`` (free guide section) |
+    ``ventana-web`` (welcome window) | ``other``.
+    ``name``: first name, optional. Set by the first sign-up that brings one
+    and never overwritten; it becomes the Resend contact's ``first_name``.
     ``sync_status`` (copy to Resend contacts): ``pending`` | ``synced`` |
     ``error`` | ``skipped`` (no Resend configured when it was saved).
     """
@@ -92,6 +97,10 @@ class NewsletterSubscriber(SQLModel, table=True):
         )
     )
     email: str = Field(sa_column=Column(String(254), nullable=False))
+    # Added after the table shipped: ``create_all`` does not add it to an
+    # existing table, so ``src/services/newsletter/schema.py`` does at startup
+    # (and migration ``9a3f6c2e8b1d`` on Alembic-managed databases).
+    name: Optional[str] = Field(default=None, sa_column=Column(String(80), nullable=True))
     source: str = Field(default="popup", sa_column=Column(String(16), nullable=False, default="popup"))
     page_path: Optional[str] = Field(default=None, sa_column=Column(String(200), nullable=True))
     resend_contact_id: Optional[str] = Field(default=None, sa_column=Column(String(64), nullable=True))

@@ -41,6 +41,8 @@ import { useDirection } from '@hooks/useDirection'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import AIMarkdownRenderer from '@components/Objects/Activities/AI/AIMarkdownRenderer'
 import { setAIHighlight, clearAIHighlight } from '../Extensions/AISelectionHighlight/AISelectionHighlight'
+// Sanar y Criar: greet by first name, not the username sign-up generates.
+import { ownDisplayName } from '@components/SanarYCriar/ownName'
 import {
   AI_STREAMING_MARK,
   insertAIContent,
@@ -1159,7 +1161,7 @@ const AIEditorSidePanelPlaceholder = (props: { sendMessage: (_msg: string) => vo
                   shadow="shadow-none"
                 />
                 <span className="capitalize">
-                  {session.data.user.username},
+                  {ownDisplayName(session.data.user)},
                 </span>
               </span>
               <span className="text-white/50 text-sm mt-1">

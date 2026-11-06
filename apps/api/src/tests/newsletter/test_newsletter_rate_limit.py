@@ -1,7 +1,10 @@
-"""Sanar y Criar: sign-up rate limits (per IP, per org, per address)."""
+"""Sanar y Criar: sign-up rate limits (per IP, per org, per address; per user when signed in)."""
 
 import pytest
+from sqlmodel import select
 
+from src.db.newsletter.newsletter import NewsletterSubscriber
+from src.db.users import User
 from src.services.newsletter.common import client_rate_key
 from src.tests.newsletter.conftest import BASE
 
@@ -94,6 +97,50 @@ class TestRateLimit:
         for i in range(12):
             response = await _post(client, "ana@example.com", "81.2.69.40")
             assert response.status_code == 200, (i, response.text)
+
+
+class TestSubscribeMeRateLimit:
+    async def _verified(self, db, user):
+        row = (await db.execute(select(User).where(User.id == user.id))).scalars().first()
+        row.email_verified = True
+        db.add(row)
+        await db.commit()
+        return user
+
+    async def test_eleventh_request_of_one_user_is_429(self, client, current, db, regular_user, admin_user,
+                                                       limiter):
+        current.set(await self._verified(db, regular_user))
+        for i in range(10):
+            response = await client.post(f"{BASE}/subscribe/me", json={"source": "test", "page": "/regalo"})
+            assert response.status_code == 200, (i, response.text)
+        blocked = await client.post(f"{BASE}/subscribe/me", json={"source": "test", "page": "/regalo"})
+        assert blocked.status_code == 429
+        assert blocked.headers["retry-after"] == "3600"
+        assert limiter[f"sc_nl_sub_user:{regular_user.id}"] == 11
+        # The org-wide cap counts the accepted ones, apart from the public sign-up's.
+        assert limiter["sc_nl_sub_me_org:1"] == 10
+        assert "sc_nl_sub_org:1" not in limiter
+        # Another account still gets through.
+        current.set(await self._verified(db, admin_user))
+        assert (await client.post(f"{BASE}/subscribe/me", json={"source": "test"})).status_code == 200
+
+    async def test_unverified_attempts_count_but_not_for_the_org(self, client, current, db, regular_user, limiter):
+        current.set(regular_user)
+        assert (await client.post(f"{BASE}/subscribe/me", json={})).status_code == 403
+        assert limiter[f"sc_nl_sub_user:{regular_user.id}"] == 1
+        assert "sc_nl_sub_me_org:1" not in limiter
+        assert "sc_nl_sub_org:1" not in limiter
+
+    async def test_a_full_public_org_cap_does_not_block_accounts(self, client, current, db, regular_user, limiter):
+        # Anonymous sign-ups used up the public route's org-wide cap...
+        limiter["sc_nl_sub_org:1"] = 300
+        assert (await _post(client, "ana@example.com", "81.2.69.70")).status_code == 429
+        # ...and a verified account still joins the list.
+        current.set(await self._verified(db, regular_user))
+        response = await client.post(f"{BASE}/subscribe/me", json={"source": "test", "page": "/regalo"})
+        assert response.status_code == 200, response.text
+        assert limiter["sc_nl_sub_me_org:1"] == 1
+        assert (await db.execute(select(NewsletterSubscriber.email))).scalars().all() == ["regular@test.com"]
 
 
 class TestClientRateKey:

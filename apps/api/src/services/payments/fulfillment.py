@@ -294,6 +294,7 @@ async def send_purchase_email(db_session: AsyncSession, order: PaymentsOrder,
     """Spanish confirmation with links to what was bought. Best effort."""
     try:
         from src.services.email.branding import resolve_org_email_branding
+        from src.services.email.sc_greeting import email_first_name
         from src.services.email.utils import send_email
         from src.services.payments.offers import offer_courses
 
@@ -312,7 +313,9 @@ async def send_purchase_email(db_session: AsyncSession, order: PaymentsOrder,
         links = [(c.name, course_url(c, request), product_type_of(c)) for c in courses]
         cta = links[0][1] if links else (platform_base_url(request) or "/")
         subject, document = _purchase_email_html(
-            first_name=user.first_name or user.username,
+            # The first name (link-free), else "¡Gracias por tu compra!" with
+            # no name; never the username, which sign-up generates.
+            first_name=email_first_name(user.first_name),
             offer_name=offer.name,
             courses=links,
             cta_url=cta,

@@ -38,6 +38,11 @@ def _check_profile_field_size(value):
 
 
 class UserCreate(UserBase):
+    # Sanar y Criar: optional at sign-up (the form no longer asks for it). A
+    # blank one, ``null`` included, is generated server-side before the
+    # conflict check (services/users/sc_username.py); one that is sent (admin
+    # tools, Google sign-in, tests) is kept as before.
+    username: str = ""
     first_name: str = ""
     last_name: str = ""
     password: str
@@ -49,10 +54,26 @@ class UserCreate(UserBase):
     # request could write an arbitrary blob. Values here are validated against
     # the org's declared fields before anything is stored.
     custom_fields: Optional[dict] = None
+    # Sanar y Criar: page the verification link sends the new account back to
+    # (``/regalo?…``). Never stored on the user: the verification mail keeps
+    # it in Redis and drops anything unsafe (services/users/sc_return_path.py).
+    # A value of another type is dropped too, so it never fails a signup.
+    return_path: Optional[str] = None
 
     _cap_profile_fields = field_validator("bio", "details", "profile")(
         _check_profile_field_size
     )
+
+    @field_validator("return_path", mode="before")
+    @classmethod
+    def _return_path_text_only(cls, value):
+        return value if isinstance(value, str) else None
+
+    # Sanar y Criar: a ``null`` username is a missing one (see ``username``).
+    @field_validator("username", mode="before")
+    @classmethod
+    def _null_username_is_blank(cls, value):
+        return "" if value is None else value
 
 
 class UserUpdate(UserBase):

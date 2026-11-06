@@ -26,7 +26,19 @@ class TestSubscribeSync:
         assert row.sync_status == "synced"
         assert row.resend_contact_id == "contact-1"
         assert row.sync_error is None and row.synced_at is not None
-        assert resend_on.calls == [("create", "re_test", "ana@example.com", None)]
+        assert resend_on.calls == [("create", "re_test", "ana@example.com", None, None)]
+
+    async def test_name_is_sent_as_first_name(self, client, db, org, resend_on):
+        await subscribe(client, "ana@example.com", name="  Ana   María ")
+        assert resend_on.calls == [("create", "re_test", "ana@example.com", None, "Ana María")]
+
+    async def test_name_filled_later_reaches_an_unsynced_row(self, client, db, org, resend_on):
+        resend_on.create_error = RuntimeError("Resend is down")
+        await subscribe(client, "ana@example.com")
+        resend_on.create_error = None
+        await subscribe(client, "ana@example.com", name="Ana")
+        assert resend_on.calls[-1] == ("create", "re_test", "ana@example.com", None, "Ana")
+        assert (await _row(db, "ana@example.com")).sync_status == "synced"
 
     async def test_synced_row_is_not_sent_again(self, client, db, org, resend_on):
         await subscribe(client, "ana@example.com")
@@ -64,7 +76,7 @@ class TestSubscribeSync:
     async def test_segment_is_passed_to_create(self, client, db, org, resend_on):
         resend_on.settings = ResendSettings(api_key="re_test", segment_id="seg_1")
         await subscribe(client, "ana@example.com")
-        assert resend_on.calls == [("create", "re_test", "ana@example.com", "seg_1")]
+        assert resend_on.calls == [("create", "re_test", "ana@example.com", "seg_1", None)]
 
     async def test_existing_contact_is_added_to_segment(self, client, db, org, resend_on):
         resend_on.settings = ResendSettings(api_key="re_test", segment_id="seg_1")
@@ -76,12 +88,13 @@ class TestSubscribeSync:
         # A segment failure only logs: the contact exists, the row is synced.
         assert (await _row(db, "ana@example.com")).sync_status == "synced"
 
-    async def test_logs_never_carry_the_address_or_key(self, client, db, org, resend_on, caplog):
+    async def test_logs_never_carry_the_address_name_or_key(self, client, db, org, resend_on, caplog):
         resend_on.create_error = RuntimeError("boom")
-        with caplog.at_level(logging.DEBUG, logger="src.services.newsletter.resend_sync"):
-            await subscribe(client, "secreta@example.com")
+        with caplog.at_level(logging.DEBUG, logger="src"):
+            await subscribe(client, "secreta@example.com", name="Remedios")
         assert caplog.records
         assert "secreta@example.com" not in caplog.text and "re_test" not in caplog.text
+        assert "Remedios" not in caplog.text
 
     async def test_slow_resend_times_out(self, client, db, org, resend_on, monkeypatch):
         import time
@@ -104,7 +117,7 @@ class TestSubscribeSync:
 
         release = threading.Event()
 
-        def blocked_create(api_key, email, segment_id):
+        def blocked_create(api_key, email, segment_id, first_name=None):
             release.wait(5)
             return "late-contact"
 
@@ -293,12 +306,14 @@ class TestResendSettings:
         monkeypatch.setattr(resend, "api_key", None)
         assert resend_sync._create_contact("re_k", "ana@example.com", "seg") == "c-1"
         assert resend.api_key == "re_k"
+        assert resend_sync._create_contact("re_k", "bea@example.com", None, "Bea") == "c-1"
         assert resend_sync._get_contact_id("re_k", "ana@example.com") is None
         resend_sync._add_to_segment("re_k", "ana@example.com", "seg")
         resend_sync._remove_contact("re_k", "c-1")
         assert calls == [
             # No "unsubscribed" field: an upsert must never undo an opt-out.
             ("create", {"email": "ana@example.com", "segments": [{"id": "seg"}]}),
+            ("create", {"email": "bea@example.com", "first_name": "Bea"}),
             ("get", "ana@example.com"),
             ("segments.add", {"segment_id": "seg", "email": "ana@example.com"}),
             ("remove", "c-1"),

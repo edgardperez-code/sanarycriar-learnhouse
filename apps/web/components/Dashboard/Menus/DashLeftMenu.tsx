@@ -88,6 +88,8 @@ import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import OnboardingSidebarBox from '@components/Dashboard/Onboarding/OnboardingSidebarBox'
 import { useOnboarding } from '@components/Hooks/useOnboarding'
 import { usePendingOrdersCount } from '@components/Dashboard/Pages/Orders/usePendingOrdersCount'
+// Sanar y Criar: the user's first name, not the username sign-up generates.
+import { ownDisplayName } from '@components/SanarYCriar/ownName'
 
 // Scattered night-sky starfield for the free-plan upgrade box. Fixed positions
 // (top/left %) so the constellation is stable across renders; `north` is the
@@ -1259,7 +1261,8 @@ function DashLeftMenu() {
             content={
               <HoverMenuContent className="w-56">
                 <div className="px-3 py-2">
-                  <p className="text-sm font-semibold text-white/90">{session?.data?.user?.username}</p>
+                  {/* Sanar y Criar: her first name, not the generated username. */}
+                  <p className="text-sm font-semibold text-white/90">{ownDisplayName(session?.data?.user)}</p>
                   <p className="text-xs text-white/40">{session?.data?.user?.email}</p>
                 </div>
                 <HoverMenuSeparator />
@@ -1293,7 +1296,8 @@ function DashLeftMenu() {
               <UserAvatar width={24} rounded="rounded-full" shadow="shadow-none" />
               {!isCollapsed && (
                 <div className="flex flex-col min-w-0 flex-1 text-start">
-                  <span className="text-sm font-medium truncate text-white/90">{session?.data?.user?.username}</span>
+                  {/* Sanar y Criar: her first name, not the generated username. */}
+                  <span className="text-sm font-medium truncate text-white/90">{ownDisplayName(session?.data?.user)}</span>
                   <span className="text-xs text-white/40 truncate">{session?.data?.user?.email}</span>
                 </div>
               )}

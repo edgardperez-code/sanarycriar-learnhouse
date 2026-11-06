@@ -86,12 +86,16 @@ def _is_not_found(exc: BaseException) -> bool:
 # ------------------------------------------------- blocking SDK wrappers
 
 
-def _create_contact(api_key: str, email: str, segment_id: Optional[str]) -> str:
+def _create_contact(
+    api_key: str, email: str, segment_id: Optional[str], first_name: Optional[str] = None
+) -> str:
     resend.api_key = api_key
     # Sanar y Criar: no ``unsubscribed`` field. A new contact is subscribed
     # anyway, and should Resend treat the create of an existing address as an
     # upsert, sending ``unsubscribed: False`` would undo an earlier opt-out.
     params: dict = {"email": email}
+    if first_name:
+        params["first_name"] = first_name
     if segment_id:
         params["segments"] = [{"id": segment_id}]
     return _contact_id_of(resend.Contacts.create(params))
@@ -129,18 +133,20 @@ async def _call(fn, *args):
 async def sync_subscriber(db_session, subscriber, settings: ResendSettings) -> bool:
     """Create (or find) the subscriber's Resend contact and record the outcome.
 
-    A contact that already existed in Resend is left as it is: in particular
-    its ``unsubscribed`` flag is never reset, so an earlier opt-out made from
-    a Resend e-mail is respected. Returns True when the row ends ``synced``.
+    A new contact gets the subscriber's name as ``first_name``. A contact that
+    already existed in Resend is left as it is: in particular its
+    ``unsubscribed`` flag is never reset, so an earlier opt-out made from a
+    Resend e-mail is respected. Returns True when the row ends ``synced``.
     Never raises.
     """
     subscriber_id = getattr(subscriber, "id", None)
     try:
         email = subscriber.email
+        first_name = getattr(subscriber, "name", None)
         contact_id: Optional[str] = None
         create_error: Optional[BaseException] = None
         try:
-            contact_id = await _call(_create_contact, settings.api_key, email, settings.segment_id)
+            contact_id = await _call(_create_contact, settings.api_key, email, settings.segment_id, first_name)
         except Exception as exc:
             create_error = exc
             # A create that timed out may still land in Resend, and a slow

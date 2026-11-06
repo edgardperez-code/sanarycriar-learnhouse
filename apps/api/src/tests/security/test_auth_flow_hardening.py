@@ -287,8 +287,10 @@ class TestEmailChange:
             new=AsyncMock(side_effect=RuntimeError("smtp down")),
         ), patch("src.services.users.emails.send_email_changed_notice") as notice_mock:
             await _after_email_change(mock_request, db, user, "old@test.com")
+        # Sanar y Criar: the notice greets by first name (never the username).
         notice_mock.assert_called_once_with(
-            email="old@test.com", new_email="new@test.com", username=user.username
+            email="old@test.com", new_email="new@test.com", username=user.username,
+            first_name=user.first_name,
         )
 
     def test_email_changed_notice_goes_to_the_old_address_escaped(self):

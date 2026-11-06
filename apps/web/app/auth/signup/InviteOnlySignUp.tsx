@@ -44,13 +44,13 @@ const validate = (values: any, t: any, customFields: SignupFieldItem[]) => {
     }
   }
 
-  if (!values.username) {
-    errors.username = t('validation.required')
-  } else if (values.username.length < 4) {
-    errors.username = t('validation.username_min_length')
+  // Sanar y Criar: no username or bio on this form (client request,
+  // 2026-11-05); the API generates the username (services/users/sc_username.py).
+  // «Nombre» is required instead: the platform greets her by it, never by
+  // that username. Spaces alone are no name.
+  if (!values.first_name?.trim()) {
+    errors.first_name = t('validation.required')
   }
-
-  // Bio is optional - no validation required
 
   // The org's admin-defined fields. Client-side only; the server revalidates.
   const customFieldErrors = validateCustomFields(customFields, values.custom_fields, t)
@@ -94,8 +94,7 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
       org_id: org?.id,
       email: '',
       password: '',
-      username: '',
-      bio: '',
+      // Sanar y Criar: no username / bio (see validate); the API generates the username.
       first_name: '',
       last_name: '',
       custom_fields: initialCustomFieldValues(customFields),
@@ -107,9 +106,12 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
       setError('')
       setMessage(null)
       setIsSubmitting(true)
-      track(AnalyticsEvent.SignupSubmitted, { invite_code_present: true, has_bio: !!values.bio })
+      // Sanar y Criar: no bio field any more, so no has_bio either.
+      track(AnalyticsEvent.SignupSubmitted, { invite_code_present: true })
       try {
-        let res = await signUpWithInviteCode(values, props.inviteCode)
+        // Sanar y Criar: the first name goes trimmed (validate requires one).
+        const body = { ...values, first_name: values.first_name.trim() }
+        let res = await signUpWithInviteCode(body, props.inviteCode)
         let message = await res.json().catch(() => ({}))
         if (res.status == 200) {
           track(AnalyticsEvent.SignupSucceeded, { email_verified: message.email_verified })
@@ -249,12 +251,14 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
                   </span>
                 )}
               </div>
+              {/* Sanar y Criar: required (see validate). */}
               <Form.Control asChild>
                 <input
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.first_name}
                   type="text"
+                  required
                   className="box-border w-full bg-neutral-50 text-black rounded-lg px-4 border border-neutral-200 inline-flex h-[44px] appearance-none items-center focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-400 transition-all placeholder:text-black/25 text-sm"
                 />
               </Form.Control>
@@ -305,42 +309,7 @@ function InviteOnlySignUpComponent(props: InviteOnlySignUpProps) {
             <PasswordStrengthIndicator password={formik.values.password} />
           </FormField>
 
-          <FormField name="username">
-            <div className="flex items-center space-x-2 mb-1.5">
-              <Form.Label className="grow text-[13px] font-semibold text-black/70">{t('user.username')}</Form.Label>
-              {formik.touched.username && formik.errors.username && (
-                <span className="text-red-500 text-xs flex items-center space-x-1">
-                  <Info size={11} />
-                  <span>{formik.errors.username}</span>
-                </span>
-              )}
-            </div>
-            <Form.Control asChild>
-              <input
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.username}
-                type="text"
-                required
-                className="box-border w-full bg-neutral-50 text-black rounded-lg px-4 border border-neutral-200 inline-flex h-[44px] appearance-none items-center focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-400 transition-all placeholder:text-black/25 text-sm"
-              />
-            </Form.Control>
-          </FormField>
-
-          <FormField name="bio">
-            <div className="flex items-center space-x-2 mb-1.5">
-              <Form.Label className="grow text-[13px] font-semibold text-black/70">{`${t('user.bio')} (${t('common.optional')})`}</Form.Label>
-            </div>
-            <Form.Control asChild>
-              <textarea
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.bio}
-                placeholder={t('user.bio_placeholder')}
-                className="box-border w-full bg-neutral-50 text-black rounded-lg px-4 py-3 border border-neutral-200 appearance-none focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-400 transition-all placeholder:text-black/25 text-sm resize-none min-h-[80px]"
-              />
-            </Form.Control>
-          </FormField>
+          {/* Sanar y Criar: the «Nombre de usuario» and «Biografía» fields were here. */}
 
           <CustomSignupFields fields={customFields} formik={formik} />
 

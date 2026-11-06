@@ -76,14 +76,22 @@ class TestEmailsService:
             assert "eliminó" in send_email.call_args.kwargs["subject"].lower()
             assert "Sanar y Criar" in send_email.call_args.kwargs["subject"]
 
-    def test_send_account_creation_email_escapes_username(self):
+    def test_send_account_creation_email_escapes_the_first_name(self):
+        # Sanar y Criar: the welcome greets by first name, never by username
+        # (sign-up generates it); the name is HTML-escaped, and one that
+        # carries markup or a link is left out.
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
-            result = send_account_creation_email(_user(), "user@test.com")
+            result = send_account_creation_email(_user(first_name="Ana & Luis"), "user@test.com")
+            hostile = send_account_creation_email(_user(first_name="Ana<script>"), "user@test.com")
 
-        assert result is True
-        body = send_email.call_args.kwargs["body"]
-        assert "user&lt;script&gt;" in body
+        assert result is True and hostile is True
+        body = send_email.call_args_list[0].kwargs["body"]
+        assert "Ana &amp; Luis" in body
+        assert "user&lt;script&gt;" not in body
         assert "Empezar" in body  # Sanar y Criar: Spanish by default
+        hostile_body = send_email.call_args_list[1].kwargs["body"]
+        assert "<script>" not in hostile_body and "&lt;script&gt;" not in hostile_body
+        assert ">¡Hola!</h1>" in hostile_body
 
     def test_orgless_welcome_uses_cta_url_and_platform_branding(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
@@ -248,6 +256,8 @@ class TestEmailsService:
                 "member<script>",
                 "Org & Co",
                 "Admin",
+                # Sanar y Criar: the greeting is the first name, not the username.
+                first_name="Ana & Luis",
             )
             send_email_verification_email(
                 "token 123",
@@ -262,7 +272,8 @@ class TestEmailsService:
         verification_body = send_email.call_args_list[2].kwargs["body"]
         assert "INV-123" in invite_body
         assert "@owner&lt;script&gt;" in invite_body
-        assert "member&lt;script&gt;" in role_body
+        assert "Ana &amp; Luis" in role_body
+        assert "member&lt;script&gt;" not in role_body
         assert "verify-email?token=token%20123&amp;user=user_uuid&amp;org=org_uuid" in verification_body
 
     def test_send_invitation_email_without_invite_code(self):

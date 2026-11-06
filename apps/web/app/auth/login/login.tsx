@@ -20,8 +20,11 @@ import TurnstileWidget, { useTurnstileRequired, verifyTurnstileToken, type Turns
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import { getAllowedAuthMethods } from '@services/auth/authMethods'
 // Sanar y Criar: keep ?redirect (back to an offer or course) across login/signup.
-import { useAuthRedirectHref, currentAuthRedirect } from '@components/Payments/useAuthRedirect'
+import { useAuthRedirectHref, currentAuthRedirect, useAuthRedirect } from '@components/Payments/useAuthRedirect'
 import { safeInternalPath } from '@services/security/url'
+// Sanar y Criar: the gift page's banner when ?redirect is /regalo….
+import { regaloPathFrom } from '@components/SanarYCriar/regalo'
+import RegaloAuthBanner from '@components/SanarYCriar/RegaloAuthBanner'
 
 interface LoginClientProps {
   org: any
@@ -41,6 +44,7 @@ const LoginClient = (props: LoginClientProps) => {
   const session = useLHSession() as any;
   const isAuthenticated = session?.status === 'authenticated'
   const signupHref = useAuthRedirectHref('/signup')
+  const regaloPath = regaloPathFrom(useAuthRedirect())
 
   // The org's allowed sign-in methods. Offering a method the org has turned off
   // only leads to a 403 from the backend, so it isn't offered at all.
@@ -747,6 +751,8 @@ const LoginClient = (props: LoginClientProps) => {
                     defaultValue: 'Choose how you’d like to sign in.',
                   })}
             </p>
+            {/* Sanar y Criar: what signing in is for, coming from the test or the free ebook. */}
+            <RegaloAuthBanner path={regaloPath} mode="login" />
 
             <div className="mt-8">
               {passwordAllowed && (

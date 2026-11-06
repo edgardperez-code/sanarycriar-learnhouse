@@ -68,6 +68,8 @@ async def notify_user_joined_org(
         send_org_join_email(
             email=user.email,
             username=email_user_name(user.username),
+            # Sanar y Criar: the mail greets by first name, never the username.
+            first_name=getattr(user, "first_name", "") or "",
             org_name=email_org_name(org.name),
             # Org landing page, not `/home`, because `/home` is the platform org
             # picker on every host and would deroute the user straight back

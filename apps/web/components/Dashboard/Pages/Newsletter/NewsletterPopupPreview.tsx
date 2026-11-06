@@ -1,21 +1,29 @@
 'use client'
-// Sanar y Criar: static mock of the marketing site's newsletter pop-up
+// Sanar y Criar: static mock of the marketing site's welcome pop-up
 // (web/src/components/islands/NewsletterPopup.tsx), drawn with the same brand
-// tokens. It is inert: nothing inside can be focused, clicked or read twice by
-// a screen reader. The mock screen is laid out at a real viewport width and
+// tokens. Since 2026-11 the pop-up offers the free guide: its button leads to
+// the sign-up and the platform adds her to the letters once she is in, so
+// there is no email field and no thank-you view (success_message is no longer
+// shown anywhere). Computer: two columns, the gift drawn in CSS and the texts.
+// Phone: a bottom sheet without the drawing, the body or the privacy note, as
+// on the site. A word between asterisks in the title is the italic accent.
+// It is inert: nothing inside can be focused, clicked or read twice by a
+// screen reader. The mock screen is laid out at a real viewport width and
 // shrunk with CSS zoom to fit the column, so the proportions match the site.
 // The website is Spanish-only (left to right), so the mock is dir="ltr".
 import React, { useEffect, useRef, useState } from 'react'
-import { Check, EyeOff, Mail, X } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
+import { ArrowRight, EyeOff, UserRound, X } from 'lucide-react'
+import { accentParts } from '@components/SanarYCriar/regalo'
 import type { NewsletterSettingsDraft } from './newsletterForm'
 import { useNewsletterT } from './useNewsletterT'
 
 type PreviewProps = {
   draft: NewsletterSettingsDraft
   device: 'desktop' | 'mobile'
-  view: 'form' | 'success'
 }
+
+/** The free guide's title (site.funnel.giftTitle on the website): a book title, never translated. */
+export const GIFT_TITLE = '¿Será que soy una mala mamá?'
 
 // Virtual screen sizes (CSS px). Desktop keeps a 16:10 frame; the phone is a
 // common 360 px wide handset. Both grow taller if the texts need it.
@@ -44,16 +52,6 @@ function useFitZoom(width: number) {
   return { ref, zoom }
 }
 
-/** Lavender circle with a pink dot (brand accent), as on the site. */
-function BadgeIcon({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative inline-flex h-14 w-14 items-center justify-center rounded-full bg-lavanda-100 text-lavanda-700">
-      {children}
-      <span className="absolute -end-0.5 -top-0.5 h-3.5 w-3.5 rounded-full bg-rosa-300 ring-2 ring-nube" />
-    </div>
-  )
-}
-
 /** A few soft blocks that stand for the website behind the veil. */
 function FakePage({ mobile }: { mobile: boolean }) {
   return (
@@ -80,87 +78,118 @@ function FakePage({ mobile }: { mobile: boolean }) {
   )
 }
 
-export default function NewsletterPopupPreview({ draft, device, view }: PreviewProps) {
+/**
+ * The free guide's cover, as the website's `.book .cover-free` (global.css):
+ * sizes in container units, so it scales as one piece. The cover is artwork
+ * (the ebook's printed title), so its words stay as they are.
+ */
+function GiftBook() {
+  return (
+    <div className="@container relative aspect-[4/5] w-[min(220px,100%)] rounded-[4px_14px_14px_4px] shadow-[24px_30px_50px_-22px_rgb(25_9_51/0.6),2px_2px_0_rgb(25_9_51/0.08)] [transform:rotateY(-14deg)_rotate(-3deg)]">
+      <div className="absolute inset-0 flex flex-col overflow-hidden rounded-[inherit] bg-[radial-gradient(60%_45%_at_85%_12%,rgb(187_187_255/0.95),transparent_70%),radial-gradient(55%_40%_at_8%_92%,rgb(255_252_248/0.9),transparent_70%),linear-gradient(160deg,#f6c8e8_0%,var(--color-rosa-300)_55%,#e6b8ee_100%)] p-[9cqi_9cqi_8cqi_12cqi] text-violeta">
+        <span className="self-start rounded-full bg-violeta px-[4cqi] py-[2.6cqi] text-[3.6cqi] font-semibold uppercase leading-none tracking-[0.12em] text-nube">
+          Guía gratuita
+        </span>
+        <span className="font-heading mt-[9cqi] text-[8.4cqi] font-medium italic leading-[1.05]">¿Será que soy una</span>
+        <span className="font-heading mt-[2cqi] text-[19cqi] font-black leading-[0.86] tracking-[-0.02em]">
+          <span className="block">MALA</span>
+          <span className="block">MAMÁ?</span>
+        </span>
+        <span className="font-heading mt-auto text-[4.6cqi] font-semibold leading-[1.2]">
+          Hilda Hernández
+          <small className="block font-sans text-[3cqi] font-medium uppercase leading-[1.4] tracking-[0.08em] text-violeta-600">
+            Psicóloga infanto-juvenil
+          </small>
+        </span>
+      </div>
+      {/* Spine shade and page edges (the website's ::before / ::after). */}
+      <span className="absolute inset-y-0 start-0 z-[3] w-[7%] rounded-s-[4px] bg-[linear-gradient(90deg,rgb(0_0_0/0.28),rgb(0_0_0/0)_70%),linear-gradient(90deg,rgb(255_255_255/0.25),rgb(255_255_255/0))]" />
+      <span className="absolute -end-[9px] top-[2%] bottom-[2%] w-[10px] origin-left rounded-e-[4px] bg-[repeating-linear-gradient(180deg,#fffaf4_0_2px,#ece3da_2px_3px)] [transform:rotateY(60deg)]" />
+    </div>
+  )
+}
+
+export default function NewsletterPopupPreview({ draft, device }: PreviewProps) {
   const { nl } = useNewsletterT()
-  const { t } = useTranslation()
   const mobile = device === 'mobile'
   const screen = SCREEN[device]
   const { ref, zoom } = useFitZoom(screen.width)
-  const closeLabel = t('common.close')
 
-  const card = (
+  const panel = (
     <div
       className={
         mobile
-          ? 'relative z-10 w-full rounded-t-[24px] border border-borde bg-nube px-6 pb-6 pt-7 shadow-xl'
-          : 'relative z-10 w-full max-w-md rounded-[20px] border border-borde bg-nube p-8 shadow-xl'
+          ? 'relative z-10 grid w-full rounded-t-[24px] bg-nube shadow-[0_40px_80px_-30px_rgba(25,9,51,0.7)]'
+          : 'relative z-10 grid w-full max-w-[54rem] grid-cols-[0.85fr_1.15fr] overflow-hidden rounded-[24px] bg-nube shadow-[0_40px_80px_-30px_rgba(25,9,51,0.7)]'
       }
     >
-      {mobile && <div className="mx-auto -mt-3 mb-5 h-1.5 w-12 rounded-full bg-lavanda-300/70" />}
-
-      <span
-        className={`absolute inline-flex h-11 w-11 items-center justify-center rounded-full text-violeta-500 ${
-          mobile ? 'end-2 top-2' : 'end-3 top-3'
-        }`}
-      >
-        <X size={22} strokeWidth={2} />
+      <span className="absolute end-3 top-3 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-nube/90 text-violeta">
+        <X size={20} strokeWidth={2} />
       </span>
 
-      {view === 'form' ? (
-        <>
-          <BadgeIcon>
-            <Mail size={26} strokeWidth={1.75} />
-          </BadgeIcon>
-          <h3 className="mt-5 pe-8 font-['Playfair_Display',Georgia,serif] text-2xl font-semibold leading-snug text-violeta">
-            {draft.title}
-          </h3>
-          <p className="mt-3 whitespace-pre-line text-[0.9875rem] leading-relaxed text-violeta-600">{draft.body}</p>
-
-          <div className="mt-6">
-            <label className="block text-[0.9375rem] font-semibold text-violeta">{nl('preview.email_label')}</label>
-            <input
-              type="email"
-              disabled
-              placeholder={nl('preview.email_placeholder')}
-              className="mt-2 block w-full rounded-[12px] border border-borde bg-white px-4 py-3 text-base text-violeta placeholder:text-violeta-400"
-            />
-            <button
-              type="button"
-              disabled
-              className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-full border-[1.5px] border-violeta bg-violeta px-6 py-3 text-center text-base font-semibold leading-tight text-nube"
-            >
-              {draft.button_label}
-            </button>
-          </div>
-
-          <span className="mx-auto mt-2 flex min-h-11 w-fit items-center px-3 text-[0.9375rem] font-semibold text-lavanda-600 underline decoration-1 underline-offset-[0.2em]">
-            {draft.dismiss_label}
+      {/* The gift, drawn: only where there is room (not on phones). */}
+      {!mobile && (
+        <div className="relative grid place-items-center bg-rosa-200 bg-[radial-gradient(70%_50%_at_20%_15%,rgb(187_187_255/0.9),transparent_70%),radial-gradient(70%_55%_at_90%_95%,rgb(240_180_223/0.95),transparent_70%)] p-7">
+          <span className="absolute start-4 top-4 rounded-full bg-violeta px-3 py-2 text-xs font-semibold uppercase tracking-[0.1em] text-nube">
+            {nl('preview.gift_chip')}
           </span>
+          <GiftBook />
+        </div>
+      )}
 
-          <p className="mt-3 text-center text-sm leading-[1.55] text-violeta-400">
+      <div className={mobile ? 'px-5 pb-[1.375rem] pt-6' : 'px-9 pb-8 pt-10'}>
+        <div className="flex items-center gap-3 pe-12">
+          {/* Hilda's photo lives on the website: a neutral circle stands for it. */}
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-rosa-300 bg-lavanda-100 text-lavanda-500">
+            <UserRound size={20} strokeWidth={1.75} />
+          </span>
+          <span className="sc-eyebrow">{nl('preview.eyebrow')}</span>
+        </div>
+        <p
+          className={`font-heading mt-3 font-semibold leading-tight text-violeta ${
+            mobile ? 'pe-10 text-[1.7rem]' : 'text-[2.25rem]'
+          }`}
+        >
+          {accentParts(draft.title).map((part, i) =>
+            part.accent ? (
+              <em key={i} className="sc-title-accent">
+                {part.text}
+              </em>
+            ) : (
+              <React.Fragment key={i}>{part.text}</React.Fragment>
+            )
+          )}
+        </p>
+        {/* On phones the site keeps the body for screen readers only. */}
+        {!mobile && <p className="mt-3 whitespace-pre-line leading-relaxed text-violeta-600">{draft.body}</p>}
+
+        <p className="mt-4 flex items-center gap-2.5 rounded-[12px] bg-rosa-200 px-3.5 py-3 text-[0.9rem] text-violeta-600">
+          <span className="shrink-0 rounded-full bg-rosa-600 px-2.5 py-1.5 text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-nube">
+            {nl('preview.free_badge')}
+          </span>
+          <span>
+            {nl('preview.free_line')} <strong className="font-semibold text-violeta">«{GIFT_TITLE}»</strong>
+          </span>
+        </p>
+
+        <span className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full border-[1.5px] border-violeta bg-violeta px-6 py-3 text-center text-base font-semibold leading-tight text-nube">
+          {draft.button_label}
+          <ArrowRight size={18} strokeWidth={2} className="shrink-0" />
+        </span>
+
+        <span className="mx-auto mt-2 flex min-h-11 w-fit items-center px-3 text-[0.9375rem] font-medium text-lavanda-600 underline decoration-1 underline-offset-[0.2em]">
+          {draft.dismiss_label}
+        </span>
+
+        {!mobile && (
+          <p className="mt-1 text-center text-sm leading-[1.55] text-violeta-400">
             {draft.privacy_note.trim() && <>{draft.privacy_note} </>}
             <span className="font-semibold text-lavanda-600 underline decoration-1 underline-offset-[0.2em]">
               {nl('preview.privacy_link')}
             </span>
           </p>
-        </>
-      ) : (
-        <>
-          <BadgeIcon>
-            <Check size={28} strokeWidth={2} />
-          </BadgeIcon>
-          <p
-            className={`mt-5 whitespace-pre-line pe-8 font-['Playfair_Display',Georgia,serif] font-semibold leading-snug text-violeta ${
-              mobile ? 'text-xl' : 'text-2xl'
-            }`}
-          >
-            {draft.success_message}
-          </p>
-          <span className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full border-[1.5px] border-violeta px-6 py-3 text-base font-semibold text-violeta">
-            {closeLabel}
-          </span>
-        </>
-      )}
+        )}
+      </div>
     </div>
   )
 
@@ -193,7 +222,8 @@ export default function NewsletterPopupPreview({ draft, device, view }: PreviewP
             inert
             aria-hidden
             dir="ltr"
-            className="relative flex font-sans select-none"
+            // The website's body text: 17 px Poppins, violeta-600.
+            className="relative flex font-sans text-[1.0625rem] leading-[1.6] text-violeta-600 select-none"
             style={{
               width: screen.width,
               minHeight: screen.height,
@@ -204,8 +234,8 @@ export default function NewsletterPopupPreview({ draft, device, view }: PreviewP
             }}
           >
             <FakePage mobile={mobile} />
-            <div className="absolute inset-0 bg-violeta/45" />
-            {card}
+            <div className={mobile ? 'absolute inset-0 bg-violeta/30' : 'absolute inset-0 bg-violeta/55 backdrop-blur-[3px]'} />
+            {panel}
           </div>
         </div>
       </div>

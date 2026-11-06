@@ -14,17 +14,19 @@ from src.services.newsletter.common import clean_line, clean_multiline
 from src.services.payments.common import get_org_or_404, iso, utcnow
 
 # The only source of the suggested texts (the dashboard's "restore" button
-# reads them from GET /settings -> "defaults").
+# reads them from GET /settings -> "defaults"). They apply to an org without a
+# saved row; a saved row keeps its own texts. The site's welcome window shows
+# a word wrapped in asterisks in the title in italics.
 DEFAULT_SETTINGS = {
     "enabled": False,
-    "title": "Recibe ideas para criar desde la calma",
-    "body": "Déjame tu correo y te escribiré de vez en cuando con consejos prácticos de crianza, novedades y avisos de mis cursos y talleres.",
-    "button_label": "Quiero recibirlas",
-    "dismiss_label": "Ahora no",
+    "title": "Necesito acompañarte en tu *maternidad*.",
+    "body": "Soy Hilda, psicóloga infanto-juvenil y mamá. Quiero ser esa amiga psicóloga que te escucha sin juzgarte y te da herramientas reales para tu día a día con tu hijo.",
+    "button_label": "Sí, quiero mi guía gratis",
+    "dismiss_label": "Ahora no, quiero ver la web",
     "success_message": "¡Listo, gracias por sumarte! Muy pronto te llegará mi primer correo.",
-    "privacy_note": "Sin spam. Puedes darte de baja cuando quieras con un clic.",
-    "delay_seconds": 0,
-    "dismiss_days": 30,
+    "privacy_note": "Después te seguiré escribiendo, como una amiga; te das de baja cuando quieras.",
+    "delay_seconds": 5,
+    "dismiss_days": 7,
 }
 
 # (min, max), checked after cleaning. Texts count characters.

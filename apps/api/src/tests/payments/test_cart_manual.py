@@ -26,6 +26,7 @@ from src.db.courses.courses import Course
 from src.db.payments.payments import PaymentsConfig, PaymentsEnrollment, PaymentsOrder
 from src.db.payments.purchases import PaymentsFxRate, PaymentsPurchase, PaymentsPurchaseItem
 from src.db.trail_runs import TrailRun
+from src.db.users import User
 from src.services.payments import checkout, fx, purchase_emails, reconcile
 from src.services.payments import purchases as purchases_module
 from src.services.payments.checkout import _capture_lock
@@ -1577,3 +1578,66 @@ class TestRobustness:
             response = await _checkout(client, current, outsider, cart)
         assert response.status_code == 201, response.text
         assert len(await _rows(db, PaymentsPurchase)) == 1
+
+
+# ---------------------------------------------------------------- greetings
+
+
+class TestGreetingByFirstName:
+    """The buyer's emails greet her by first name; without one they say just
+    "Hola", never the username sign-up generated for her."""
+
+    GENERATED = "outsider583735"
+
+    @staticmethod
+    async def _rename(db, user_id: int, first_name: str) -> None:
+        row = await db.get(User, user_id)
+        row.first_name, row.username = first_name, TestGreetingByFirstName.GENERATED
+        db.add(row)
+        await db.commit()
+
+    @staticmethod
+    async def _buyer_mails(sent_emails) -> list[str]:
+        await _emails(sent_emails)
+        return [c.kwargs["body"] for c in sent_emails.call_args_list if c.kwargs["to"] == "outsider@test.com"]
+
+    async def _created_then_paid(self, client, current, admin_user, outsider, cart, sent_emails):
+        purchase = await _purchase(client, current, outsider, cart)
+        (created,) = await self._buyer_mails(sent_emails)
+        sent_emails.reset_mock()
+        response = await _act(client, current, admin_user, purchase, "confirm", {"bank_reference": "0012345678"})
+        assert response.status_code == 200, response.text
+        (paid,) = await self._buyer_mails(sent_emails)
+        return created, paid
+
+    async def _rejected(self, client, current, admin_user, outsider, cart, sent_emails):
+        purchase = await _purchase(client, current, outsider, cart)
+        await _emails(sent_emails)
+        sent_emails.reset_mock()
+        response = await _act(client, current, admin_user, purchase, "reject", {"reason": "No vimos el pago."})
+        assert response.status_code == 200, response.text
+        (rejected,) = await self._buyer_mails(sent_emails)
+        return rejected
+
+    async def test_by_first_name(self, client, current, db, admin_user, outsider, cart, sent_emails):
+        await self._rename(db, outsider.id, "María")
+        created, paid = await self._created_then_paid(client, current, admin_user, outsider, cart, sent_emails)
+        assert ">Hola, María: tu pedido " in created
+        assert ">¡Gracias por tu compra, María!</h1>" in paid
+        for document in (created, paid):
+            assert self.GENERATED not in document
+
+    async def test_without_a_first_name_no_name(self, client, current, db, admin_user, outsider, cart, sent_emails):
+        await self._rename(db, outsider.id, "")
+        created, paid = await self._created_then_paid(client, current, admin_user, outsider, cart, sent_emails)
+        assert ">Hola: tu pedido " in created
+        assert ">¡Gracias por tu compra!</h1>" in paid
+        for document in (created, paid):
+            assert self.GENERATED not in document
+
+    @pytest.mark.parametrize("first_name,heading", [("María", ">Hola, María</h1>"), ("  ", ">Hola</h1>")])
+    async def test_rejected(self, client, current, db, admin_user, outsider, cart, sent_emails, first_name, heading):
+        await self._rename(db, outsider.id, first_name)
+        rejected = await self._rejected(client, current, admin_user, outsider, cart, sent_emails)
+        assert heading in rejected
+        assert self.GENERATED not in rejected

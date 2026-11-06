@@ -2,8 +2,8 @@
 
 Covers the access rule (``get_course_access`` on a course with no live
 offer), the reader gate and ``/content`` files, "start course", the access
-endpoint, signup (verification mail in OSS mode) and the cache bump after
-``verify-email``.
+endpoint, signup (verification mail in OSS mode) and, after ``verify-email``,
+the access cache bump and the dropped ``/users/session`` cache.
 """
 
 import json
@@ -364,6 +364,52 @@ class TestVerifyBumpsAccess:
             assert fake.data[access_mod._VERSION_KEY] == "1"
             # A new version: the old denial is not read any more.
             assert await has_course_access(None, db, regular_user, course) is True
+
+
+class TestVerifyDropsCachedSession:
+    """/users/session is cached per user for 10 minutes and carries
+    ``email_verified``, which /regalo reads: the link must not leave the
+    unverified copy behind."""
+
+    async def test_session_cached_unverified_reads_verified_after_the_link(
+        self, db, org, regular_user, mock_request, monkeypatch
+    ):
+        from src.routers import users as users_router
+        from src.services.users.email_verification import verify_email_token
+
+        await _set_verified(db, regular_user.id, False)
+        fake = FakeRedis()
+        monkeypatch.setattr(users_router, "_get_redis_pool_client", lambda: fake)
+        app = FastAPI()
+        app.include_router(users_router.router, prefix="/api/v1/users")
+        app.dependency_overrides[get_db_session] = lambda: db
+        app.dependency_overrides[get_current_user] = lambda: regular_user
+        session_key = f"session:{regular_user.id}"
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+            # Signed in before verifying: the session is cached unverified.
+            before = await c.get("/api/v1/users/session")
+            assert before.status_code == 200
+            assert before.json()["user"]["email_verified"] is False
+            assert json.loads(fake.data[session_key])["user"]["email_verified"] is False
+
+            token_key = f"email_verification:{regular_user.user_uuid}:org:{org.org_uuid}:token:tok"
+            fake.data[token_key] = json.dumps({
+                "token": "tok", "user_uuid": regular_user.user_uuid, "org_uuid": org.org_uuid,
+                "email": regular_user.email, "expires_at": datetime.now().timestamp() + 3600,
+            })
+            with patch("src.services.users.email_verification.get_redis_connection", return_value=fake), \
+                    patch("src.services.users.email_verification.dispatch_webhooks", new_callable=AsyncMock):
+                _user, message = await verify_email_token(
+                    mock_request, db, "tok", regular_user.user_uuid, org.org_uuid
+                )
+            assert message == "Email verified successfully"
+            assert session_key not in fake.data
+
+            after = await c.get("/api/v1/users/session")
+            assert after.json()["user"]["email_verified"] is True
+            # And the fresh copy is what the next reads get.
+            assert json.loads(fake.data[session_key])["user"]["email_verified"] is True
 
 
 # ------------------------------------------------------- review follow-ups

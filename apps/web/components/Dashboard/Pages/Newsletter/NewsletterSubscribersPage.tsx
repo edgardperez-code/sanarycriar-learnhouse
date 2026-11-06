@@ -1,7 +1,8 @@
 'use client'
 // Sanar y Criar: "Suscriptores" tab of the newsletter section. Lists the
-// emails left on the marketing site, with search, CSV export, deletion and a
-// manual retry of the Resend sync.
+// emails left on the marketing site and on /regalo (with the name, when
+// there is one), with search, CSV export, deletion and a manual retry of
+// the Resend sync.
 import React, { useEffect, useState } from 'react'
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
@@ -58,11 +59,25 @@ function sourceLabel(source: string, nl: NewsletterTranslate): string {
   switch (source) {
     case 'popup':
       return nl('source.popup')
+    case 'ventana-web':
+      return nl('source.ventana_web')
     case 'footer':
       return nl('source.footer')
+    case 'cartas':
+      return nl('source.cartas')
+    case 'test':
+      return nl('source.test')
+    case 'guia-gratis':
+      return nl('source.guia_gratis')
     default:
       return nl('source.other')
   }
+}
+
+/** The subscriber's name, or a dash for rows without one. */
+function nameLabel(name: string | null | undefined): string {
+  const value = (name ?? '').trim()
+  return value || '—'
 }
 
 function SyncBadge({ item, nl }: { item: NewsletterSubscriber; nl: NewsletterTranslate }) {
@@ -315,6 +330,7 @@ export default function NewsletterSubscribersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{nl('subscribers.col_email')}</TableHead>
+                    <TableHead>{nl('subscribers.col_name')}</TableHead>
                     <TableHead>{nl('subscribers.col_date')}</TableHead>
                     <TableHead>{nl('subscribers.col_source')}</TableHead>
                     <TableHead>{nl('subscribers.col_page')}</TableHead>
@@ -327,6 +343,9 @@ export default function NewsletterSubscribersPage() {
                     <TableRow key={item.id}>
                       <TableCell className="max-w-[18rem] truncate font-medium text-[#190933]" title={item.email}>
                         {item.email}
+                      </TableCell>
+                      <TableCell className="max-w-[12rem] truncate text-sm text-[#190933]" title={item.name ?? undefined}>
+                        {nameLabel(item.name)}
                       </TableCell>
                       <TableCell className="whitespace-nowrap text-sm text-gray-500">{formatDate(item.created_at)}</TableCell>
                       <TableCell className="text-sm">{sourceLabel(item.source, nl)}</TableCell>
@@ -350,7 +369,13 @@ export default function NewsletterSubscribersPage() {
               {items.map((item) => (
                 <li key={item.id} className="rounded-lg border border-[#EAE8F2] px-3 py-3">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="min-w-0 break-all font-medium text-[#190933]">{item.email}</p>
+                    <div className="min-w-0">
+                      <p className="break-all font-medium text-[#190933]">{item.email}</p>
+                      <p className="mt-0.5 break-words text-sm text-[#41375B]">
+                        <span className="sr-only">{nl('subscribers.col_name')}: </span>
+                        {nameLabel(item.name)}
+                      </p>
+                    </div>
                     <DeleteButton item={item} onDelete={handleDelete} nl={nl} />
                   </div>
                   <p className="mt-1 text-xs text-gray-500">{formatDate(item.created_at)}</p>

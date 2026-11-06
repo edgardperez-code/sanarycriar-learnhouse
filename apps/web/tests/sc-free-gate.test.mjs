@@ -13,6 +13,7 @@ const {
   rememberReturnPath,
   takeReturnPath,
   pathAfterVerify,
+  loginPathAfterVerifyError,
   courseUuidFromPath,
   verifyErrorKey,
   RETURN_AFTER_VERIFY_KEY,
@@ -89,6 +90,33 @@ describe('return path after verifying', () => {
     expect(pathAfterVerify('https://evil.example', '/course/b')).toBe('/course/b')
     expect(pathAfterVerify(null, null)).toBe('/home')
     expect(pathAfterVerify('//evil', '//evil')).toBe('/home')
+  })
+})
+
+// An expired (1 h) or already used link: «Volver a iniciar sesión» keeps the
+// email's ?redirect, so the login lands back on /regalo?… and not on /home.
+describe('loginPathAfterVerifyError', () => {
+  const GIFT = '/regalo?resultado=limites&origen=test&guia=2999a0ad-d98b-471c-b7df-abcf4dae2462'
+
+  test('keeps the page ?redirect, encoded, and the login reads the same path back', async () => {
+    const { redirectFromSearch } = await import('../components/Payments/commerce.ts')
+    const href = loginPathAfterVerifyError(GIFT)
+    expect(href).toBe(`/login?redirect=${encodeURIComponent(GIFT)}`)
+    expect(redirectFromSearch(href.slice(href.indexOf('?')))).toBe(GIFT)
+    expect(loginPathAfterVerifyError('/course/abc')).toBe('/login?redirect=%2Fcourse%2Fabc')
+  })
+
+  test('plain /login without a usable redirect (missing, external or unsafe)', () => {
+    for (const bad of [null, undefined, '', 'https://evil.example/regalo', '//evil.example', '/\\evil.example', '/..//evil.com', 'javascript:alert(1)', '/\t/evil.com']) {
+      expect(loginPathAfterVerifyError(bad)).toBe('/login')
+    }
+  })
+
+  test('the error state of /verify-email uses it with its own ?redirect', () => {
+    const src = fs.readFileSync(path.resolve(import.meta.dirname, '..', 'app/auth/verify-email/verify-email.tsx'), 'utf8')
+    expect(src).toContain("loginPathAfterVerifyError(searchParams.get('redirect'))")
+    expect(src).toContain('href={retryLoginHref}')
+    expect(src).not.toContain('href="/login"')
   })
 })
 

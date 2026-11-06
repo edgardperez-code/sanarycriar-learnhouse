@@ -21,9 +21,10 @@ def _settings(**overrides):
     return body
 
 
-async def _add(db, email, *, org_id=1, minutes=0, source="popup", page_path=None, sync_status="skipped"):
+async def _add(db, email, *, org_id=1, minutes=0, source="popup", page_path=None, sync_status="skipped",
+               name=None):
     row = NewsletterSubscriber(
-        org_id=org_id, email=email, source=source, page_path=page_path, sync_status=sync_status,
+        org_id=org_id, email=email, name=name, source=source, page_path=page_path, sync_status=sync_status,
         creation_date=T0 + timedelta(minutes=minutes), update_date=T0 + timedelta(minutes=minutes),
     )
     db.add(row)
@@ -46,6 +47,12 @@ async def _call(client, method, url, body):
     if body is None:
         return await getattr(client, method)(url)
     return await getattr(client, method)(url, json=body)
+
+
+async def _emails(client, q):
+    """The addresses the subscriber search finds for ``q``, newest first."""
+    response = await client.get(f"{BASE}/subscribers", params={"q": q})
+    return [item["email"] for item in response.json()["items"]]
 
 
 class TestAccess:
@@ -136,6 +143,13 @@ class TestSettings:
         assert response.json()["detail"] == detail
         assert (await client.get(f"{BASE}/settings")).json()["updated_at"] is None
 
+    async def test_defaults_pass_their_own_validation(self, client, current, admin_user):
+        # The dashboard's "restore" button saves them unchanged.
+        current.set(admin_user)
+        response = await client.put(f"{BASE}/settings", json=_settings())
+        assert response.status_code == 200, response.text
+        assert {k: response.json()[k] for k in DEFAULT_SETTINGS} == DEFAULT_SETTINGS
+
     async def test_limits_count_after_cleaning(self, client, current, admin_user):
         current.set(admin_user)
         response = await client.put(f"{BASE}/settings", json=_settings(title="  " + "x" * 120 + "  "))
@@ -160,7 +174,7 @@ class TestSubscribers:
         assert first["total"] == 3 and first["page"] == 1 and first["limit"] == 1
         assert [i["email"] for i in first["items"]] == ["carla_x@example.com"]
         assert first["items"][0] == {
-            "id": first["items"][0]["id"], "email": "carla_x@example.com", "source": "footer",
+            "id": first["items"][0]["id"], "email": "carla_x@example.com", "name": None, "source": "footer",
             "page_path": "/cursos", "sync_status": "skipped", "sync_error": None,
             "created_at": (T0 + timedelta(minutes=2)).isoformat(), "synced_at": None,
         }
@@ -178,6 +192,42 @@ class TestSubscribers:
         assert [i["email"] for i in underscore["items"]] == ["carla_x@example.com"]
         percent = (await client.get(f"{BASE}/subscribers", params={"q": "%"})).json()
         assert percent["total"] == 0
+
+    async def test_search_also_matches_the_name(self, client, current, db, admin_user):
+        await _add(db, "uno@example.com", minutes=0, name="María José")
+        await _add(db, "jose.perez@example.com", minutes=1)
+        await _add(db, "otra@example.com", minutes=2, name="Ana_Luisa")
+        await _add(db, "tercera@example.com", minutes=3, name="Ana Luisa")
+        await _add(db, "sin-nombre@example.com", minutes=4)
+        current.set(admin_user)
+
+        found = (await client.get(f"{BASE}/subscribers", params={"q": " JOSÉ "})).json()
+        assert [i["email"] for i in found["items"]] == ["uno@example.com"]
+        assert found["items"][0]["name"] == "María José"
+        # One search covers the address and the name, and the name ignores the accents.
+        both = (await client.get(f"{BASE}/subscribers", params={"q": "jose"})).json()
+        assert [i["email"] for i in both["items"]] == ["jose.perez@example.com", "uno@example.com"]
+        assert both["total"] == 2
+        assert await _emails(client, "maria") == ["uno@example.com"]
+        assert (await client.get(f"{BASE}/subscribers", params={"q": "maría"})).json()["total"] == 1
+        # LIKE wildcards in a name are matched literally too.
+        assert [i["email"] for i in (await client.get(
+            f"{BASE}/subscribers", params={"q": "a_l"})).json()["items"]] == ["otra@example.com"]
+        assert (await client.get(f"{BASE}/subscribers", params={"q": "a%l"})).json()["total"] == 0
+
+    async def test_name_search_ignores_case_and_spanish_accents(self, client, current, db, admin_user):
+        await _add(db, "a@example.com", minutes=0, name="ÁNGELA MUÑOZ")
+        await _add(db, "b@example.com", minutes=1, name="Begoña Güell")
+        await _add(db, "c@example.com", minutes=2, name="João Conceição")
+        current.set(admin_user)
+
+        for q in ("angela", "Ángela", "munoz", "MUÑOZ"):
+            assert await _emails(client, q) == ["a@example.com"], q
+        for q in ("begona", "guell", "GÜELL", "Begoña"):  # the last one with a combining tilde
+            assert await _emails(client, q) == ["b@example.com"], q
+        # Other accents are not folded, but still match as typed.
+        assert await _emails(client, "joão") == ["c@example.com"]
+        assert await _emails(client, "joao") == []
 
     async def test_bad_paging_is_422(self, client, current, admin_user):
         current.set(admin_user)
@@ -223,8 +273,9 @@ class TestSubscribers:
         assert response.json() == {"resend_enabled": False, "synced": 0, "failed": 0, "remaining": 1}
 
     async def test_csv_export(self, client, current, db, admin_user):
-        await _add(db, "ana@example.com", minutes=0, source="popup", page_path="/", sync_status="synced")
-        await _add(db, "=1+2@example.com", minutes=5, source="footer", sync_status="pending")
+        await _add(db, "ana@example.com", minutes=0, source="popup", page_path="/", sync_status="synced",
+                   name="Ana María")
+        await _add(db, "=1+2@example.com", minutes=5, source="footer", sync_status="pending", name="=HOLA()")
         await _add(db, "-x@example.com", minutes=10, source="other", sync_status="error")
         current.set(admin_user)
 
@@ -239,12 +290,22 @@ class TestSubscribers:
 
         raw = response.content
         assert not raw.startswith(b"\xef\xbb\xbf")
-        assert raw.split(b"\r\n")[0] == b"email,fecha_alta,origen,pagina,estado_resend"
+        assert raw.split(b"\r\n")[0] == b"email,nombre,fecha_alta,origen,pagina,estado_resend"
         rows = list(csv.reader(io.StringIO(response.text)))
         assert rows[1:] == [
-            ["ana@example.com", "2026-10-26 10:00", "ventana", "/", "sincronizado"],
-            ["'=1+2@example.com", "2026-10-26 10:05", "pie", "", "pendiente"],
-            ["'-x@example.com", "2026-10-26 10:10", "otro", "", "error"],
+            ["ana@example.com", "Ana María", "2026-10-26 10:00", "ventana", "/", "sincronizado"],
+            ["'=1+2@example.com", "'=HOLA()", "2026-10-26 10:05", "pie", "", "pendiente"],
+            ["'-x@example.com", "", "2026-10-26 10:10", "otro", "", "error"],
+        ]
+
+    async def test_csv_source_labels(self, client, current, db, admin_user):
+        sources = ["popup", "footer", "cartas", "test", "guia-gratis", "ventana-web", "other", "legacy-x"]
+        for minutes, source in enumerate(sources):
+            await _add(db, f"s{minutes}@example.com", minutes=minutes, source=source)
+        current.set(admin_user)
+        rows = list(csv.reader(io.StringIO((await client.get(f"{BASE}/subscribers/export.csv")).text)))
+        assert [row[3] for row in rows[1:]] == [
+            "ventana", "pie", "cartas", "test", "guia_gratis", "ventana_bienvenida", "otro", "otro",
         ]
 
     async def test_csv_skipped_status_label(self, client, current, admin_user):

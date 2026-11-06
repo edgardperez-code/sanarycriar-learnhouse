@@ -7187,6 +7187,75 @@
       "error_rate_limited": "Hubo demasiados intentos. Espera unos minutos y vuelve a abrir el enlace.",
       "error_generic": "No pudimos verificar tu correo. Inténtalo de nuevo en un momento.",
       "error_network": "No pudimos conectar. Revisa tu conexión y vuelve a abrir el enlace."
+    },
+    "regalo": {
+      "eyebrow": "Tu regalo",
+      "free_title": "Tu guía gratis te espera",
+      "result": {
+        "guia": {
+          "badge": "Tu resultado · Guía gratis",
+          "title": "Empieza por *ti*, sin culpa.",
+          "text": "Por lo que me cuentas, lo que más te pesa es lo que sientes después de reaccionar. Quiero que sepas algo: no eres una mala mamá. Eres una mamá que se está dando cuenta, y ese ya es el primer paso. Te regalo mi guía para empezar.",
+          "cta": "Quiero mi guía gratis",
+          "more": "Cuando quieras ir más allá: Límites sin culpa"
+        },
+        "limites": {
+          "badge": "Tu resultado · Límites sin culpa",
+          "title": "Lo tuyo son los *límites*, y se aprenden.",
+          "text": "Quieres darle a tu hijo lo que tú no tuviste, y en el camino te cuesta sostener un «no» sin ceder o terminar gritando. Eso no te hace una mala mamá: te hace una mamá que necesita herramientas. Escribí Límites sin culpa justo para este momento.",
+          "cta": "Lo quiero",
+          "cta_price": "Lo quiero · {{price}}",
+          "details": "Ver qué trae la guía",
+          "free_first": "Prefiero empezar por lo gratis"
+        },
+        "cita": {
+          "badge": "Tu resultado · Acompañamiento",
+          "title": "Mereces un acompañamiento *más cercano*.",
+          "text": "Por lo que me cuentas, lo que están viviendo en casa pide algo más que una guía: que lo miremos juntas, con calma y sin juicios. Me encantaría acompañarte en una cita online, desde donde estés.",
+          "cta": "Agenda tu cita online",
+          "free_meanwhile": "Mientras tanto, empieza por mi guía gratis"
+        },
+        "disclaimer": "Este test no es un diagnóstico. Es una forma de mirarte con cariño y elegir por dónde empezar.",
+        "retake": "Repetir el test",
+        "new_tab": "(se abre en una pestaña nueva)"
+      },
+      "gift": {
+        "ready_title": "Tu guía gratis está lista",
+        "ready_title_free": "Ya es tuya",
+        "ready_text": "Léela cuando quieras, desde tu teléfono o tu computadora.",
+        "ready_text_generic": "La encuentras en tu cuenta, junto a tus cursos y ebooks.",
+        "read": "Leer mi guía",
+        "subscribed": "También te sumé a mis cartas; te das de baja cuando quieras.",
+        "verify_title": "Activa tu cuenta para leer tu guía",
+        "verify_text": "Te enviamos un enlace a {{email}}.",
+        "verify_text_no_email": "Te enviamos un enlace a tu correo.",
+        "pending_title": "Revisa tu correo",
+        "pending_text": "Te enviamos un correo a {{email}} para activar tu cuenta. Toca el enlace y vuelves aquí con tu guía lista.",
+        "pending_activated": "¿Ya la activaste?",
+        "login": "Entrar",
+        "created_title": "Tu cuenta está lista",
+        "created_text": "Entra con tu correo y tu contraseña para leer tu guía."
+      },
+      "gate": {
+        "result_title": "Tu resultado está listo.",
+        "result_text": "Crea tu cuenta gratis para verlo y recibir tu ebook de regalo.",
+        "free_title": "Tu ebook gratis te espera.",
+        "free_text": "Crea tu cuenta gratis para leerlo.",
+        "signup": "Crear mi cuenta gratis",
+        "login": "Ya tengo cuenta"
+      },
+      "sale": {
+        "title": "Y si lo que más te cuesta son los límites…",
+        "text": "Escribí *Límites sin culpa* para ti.",
+        "text_price": "Escribí *Límites sin culpa* para ti · {{price}}",
+        "cta": "Ver Límites sin culpa"
+      },
+      "banner": {
+        "signup_result": "Crea tu cuenta gratis para ver tu resultado y leer tu ebook de regalo.",
+        "signup": "Crea tu cuenta gratis para leer tu ebook de regalo.",
+        "login_result": "Entra a tu cuenta para ver tu resultado y leer tu ebook de regalo.",
+        "login": "Entra a tu cuenta para leer tu ebook de regalo."
+      }
     }
   },
   "sc_fixes": {
@@ -7580,7 +7649,7 @@
     "tab_popup": "Ventana emergente",
     "tab_subscribers": "Suscriptores",
     "popup_title": "Ventana emergente",
-    "popup_subtitle": "Invita a quien visita tu sitio web a suscribirse a tu boletín.",
+    "popup_subtitle": "Ofrece tu guía gratis a quien visita tu sitio web. Al crear su cuenta, se suma a tu boletín.",
     "subscribers_title": "Suscriptores",
     "subscribers_subtitle": "Las personas que dejaron su correo en tu sitio web.",
     "open_resend": "Enviar un boletín en Resend",
@@ -7594,18 +7663,18 @@
       "enabled_hint": "Si la apagas, la ventana deja de aparecer. El formulario del pie de página sigue disponible.",
       "texts_title": "Textos",
       "title_label": "Título",
+      "title_hint": "Encierra una palabra entre asteriscos para mostrarla en cursiva: Necesito acompañarte en tu *maternidad*.",
       "body_label": "Texto",
+      "body_hint": "En el celular no se muestra, para que la ventana quede corta.",
       "button_text": "Texto del botón",
       "dismiss_text": "Texto para cerrar",
-      "success_label": "Mensaje de agradecimiento",
-      "success_hint": "Se muestra cuando alguien se suscribe.",
       "privacy_label": "Nota de privacidad",
-      "privacy_hint": "Aparece bajo el botón, junto a un enlace a tu política de privacidad. Puedes dejarla vacía.",
+      "privacy_hint": "Aparece al pie de la ventana, junto a un enlace a tu política de privacidad; en el celular no se muestra. Puedes dejarla vacía.",
       "timing_title": "Cuándo aparece",
       "delay_label": "Retraso (segundos)",
-      "delay_hint": "0 = aparece apenas se abre la página.",
+      "delay_hint": "0 = aparece apenas se abre la página. En el celular y la tableta espera 3 segundos más; en la computadora también aparece al bajar un tercio de la página.",
       "days_label": "Días sin volver a mostrarla",
-      "days_hint": "Si alguien la cierra, no la vuelve a ver durante estos días. Si se suscribe, no la vuelve a ver en ese navegador.",
+      "days_hint": "Si alguien la cierra, no la vuelve a ver durante estos días. Si toca su botón o se suscribe en el sitio, no la vuelve a ver en ese navegador.",
       "test_hint": "Para volver a verla en tu navegador después de cerrarla, abre el sitio en una ventana privada.",
       "save": "Guardar cambios",
       "saving": "Guardando…",
@@ -7626,17 +7695,17 @@
       "title": "Vista previa",
       "desktop": "Computadora",
       "mobile": "Celular",
-      "show_form": "Formulario",
-      "show_success": "Agradecimiento",
-      "email_label": "Tu correo electrónico",
-      "email_placeholder": "tu@correo.com",
+      "gift_chip": "Tu regalo",
+      "eyebrow": "Te tengo un regalo, mamá",
+      "free_badge": "Gratis",
+      "free_line": "Crea tu cuenta gratis y te regalo mi guía",
       "privacy_link": "Política de privacidad",
       "disabled_note": "La ventana está desactivada: no aparece en el sitio web.",
-      "approx_note": "Vista aproximada: en el sitio web se ve con sus colores y tipografías."
+      "approx_note": "Vista aproximada: en el sitio web aparece tu foto y se ve con sus colores y tipografías."
     },
     "subscribers": {
       "search_label": "Buscar suscriptores",
-      "search_placeholder": "Buscar por correo",
+      "search_placeholder": "Buscar por correo o nombre",
       "export": "Exportar CSV",
       "exporting": "Exportando…",
       "export_error": "No pudimos exportar la lista. Intenta de nuevo.",
@@ -7651,8 +7720,9 @@
       "sync_error_hint": "Error al sincronizar: {{error}}",
       "empty_title": "Todavía no hay suscriptores",
       "empty_body": "Cuando alguien deje su correo en tu sitio web, aparecerá aquí.",
-      "no_results": "Ningún correo coincide con “{{q}}”.",
+      "no_results": "Ningún suscriptor coincide con “{{q}}”.",
       "col_email": "Correo",
+      "col_name": "Nombre",
       "col_date": "Fecha",
       "col_source": "Origen",
       "col_page": "Página",
@@ -7671,8 +7741,12 @@
       "page_of": "Página {{page}} de {{pages}}"
     },
     "source": {
-      "popup": "Ventana",
+      "popup": "Ventana (antes)",
+      "ventana_web": "Ventana de bienvenida",
       "footer": "Pie de página",
+      "cartas": "Cartas (inicio)",
+      "test": "Test de crianza",
+      "guia_gratis": "Guía gratis",
       "other": "Otro"
     },
     "sync_status": {
@@ -7684,8 +7758,8 @@
     "search": {
       "popup": {
         "title": "Boletín: ventana emergente",
-        "description": "Activa y edita la ventana de suscripción del sitio web",
-        "keywords": "boletín, newsletter, ventana, popup, suscripción, correo"
+        "description": "Activa y edita la ventana de bienvenida del sitio web",
+        "keywords": "boletín, newsletter, ventana, bienvenida, popup, suscripción, correo"
       },
       "subscribers": {
         "title": "Boletín: suscriptores",
@@ -8359,6 +8433,91 @@
       "more_products_one": "y {{count}} más",
       "more_products_other": "y {{count}} más",
       "pay_before": "Paga antes del {{date}}"
+    }
+  },
+  "sc_summary": {
+    "breadcrumb": "Resumen",
+    "title": "Resumen",
+    "subtitle": "Ventas, compradoras y uso de tus cursos y ebooks.",
+    "range": {
+      "label": "Periodo",
+      "days_7": "Últimos 7 días",
+      "days_30": "30 días",
+      "days_90": "90 días",
+      "days_0": "Todo"
+    },
+    "refreshing": "Actualizando…",
+    "load_error": "No se pudo cargar el resumen. Revisa tu conexión e inténtalo de nuevo.",
+    "forbidden": "Solo las administradoras de la organización pueden ver el resumen.",
+    "retry": "Reintentar",
+    "empty": "Todavía no hay ventas. Cuando vendas tu primer curso o ebook, aquí verás cómo va.",
+    "kpi": {
+      "sales": "Ventas",
+      "sales_count_one": "{{count}} compra",
+      "sales_count_other": "{{count}} compras",
+      "pending": "Pedidos por confirmar",
+      "pending_link": "Ver pedidos",
+      "pending_none": "Nada pendiente",
+      "accounts": "Cuentas nuevas",
+      "newsletter": "Suscriptores nuevos del boletín",
+      "total": "{{total}} en total"
+    },
+    "chart": {
+      "title_daily": "Ventas por día",
+      "title_weekly": "Ventas por semana",
+      "revenue": "Ventas (US$)",
+      "signups": "Cuentas nuevas",
+      "sales_one": "{{count}} compra",
+      "sales_other": "{{count}} compras",
+      "week_of": "Semana del {{date}}",
+      "empty": "No hubo ventas ni cuentas nuevas en este periodo."
+    },
+    "products": {
+      "title": "Tus productos",
+      "hint": "Toca un producto para ver quién lo compró y cómo lo usa.",
+      "col_product": "Producto",
+      "col_price": "Precio",
+      "col_sales": "Ventas",
+      "col_revenue": "Ingresos",
+      "col_buyers": "Compradoras",
+      "col_opened": "Abrieron",
+      "col_downloaded": "Descargaron",
+      "col_completed": "Completaron",
+      "open": "Ver compradoras de {{name}}",
+      "empty": "Todavía no tienes productos a la venta.",
+      "no_name": "Producto sin nombre",
+      "type": {
+        "course": "Curso",
+        "ebook": "Ebook",
+        "mixed": "Curso y ebook"
+      }
+    },
+    "learners": {
+      "title": "Compradoras",
+      "count_one": "{{count}} persona",
+      "count_other": "{{count}} personas",
+      "loading": "Cargando compradoras…",
+      "empty": "Nadie lo ha comprado todavía.",
+      "load_error": "No se pudo cargar la lista. Inténtalo de nuevo.",
+      "not_found": "Este producto ya no existe.",
+      "close": "Cerrar",
+      "no_name": "Sin nombre",
+      "purchased": "Compró el {{date}}",
+      "via": "con {{method}}",
+      "order": "Pedido {{code}}",
+      "opened": "Abrió el {{date}}",
+      "not_opened": "Aún no lo abre",
+      "downloads_one": "Descargó {{count}} vez",
+      "downloads_other": "Descargó {{count}} veces",
+      "not_downloaded": "No lo ha descargado",
+      "progress": "{{done}} de {{total}} actividades",
+      "progress_label": "Progreso",
+      "no_activities": "Sin actividades publicadas todavía"
+    },
+    "recent": {
+      "title": "Últimas ventas",
+      "empty": "Aún no hay ventas.",
+      "no_name": "Sin nombre"
     }
   }
 }

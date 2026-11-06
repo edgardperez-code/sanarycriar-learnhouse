@@ -7206,6 +7206,75 @@
       "error_rate_limited": "There were too many attempts. Wait a few minutes and open the link again.",
       "error_generic": "We could not verify your email. Please try again in a moment.",
       "error_network": "We could not connect. Check your connection and open the link again."
+    },
+    "regalo": {
+      "eyebrow": "Your gift",
+      "free_title": "Your free guide is waiting",
+      "result": {
+        "guia": {
+          "badge": "Your result · Free guide",
+          "title": "Start with *you*, without guilt.",
+          "text": "From what you tell me, what weighs on you most is how you feel after you react. I want you to know something: you are not a bad mom. You are a mom who is noticing, and that is already the first step. My guide is my gift to help you start.",
+          "cta": "I want my free guide",
+          "more": "Whenever you want to go further: Límites sin culpa"
+        },
+        "limites": {
+          "badge": "Your result · Límites sin culpa",
+          "title": "*Limits* are your thing, and they can be learned.",
+          "text": "You want to give your child what you did not have, and along the way it is hard to hold a “no” without giving in or ending up yelling. That does not make you a bad mom: it makes you a mom who needs tools. I wrote Límites sin culpa for exactly this moment.",
+          "cta": "I want it",
+          "cta_price": "I want it · {{price}}",
+          "details": "See what the guide includes",
+          "free_first": "I would rather start with the free one"
+        },
+        "cita": {
+          "badge": "Your result · Support",
+          "title": "You deserve *closer* support.",
+          "text": "From what you tell me, what you are going through at home calls for more than a guide: for us to look at it together, calmly and without judgment. I would love to support you in an online session, wherever you are.",
+          "cta": "Book your online session",
+          "free_meanwhile": "Meanwhile, start with my free guide"
+        },
+        "disclaimer": "This test is not a diagnosis. It is a way to look at yourself kindly and choose where to start.",
+        "retake": "Take the test again",
+        "new_tab": "(opens in a new tab)"
+      },
+      "gift": {
+        "ready_title": "Your free guide is ready",
+        "ready_title_free": "It is yours",
+        "ready_text": "Read it whenever you like, on your phone or your computer.",
+        "ready_text_generic": "You will find it in your account, with your courses and ebooks.",
+        "read": "Read my guide",
+        "subscribed": "I also added you to my letters; you can unsubscribe whenever you like.",
+        "verify_title": "Activate your account to read your guide",
+        "verify_text": "We sent a link to {{email}}.",
+        "verify_text_no_email": "We sent a link to your email.",
+        "pending_title": "Check your email",
+        "pending_text": "We sent an email to {{email}} to activate your account. Tap the link and you will come back here with your guide ready.",
+        "pending_activated": "Already activated it?",
+        "login": "Log in",
+        "created_title": "Your account is ready",
+        "created_text": "Log in with your email and password to read your guide."
+      },
+      "gate": {
+        "result_title": "Your result is ready.",
+        "result_text": "Create your free account to see it and get your gift ebook.",
+        "free_title": "Your free ebook is waiting.",
+        "free_text": "Create your free account to read it.",
+        "signup": "Create my free account",
+        "login": "I already have an account"
+      },
+      "sale": {
+        "title": "And if limits are what you find hardest…",
+        "text": "I wrote *Límites sin culpa* for you.",
+        "text_price": "I wrote *Límites sin culpa* for you · {{price}}",
+        "cta": "See Límites sin culpa"
+      },
+      "banner": {
+        "signup_result": "Create your free account to see your result and read your gift ebook.",
+        "signup": "Create your free account to read your gift ebook.",
+        "login_result": "Log in to see your result and read your gift ebook.",
+        "login": "Log in to read your gift ebook."
+      }
     }
   },
   "sc_fixes": {
@@ -7599,7 +7668,7 @@
     "tab_popup": "Pop-up",
     "tab_subscribers": "Subscribers",
     "popup_title": "Pop-up",
-    "popup_subtitle": "Invite your website visitors to subscribe to your newsletter.",
+    "popup_subtitle": "Offer your free guide to the people who visit your website. When they create their account, they join your newsletter.",
     "subscribers_title": "Subscribers",
     "subscribers_subtitle": "The people who left their email on your website.",
     "open_resend": "Send a newsletter in Resend",
@@ -7613,18 +7682,18 @@
       "enabled_hint": "If you turn it off, the pop-up stops appearing. The footer form stays available.",
       "texts_title": "Texts",
       "title_label": "Title",
+      "title_hint": "Wrap a word in asterisks to show it in italics: I want to be with you in your *motherhood*.",
       "body_label": "Text",
+      "body_hint": "Not shown on phones, so the pop-up stays short.",
       "button_text": "Button text",
       "dismiss_text": "Close text",
-      "success_label": "Thank-you message",
-      "success_hint": "Shown when someone subscribes.",
       "privacy_label": "Privacy note",
-      "privacy_hint": "Appears under the button, next to a link to your privacy policy. You can leave it empty.",
+      "privacy_hint": "Appears at the bottom of the pop-up, next to a link to your privacy policy; not shown on phones. You can leave it empty.",
       "timing_title": "When it appears",
       "delay_label": "Delay (seconds)",
-      "delay_hint": "0 = it appears as soon as the page opens.",
+      "delay_hint": "0 = it appears as soon as the page opens. On phones and tablets it waits 3 more seconds; on computers it also appears after scrolling a third of the page.",
       "days_label": "Days before showing it again",
-      "days_hint": "If someone closes it, they won't see it again for this many days. If they subscribe, they won't see it again in that browser.",
+      "days_hint": "If someone closes it, they won't see it again for this many days. If they tap its button or subscribe on the website, they won't see it again in that browser.",
       "test_hint": "To see it again in your browser after closing it, open the website in a private window.",
       "save": "Save changes",
       "saving": "Saving…",
@@ -7645,17 +7714,17 @@
       "title": "Preview",
       "desktop": "Computer",
       "mobile": "Phone",
-      "show_form": "Form",
-      "show_success": "Thank you",
-      "email_label": "Your email",
-      "email_placeholder": "you@email.com",
+      "gift_chip": "Your gift",
+      "eyebrow": "I have a gift for you, mom",
+      "free_badge": "Free",
+      "free_line": "Create your free account and I'll give you my guide",
       "privacy_link": "Privacy policy",
       "disabled_note": "The pop-up is off: it doesn't appear on the website.",
-      "approx_note": "Approximate preview: on the website it uses the site's colors and fonts."
+      "approx_note": "Approximate preview: on the website it shows your photo and uses the site's colors and fonts."
     },
     "subscribers": {
       "search_label": "Search subscribers",
-      "search_placeholder": "Search by email",
+      "search_placeholder": "Search by email or name",
       "export": "Export CSV",
       "exporting": "Exporting…",
       "export_error": "We couldn't export the list. Try again.",
@@ -7670,8 +7739,9 @@
       "sync_error_hint": "Sync error: {{error}}",
       "empty_title": "No subscribers yet",
       "empty_body": "When someone leaves their email on your website, it will show up here.",
-      "no_results": "No email matches “{{q}}”.",
+      "no_results": "No subscriber matches “{{q}}”.",
       "col_email": "Email",
+      "col_name": "Name",
       "col_date": "Date",
       "col_source": "Source",
       "col_page": "Page",
@@ -7690,8 +7760,12 @@
       "page_of": "Page {{page}} of {{pages}}"
     },
     "source": {
-      "popup": "Pop-up",
+      "popup": "Pop-up (earlier)",
+      "ventana_web": "Welcome pop-up",
       "footer": "Footer",
+      "cartas": "Letters (home)",
+      "test": "Parenting test",
+      "guia_gratis": "Free guide",
       "other": "Other"
     },
     "sync_status": {
@@ -7703,8 +7777,8 @@
     "search": {
       "popup": {
         "title": "Newsletter: pop-up",
-        "description": "Turn on and edit the website's sign-up pop-up",
-        "keywords": "newsletter, pop-up, popup, subscription, email, sign-up"
+        "description": "Turn on and edit the website's welcome pop-up",
+        "keywords": "newsletter, pop-up, popup, welcome, subscription, email, sign-up"
       },
       "subscribers": {
         "title": "Newsletter: subscribers",
@@ -8378,6 +8452,91 @@
       "more_products_one": "and {{count}} more",
       "more_products_other": "and {{count}} more",
       "pay_before": "Pay before {{date}}"
+    }
+  },
+  "sc_summary": {
+    "breadcrumb": "Summary",
+    "title": "Summary",
+    "subtitle": "Sales, buyers and how your courses and ebooks are used.",
+    "range": {
+      "label": "Period",
+      "days_7": "Last 7 days",
+      "days_30": "30 days",
+      "days_90": "90 days",
+      "days_0": "All time"
+    },
+    "refreshing": "Refreshing…",
+    "load_error": "The summary could not be loaded. Check your connection and try again.",
+    "forbidden": "Only organization admins can see the summary.",
+    "retry": "Retry",
+    "empty": "No sales yet. Once you sell your first course or ebook, you will see how it goes here.",
+    "kpi": {
+      "sales": "Sales",
+      "sales_count_one": "{{count}} purchase",
+      "sales_count_other": "{{count}} purchases",
+      "pending": "Orders to confirm",
+      "pending_link": "See orders",
+      "pending_none": "Nothing pending",
+      "accounts": "New accounts",
+      "newsletter": "New newsletter subscribers",
+      "total": "{{total}} in total"
+    },
+    "chart": {
+      "title_daily": "Sales per day",
+      "title_weekly": "Sales per week",
+      "revenue": "Sales (US$)",
+      "signups": "New accounts",
+      "sales_one": "{{count}} purchase",
+      "sales_other": "{{count}} purchases",
+      "week_of": "Week of {{date}}",
+      "empty": "No sales or new accounts in this period."
+    },
+    "products": {
+      "title": "Your products",
+      "hint": "Tap a product to see who bought it and how they use it.",
+      "col_product": "Product",
+      "col_price": "Price",
+      "col_sales": "Sales",
+      "col_revenue": "Revenue",
+      "col_buyers": "Buyers",
+      "col_opened": "Opened",
+      "col_downloaded": "Downloaded",
+      "col_completed": "Completed",
+      "open": "See buyers of {{name}}",
+      "empty": "You have no products for sale yet.",
+      "no_name": "Untitled product",
+      "type": {
+        "course": "Course",
+        "ebook": "Ebook",
+        "mixed": "Course and ebook"
+      }
+    },
+    "learners": {
+      "title": "Buyers",
+      "count_one": "{{count}} person",
+      "count_other": "{{count}} people",
+      "loading": "Loading buyers…",
+      "empty": "Nobody has bought it yet.",
+      "load_error": "The list could not be loaded. Please try again.",
+      "not_found": "This product no longer exists.",
+      "close": "Close",
+      "no_name": "No name",
+      "purchased": "Bought on {{date}}",
+      "via": "with {{method}}",
+      "order": "Order {{code}}",
+      "opened": "Opened on {{date}}",
+      "not_opened": "Not opened yet",
+      "downloads_one": "Downloaded {{count}} time",
+      "downloads_other": "Downloaded {{count}} times",
+      "not_downloaded": "Not downloaded",
+      "progress": "{{done}} of {{total}} activities",
+      "progress_label": "Progress",
+      "no_activities": "No published activities yet"
+    },
+    "recent": {
+      "title": "Latest sales",
+      "empty": "No sales yet.",
+      "no_name": "No name"
     }
   }
 }

@@ -48,6 +48,8 @@ import { planMeetsRequirement } from '@services/plans/plans'
 import { FeedbackModal } from '@components/Objects/Modals/FeedbackModal'
 import { useCommandPalette } from '@components/Dashboard/CommandPalette/CommandPaletteContext'
 import { usePendingOrdersCount } from '@components/Dashboard/Pages/Orders/usePendingOrdersCount'
+// Sanar y Criar: the user's first name, not the username sign-up generates.
+import { ownDisplayName } from '@components/SanarYCriar/ownName'
 
 function DashMobileMenu() {
   const org = useOrg() as any
@@ -297,7 +299,8 @@ function DashMobileMenu() {
                 <div className="flex items-center gap-3">
                   <UserAvatar width={28} rounded="rounded-full" shadow="shadow-none" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white/90 truncate leading-none mb-0.5">{session?.data?.user?.username}</p>
+                    {/* Sanar y Criar: her first name, not the generated username. */}
+                    <p className="text-sm font-semibold text-white/90 truncate leading-none mb-0.5">{ownDisplayName(session?.data?.user)}</p>
                     <p className="text-[10px] text-white/30 truncate">{session?.data?.user?.email}</p>
                   </div>
                   <button

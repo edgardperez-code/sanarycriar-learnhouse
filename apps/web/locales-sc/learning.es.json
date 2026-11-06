@@ -78,6 +78,75 @@
       "error_rate_limited": "Hubo demasiados intentos. Espera unos minutos y vuelve a abrir el enlace.",
       "error_generic": "No pudimos verificar tu correo. Inténtalo de nuevo en un momento.",
       "error_network": "No pudimos conectar. Revisa tu conexión y vuelve a abrir el enlace."
+    },
+    "regalo": {
+      "eyebrow": "Tu regalo",
+      "free_title": "Tu guía gratis te espera",
+      "result": {
+        "guia": {
+          "badge": "Tu resultado · Guía gratis",
+          "title": "Empieza por *ti*, sin culpa.",
+          "text": "Por lo que me cuentas, lo que más te pesa es lo que sientes después de reaccionar. Quiero que sepas algo: no eres una mala mamá. Eres una mamá que se está dando cuenta, y ese ya es el primer paso. Te regalo mi guía para empezar.",
+          "cta": "Quiero mi guía gratis",
+          "more": "Cuando quieras ir más allá: Límites sin culpa"
+        },
+        "limites": {
+          "badge": "Tu resultado · Límites sin culpa",
+          "title": "Lo tuyo son los *límites*, y se aprenden.",
+          "text": "Quieres darle a tu hijo lo que tú no tuviste, y en el camino te cuesta sostener un «no» sin ceder o terminar gritando. Eso no te hace una mala mamá: te hace una mamá que necesita herramientas. Escribí Límites sin culpa justo para este momento.",
+          "cta": "Lo quiero",
+          "cta_price": "Lo quiero · {{price}}",
+          "details": "Ver qué trae la guía",
+          "free_first": "Prefiero empezar por lo gratis"
+        },
+        "cita": {
+          "badge": "Tu resultado · Acompañamiento",
+          "title": "Mereces un acompañamiento *más cercano*.",
+          "text": "Por lo que me cuentas, lo que están viviendo en casa pide algo más que una guía: que lo miremos juntas, con calma y sin juicios. Me encantaría acompañarte en una cita online, desde donde estés.",
+          "cta": "Agenda tu cita online",
+          "free_meanwhile": "Mientras tanto, empieza por mi guía gratis"
+        },
+        "disclaimer": "Este test no es un diagnóstico. Es una forma de mirarte con cariño y elegir por dónde empezar.",
+        "retake": "Repetir el test",
+        "new_tab": "(se abre en una pestaña nueva)"
+      },
+      "gift": {
+        "ready_title": "Tu guía gratis está lista",
+        "ready_title_free": "Ya es tuya",
+        "ready_text": "Léela cuando quieras, desde tu teléfono o tu computadora.",
+        "ready_text_generic": "La encuentras en tu cuenta, junto a tus cursos y ebooks.",
+        "read": "Leer mi guía",
+        "subscribed": "También te sumé a mis cartas; te das de baja cuando quieras.",
+        "verify_title": "Activa tu cuenta para leer tu guía",
+        "verify_text": "Te enviamos un enlace a {{email}}.",
+        "verify_text_no_email": "Te enviamos un enlace a tu correo.",
+        "pending_title": "Revisa tu correo",
+        "pending_text": "Te enviamos un correo a {{email}} para activar tu cuenta. Toca el enlace y vuelves aquí con tu guía lista.",
+        "pending_activated": "¿Ya la activaste?",
+        "login": "Entrar",
+        "created_title": "Tu cuenta está lista",
+        "created_text": "Entra con tu correo y tu contraseña para leer tu guía."
+      },
+      "gate": {
+        "result_title": "Tu resultado está listo.",
+        "result_text": "Crea tu cuenta gratis para verlo y recibir tu ebook de regalo.",
+        "free_title": "Tu ebook gratis te espera.",
+        "free_text": "Crea tu cuenta gratis para leerlo.",
+        "signup": "Crear mi cuenta gratis",
+        "login": "Ya tengo cuenta"
+      },
+      "sale": {
+        "title": "Y si lo que más te cuesta son los límites…",
+        "text": "Escribí *Límites sin culpa* para ti.",
+        "text_price": "Escribí *Límites sin culpa* para ti · {{price}}",
+        "cta": "Ver Límites sin culpa"
+      },
+      "banner": {
+        "signup_result": "Crea tu cuenta gratis para ver tu resultado y leer tu ebook de regalo.",
+        "signup": "Crea tu cuenta gratis para leer tu ebook de regalo.",
+        "login_result": "Entra a tu cuenta para ver tu resultado y leer tu ebook de regalo.",
+        "login": "Entra a tu cuenta para leer tu ebook de regalo."
+      }
     }
   }
 }

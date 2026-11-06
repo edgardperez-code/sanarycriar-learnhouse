@@ -5,7 +5,7 @@
     "tab_popup": "Ventana emergente",
     "tab_subscribers": "Suscriptores",
     "popup_title": "Ventana emergente",
-    "popup_subtitle": "Invita a quien visita tu sitio web a suscribirse a tu boletín.",
+    "popup_subtitle": "Ofrece tu guía gratis a quien visita tu sitio web. Al crear su cuenta, se suma a tu boletín.",
     "subscribers_title": "Suscriptores",
     "subscribers_subtitle": "Las personas que dejaron su correo en tu sitio web.",
     "open_resend": "Enviar un boletín en Resend",
@@ -19,18 +19,18 @@
       "enabled_hint": "Si la apagas, la ventana deja de aparecer. El formulario del pie de página sigue disponible.",
       "texts_title": "Textos",
       "title_label": "Título",
+      "title_hint": "Encierra una palabra entre asteriscos para mostrarla en cursiva: Necesito acompañarte en tu *maternidad*.",
       "body_label": "Texto",
+      "body_hint": "En el celular no se muestra, para que la ventana quede corta.",
       "button_text": "Texto del botón",
       "dismiss_text": "Texto para cerrar",
-      "success_label": "Mensaje de agradecimiento",
-      "success_hint": "Se muestra cuando alguien se suscribe.",
       "privacy_label": "Nota de privacidad",
-      "privacy_hint": "Aparece bajo el botón, junto a un enlace a tu política de privacidad. Puedes dejarla vacía.",
+      "privacy_hint": "Aparece al pie de la ventana, junto a un enlace a tu política de privacidad; en el celular no se muestra. Puedes dejarla vacía.",
       "timing_title": "Cuándo aparece",
       "delay_label": "Retraso (segundos)",
-      "delay_hint": "0 = aparece apenas se abre la página.",
+      "delay_hint": "0 = aparece apenas se abre la página. En el celular y la tableta espera 3 segundos más; en la computadora también aparece al bajar un tercio de la página.",
       "days_label": "Días sin volver a mostrarla",
-      "days_hint": "Si alguien la cierra, no la vuelve a ver durante estos días. Si se suscribe, no la vuelve a ver en ese navegador.",
+      "days_hint": "Si alguien la cierra, no la vuelve a ver durante estos días. Si toca su botón o se suscribe en el sitio, no la vuelve a ver en ese navegador.",
       "test_hint": "Para volver a verla en tu navegador después de cerrarla, abre el sitio en una ventana privada.",
       "save": "Guardar cambios",
       "saving": "Guardando…",
@@ -51,17 +51,17 @@
       "title": "Vista previa",
       "desktop": "Computadora",
       "mobile": "Celular",
-      "show_form": "Formulario",
-      "show_success": "Agradecimiento",
-      "email_label": "Tu correo electrónico",
-      "email_placeholder": "tu@correo.com",
+      "gift_chip": "Tu regalo",
+      "eyebrow": "Te tengo un regalo, mamá",
+      "free_badge": "Gratis",
+      "free_line": "Crea tu cuenta gratis y te regalo mi guía",
       "privacy_link": "Política de privacidad",
       "disabled_note": "La ventana está desactivada: no aparece en el sitio web.",
-      "approx_note": "Vista aproximada: en el sitio web se ve con sus colores y tipografías."
+      "approx_note": "Vista aproximada: en el sitio web aparece tu foto y se ve con sus colores y tipografías."
     },
     "subscribers": {
       "search_label": "Buscar suscriptores",
-      "search_placeholder": "Buscar por correo",
+      "search_placeholder": "Buscar por correo o nombre",
       "export": "Exportar CSV",
       "exporting": "Exportando…",
       "export_error": "No pudimos exportar la lista. Intenta de nuevo.",
@@ -76,8 +76,9 @@
       "sync_error_hint": "Error al sincronizar: {{error}}",
       "empty_title": "Todavía no hay suscriptores",
       "empty_body": "Cuando alguien deje su correo en tu sitio web, aparecerá aquí.",
-      "no_results": "Ningún correo coincide con “{{q}}”.",
+      "no_results": "Ningún suscriptor coincide con “{{q}}”.",
       "col_email": "Correo",
+      "col_name": "Nombre",
       "col_date": "Fecha",
       "col_source": "Origen",
       "col_page": "Página",
@@ -96,8 +97,12 @@
       "page_of": "Página {{page}} de {{pages}}"
     },
     "source": {
-      "popup": "Ventana",
+      "popup": "Ventana (antes)",
+      "ventana_web": "Ventana de bienvenida",
       "footer": "Pie de página",
+      "cartas": "Cartas (inicio)",
+      "test": "Test de crianza",
+      "guia_gratis": "Guía gratis",
       "other": "Otro"
     },
     "sync_status": {
@@ -109,8 +114,8 @@
     "search": {
       "popup": {
         "title": "Boletín: ventana emergente",
-        "description": "Activa y edita la ventana de suscripción del sitio web",
-        "keywords": "boletín, newsletter, ventana, popup, suscripción, correo"
+        "description": "Activa y edita la ventana de bienvenida del sitio web",
+        "keywords": "boletín, newsletter, ventana, bienvenida, popup, suscripción, correo"
       },
       "subscribers": {
         "title": "Boletín: suscriptores",

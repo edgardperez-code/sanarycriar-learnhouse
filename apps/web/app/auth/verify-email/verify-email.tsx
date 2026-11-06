@@ -9,7 +9,7 @@ import AuthLayout from '@components/Auth/AuthLayout'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 // Sanar y Criar: after verifying, back to the ebook/course that asked for it.
 import { getUriWithOrg } from '@services/config/config'
-import { pathAfterVerify, takeReturnPath, verifyErrorKey } from '@components/SanarYCriar/freeAccessGate'
+import { loginPathAfterVerifyError, pathAfterVerify, takeReturnPath, verifyErrorKey } from '@components/SanarYCriar/freeAccessGate'
 import { useLearningT } from '@components/SanarYCriar/useLearningT'
 
 interface VerifyEmailClientProps {
@@ -32,6 +32,11 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
     // Sanar y Criar: ?redirect, else the page remembered by FreeAccessCard /
     // signup, else /home (upstream).
     const [nextHref, setNextHref] = useState('/home')
+    // Sanar y Criar: an expired or used link still leads back to the page it
+    // was for: /login keeps the sanitized ?redirect (/regalo?…), wrapped for
+    // the org like the success path. Plain /login without one (upstream).
+    const retryLoginPath = loginPathAfterVerifyError(searchParams.get('redirect'))
+    const retryLoginHref = retryLoginPath !== '/login' && org?.slug ? getUriWithOrg(org.slug, retryLoginPath) : retryLoginPath
 
     // The verification token is single-use: the backend consumes (deletes) it the
     // moment it succeeds and auto-signs the user in. So this request must fire
@@ -164,7 +169,7 @@ function VerifyEmailClient({ org }: VerifyEmailClientProps) {
                                     {t('auth.verification_trouble')}
                                 </p>
                                 <Link
-                                    href="/login"
+                                    href={retryLoginHref}
                                     className="box-border w-full inline-flex h-[44px] rounded-lg items-center justify-center bg-black hover:bg-black/85 text-white px-[15px] font-bold text-[14px] leading-none transition-all"
                                 >
                                     {t('auth.back_to_login')}

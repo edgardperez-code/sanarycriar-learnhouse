@@ -6,7 +6,7 @@
 //
 // The verification email link carries no ?redirect, so the page that showed
 // the card remembers itself here and /verify-email sends the reader back.
-import { safeRedirectPath } from '@components/Payments/commerce'
+import { safeRedirectPath, withRedirect } from '@components/Payments/commerce'
 
 export type FreeGateReason = 'login_required' | 'verify_email'
 
@@ -67,6 +67,17 @@ export function takeReturnPath(now = Date.now(), storage: KV | null = defaultSto
  */
 export function pathAfterVerify(redirectParam: string | null | undefined, remembered: string | null | undefined): string {
   return safeRedirectPath(redirectParam) ?? safeRedirectPath(remembered) ?? '/home'
+}
+
+/**
+ * «Volver a iniciar sesión» when the link failed (expired after 1 h, or
+ * already used): /login with the page's own ?redirect, sanitized, so signing
+ * in still lands on the page the email was for (/regalo?…, which offers a new
+ * email while the account is unverified) instead of /home. Without a usable
+ * ?redirect it is plain /login, as upstream.
+ */
+export function loginPathAfterVerifyError(redirectParam: string | null | undefined): string {
+  return withRedirect('/login', redirectParam)
 }
 
 /** "/course/<uuid>" (FreeAccessCard's coursePath) -> "<uuid>", or null. */

@@ -182,7 +182,9 @@ export async function getNewAccessTokenUsingRefreshToken(): Promise<any> {
 // signup
 
 interface NewAccountBody {
-  username: string
+  // Sanar y Criar: the sign-up forms no longer ask for it; without one the
+  // backend generates a unique username.
+  username?: string
   email: string
   password: string
   org_slug: string
@@ -190,6 +192,9 @@ interface NewAccountBody {
   // Cloudflare Turnstile token collected by the signup form. Optional so OSS /
   // Turnstile-disabled deployments keep working.
   turnstileToken?: string | null
+  // Sanar y Criar: where the verification email's link sends the reader back
+  // (only /regalo… paths; the backend checks it and never stores it on the user).
+  return_path?: string
 }
 
 // Signup goes through the same-origin gateway (app/api/signup/route.ts), which
@@ -268,7 +273,10 @@ export async function verifyEmail(
 
 export async function resendVerificationEmail(
   email: string,
-  orgId?: number
+  orgId?: number,
+  // Sanar y Criar: the page the new link returns to (e.g. "/regalo?…"); the
+  // backend keeps only valid /regalo paths and otherwise reuses the stored one.
+  returnPath?: string | null
 ): Promise<{ success: boolean; error?: string; status?: number }> {
   try {
     const HeadersConfig = new Headers({ 'Content-Type': 'application/json' })
@@ -278,7 +286,11 @@ export async function resendVerificationEmail(
     const requestOptions: RequestInit = {
       method: 'POST',
       headers: HeadersConfig,
-      body: JSON.stringify(orgId != null ? { email, org_id: orgId } : { email }),
+      body: JSON.stringify({
+        email,
+        ...(orgId != null ? { org_id: orgId } : {}),
+        ...(returnPath ? { return_path: returnPath } : {}),
+      }),
     }
 
     const response = await fetch(`${getAPIUrl()}auth/resend-verification`, requestOptions)

@@ -17,6 +17,7 @@ from src.security.features_utils.usage import (
 )
 from src.core.deployment_mode import get_deployment_mode
 from src.services.users.sc_verification import password_signup_needs_verification
+from src.services.users.sc_username import generate_username, needs_generated_username
 from src.services.users.usergroups import add_users_to_usergroup
 from src.services.users.emails import (
     send_account_creation_email,
@@ -182,9 +183,17 @@ _SC_VERIFICATION_MAIL_TIMEOUT_S = 4.0
 
 
 async def _sc_send_verification(
-    request: Request, db_session: AsyncSession, user: User, org_id: int | None
+    request: Request,
+    db_session: AsyncSession,
+    user: User,
+    org_id: int | None,
+    return_path: str | None = None,
 ) -> None:
-    """Sanar y Criar: send the verification mail without failing the signup."""
+    """Sanar y Criar: send the verification mail without failing the signup.
+
+    ``return_path`` (``UserCreate.return_path``) is where the link sends the
+    user once verified; the mail drops it unless it is a safe ``/regalo`` path.
+    """
     from src.services.users.email_verification import send_verification_email
 
     # The account is already committed: a slow mail provider must not push the
@@ -192,7 +201,7 @@ async def _sc_send_verification(
     # still delivers the mail; the web offers "resend" either way.
     try:
         await asyncio.wait_for(
-            send_verification_email(request, db_session, user, org_id),
+            send_verification_email(request, db_session, user, org_id, return_path=return_path),
             timeout=_SC_VERIFICATION_MAIL_TIMEOUT_S,
         )
     except asyncio.TimeoutError:
@@ -291,6 +300,15 @@ async def create_user(
     # Usage check
     await check_limits_with_usage("members", org_id, db_session)
 
+    # Sanar y Criar: the sign-up form no longer asks for a username. A blank
+    # one gets a unique generated handle here, before the conflict check
+    # (sc_username.py); one that was sent is kept as is. The invite signup
+    # comes through here too.
+    if needs_generated_username(user.username):
+        user.username = await generate_username(
+            db_session, user.first_name, user.last_name, str(user.email)
+        )
+
     # SECURITY: single generic error for both email and username conflicts so
     # the endpoint cannot be used to probe which addresses or handles are
     # already registered (account enumeration).
@@ -385,7 +403,7 @@ async def create_user(
         # Sanar y Criar: the verification mail doubles as the welcome (no
         # second mail). A mail failure must not fail a signup that is already
         # committed; the web offers "resend".
-        await _sc_send_verification(request, db_session, user, org_id)
+        await _sc_send_verification(request, db_session, user, org_id, user_object.return_path)
 
     return user_read
 
@@ -528,6 +546,13 @@ async def create_user_without_org(
 
     # Verifications
 
+    # Sanar y Criar: a blank username is generated before the conflict check,
+    # as in create_user.
+    if needs_generated_username(user.username):
+        user.username = await generate_username(
+            db_session, user.first_name, user.last_name, str(user.email)
+        )
+
     # SECURITY: single generic error for both email and username conflicts to
     # prevent account enumeration via this org-less signup endpoint.
     conflict = (await db_session.execute(
@@ -562,7 +587,7 @@ async def create_user_without_org(
     # OAuth users get welcome email (already verified)
     # Non-OAuth SaaS users get verification email (no org needed)
     if sc_verify and get_deployment_mode() != 'saas':
-        await _sc_send_verification(request, db_session, user, None)
+        await _sc_send_verification(request, db_session, user, None, user_object.return_path)
     elif is_oauth or get_deployment_mode() != 'saas':
         send_account_creation_email(
             user=user_read,
@@ -808,7 +833,9 @@ async def _after_email_change(
         logging.warning("Could not send verification email after email change")
 
     send_email_changed_notice(
-        email=previous_email, new_email=user.email, username=user.username
+        email=previous_email, new_email=user.email, username=user.username,
+        # Sanar y Criar: the mail greets by first name, never the username.
+        first_name=user.first_name or "",
     )
 
 

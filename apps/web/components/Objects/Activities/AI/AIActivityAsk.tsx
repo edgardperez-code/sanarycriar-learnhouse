@@ -21,6 +21,8 @@ import UserAvatar from '@components/Objects/UserAvatar'
 import { useTranslation } from 'react-i18next'
 import AIMarkdownRenderer from './AIMarkdownRenderer'
 import AIFollowUpSuggestions from './AIFollowUpSuggestions'
+// Sanar y Criar: greet by first name, not the username sign-up generates.
+import { ownDisplayName } from '@components/SanarYCriar/ownName'
 
 type AIActivityAskProps = {
   activity: any
@@ -634,7 +636,7 @@ const AIMessagePlaceHolder = (props: {
               <span className="items-center">{t('common.hello')}</span>
               <span className="capitalize flex space-x-2 items-center">
                 <UserAvatar rounded="rounded-lg" border="border-2" width={35} shadow="shadow-none" />
-                <span>{session.data.user.username},</span>
+                <span>{ownDisplayName(session.data.user)},</span>
               </span>
               <span>{t('ai.how_can_we_help')}</span>
             </p>
@@ -1179,7 +1181,7 @@ const AISidePanelPlaceholder = (props: {
               <span className="flex items-center space-x-2">
                 <span>{t('common.hello')}</span>
                 <UserAvatar rounded="rounded-lg" border="border-2" width={28} shadow="shadow-none" />
-                <span className="capitalize">{session?.data?.user?.username},</span>
+                <span className="capitalize">{ownDisplayName(session?.data?.user)},</span>
               </span>
               <span>{t('ai.how_can_we_help')}</span>
             </p>

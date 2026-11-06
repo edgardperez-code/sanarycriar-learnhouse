@@ -7,9 +7,12 @@ from pydantic import EmailStr
 from src.db.organizations import OrganizationRead
 from src.db.users import UserRead
 from src.services.email.safe_text import email_org_name, email_user_name
+# Sanar y Criar: mail greets by first name, never by the generated username.
+from src.services.email.sc_greeting import named_copy
 # Sanar y Criar: DEFAULT_LANGUAGE ("es") is the default `lang` below (was "en").
 from src.services.email.translations import DEFAULT_LANGUAGE, PLATFORM_NAME, t
 from src.services.email.utils import send_email
+from src.services.users.sc_return_path import safe_return_path
 
 logger = logging.getLogger(__name__)
 
@@ -342,21 +345,25 @@ def send_account_creation_email(
     ``brand_color``, and the footer is reduced to a "Powered by LearnHouse"
     line that ``powered_by=False`` removes. Org-less signups keep the
     LearnHouse-branded variant with the Academy footer link.
+
+    Sanar y Criar: greets by ``user.first_name``, never by username (see
+    ``named_copy``); the subject carries the name unescaped (plain text).
     """
-    safe_username = html.escape(email_user_name(user.username))
     white_label = bool(org_name)
     safe_org = html.escape(email_org_name(org_name)) if org_name else ""
 
-    heading = t(lang, "account_creation.heading", username=safe_username)
+    heading = named_copy(lang, "account_creation.heading", user.first_name)
     cta = t(lang, "account_creation.cta")
 
     if white_label:
-        subject = t(lang, "account_creation.subject_org", org_name=safe_org, username=safe_username)
+        subject = named_copy(
+            lang, "account_creation.subject_org", user.first_name, escape=False, org_name=safe_org
+        )
         body_text = t(lang, "account_creation.body_in_org", org_name=safe_org)
         footer_note = ""
         logo_html = _brand_logo_html(logo_url, org_name)
     else:
-        subject = t(lang, "account_creation.subject", username=safe_username)
+        subject = named_copy(lang, "account_creation.subject", user.first_name, escape=False)
         body_text = t(lang, "account_creation.body")
         academy_link = (
             f'<a href="{ACADEMY_URL}" '
@@ -473,13 +480,17 @@ def send_email_changed_notice(
     new_email: str,
     username: str = "",
     lang: str = DEFAULT_LANGUAGE,
+    first_name: str = "",
 ):
     """Tell the previous address that the account's email was changed, so a
-    hijacked session cannot quietly move the account to another inbox."""
-    safe_username = html.escape(email_user_name(username))
+    hijacked session cannot quietly move the account to another inbox.
+
+    Sanar y Criar: greets by ``first_name`` (``named_copy``); ``username``
+    is no longer used and stays for upstream callers.
+    """
     heading = t(lang, "email_changed.heading")
-    body_text = t(
-        lang, "email_changed.body", username=safe_username, new_email=html.escape(new_email)
+    body_text = named_copy(
+        lang, "email_changed.body", first_name, new_email=html.escape(new_email)
     )
 
     body_content = f"""
@@ -514,15 +525,16 @@ def send_password_reset_email(
     Branded to the org: its logo (or name) in the header, its color on the
     button, its name as the From display name. Platform-level resets go
     through ``send_password_reset_email_platform`` instead.
+
+    Sanar y Criar: greets by ``user.first_name``, never by username.
     """
-    safe_username = html.escape(email_user_name(user.username))
     safe_code = html.escape(generated_reset_code)
     safe_email = quote(str(email), safe='')
     safe_code_param = quote(generated_reset_code, safe='')
     reset_url = html.escape(f"{base_url}/reset?email={safe_email}&resetCode={safe_code_param}")
 
     heading = t(lang, "password_reset.heading")
-    body_text = t(lang, "password_reset.body", username=safe_username)
+    body_text = named_copy(lang, "password_reset.body", user.first_name)
     cta = t(lang, "password_reset.cta")
 
     body_content = f"""
@@ -560,14 +572,14 @@ def send_password_reset_email_platform(
     base_url: str,
     lang: str = DEFAULT_LANGUAGE,
 ):
-    safe_username = html.escape(email_user_name(user.username))
+    # Sanar y Criar: greets by first name, never by username (named_copy).
     safe_code = html.escape(generated_reset_code)
     safe_email = quote(str(email), safe='')
     safe_code_param = quote(generated_reset_code, safe='')
     reset_url = html.escape(f"{base_url}/reset?email={safe_email}&resetCode={safe_code_param}")
 
     heading = t(lang, "password_reset.heading")
-    body_text = t(lang, "password_reset.body", username=safe_username)
+    body_text = named_copy(lang, "password_reset.body", user.first_name)
     cta = t(lang, "password_reset.cta")
 
     body_content = f"""
@@ -667,6 +679,7 @@ def send_org_join_email(
     sender_name: str | None = None,
     brand_color: str | None = None,
     powered_by: bool = True,
+    first_name: str = "",
 ):
     """Greeting sent when an EXISTING account becomes a member of an organization.
 
@@ -677,11 +690,13 @@ def send_org_join_email(
 
     Always white-labeled to the org (the user is being welcomed into that
     academy, not onto LearnHouse), with the org's logo (or name) up top.
+
+    Sanar y Criar: greets by ``first_name`` (``named_copy``); ``username``
+    is no longer used and stays for upstream callers.
     """
-    safe_username = html.escape(email_user_name(username))
     safe_org_name = html.escape(email_org_name(org_name))
 
-    heading = t(lang, "org_join.heading", username=safe_username)
+    heading = named_copy(lang, "org_join.heading", first_name)
     body_text = t(lang, "org_join.body", org_name=safe_org_name)
     cta = t(lang, "org_join.cta")
 
@@ -722,6 +737,7 @@ def send_role_changed_email(
     logo_url: str | None = None,
     brand_color: str | None = None,
     powered_by: bool = True,
+    first_name: str = "",
 ):
     """
     Send an email notifying a user that their role has changed in an organization.
@@ -729,15 +745,17 @@ def send_role_changed_email(
     ``cta_url`` is the org's own landing page, on the org's host (verified
     custom domain when it has one). Without it the mail told someone their
     permissions had changed and then gave them nowhere to go.
+
+    Sanar y Criar: greets by ``first_name`` (``named_copy``); ``username``
+    is no longer used and stays for upstream callers.
     """
-    safe_username = html.escape(email_user_name(username))
     safe_org_name = html.escape(email_org_name(org_name))
     safe_role_name = html.escape(new_role_name)
 
     heading = t(lang, "role_changed.heading")
-    body_1 = t(
-        lang, "role_changed.body_1",
-        username=safe_username, org_name=safe_org_name, role=safe_role_name,
+    body_1 = named_copy(
+        lang, "role_changed.body_1", first_name,
+        org_name=safe_org_name, role=safe_role_name,
     )
     body_2 = t(lang, "role_changed.body_2")
 
@@ -785,6 +803,7 @@ def send_email_verification_email(
     logo_url: str | None = None,
     brand_color: str | None = None,
     powered_by: bool = True,
+    return_path: str | None = None,
 ):
     """
     Send email verification email with verification link.
@@ -800,23 +819,31 @@ def send_email_verification_email(
         email: Email address to send to
         base_url: Base URL for constructing the verification link
         lang: ISO 639-1 language code for email content (defaults to 'es')
+        return_path: Sanar y Criar: page to land on once verified, added to
+            the link as ``redirect`` (only a safe ``/regalo`` path)
 
     Returns:
         Boolean indicating if email was sent successfully
+
+    Sanar y Criar: greets by ``user.first_name``, never by the (generated)
+    username; without a first name it says "Hola," (``named_copy``).
     """
-    safe_username = html.escape(email_user_name(user.username))
     # Sanar y Criar: org-less mail names our platform, not LearnHouse.
     brand = html.escape(email_org_name(organization.name)) if organization else PLATFORM_NAME
     safe_token = quote(token, safe='')
     safe_user_uuid = quote(user.user_uuid, safe='')
     org_uuid = organization.org_uuid if organization else "none"
     safe_org_uuid = quote(org_uuid, safe='')
-    verification_url = html.escape(
-        f"{base_url}/verify-email?token={safe_token}&user={safe_user_uuid}&org={safe_org_uuid}"
-    )
+    verification_url = f"{base_url}/verify-email?token={safe_token}&user={safe_user_uuid}&org={safe_org_uuid}"
+    # Sanar y Criar: the web's verify page follows ``redirect`` first, so the
+    # link lands back on the gift page from any browser.
+    redirect_path = safe_return_path(return_path)
+    if redirect_path:
+        verification_url += f"&redirect={quote(redirect_path, safe='')}"
+    verification_url = html.escape(verification_url)
 
     heading = t(lang, "email_verification.heading")
-    body_text = t(lang, "email_verification.body", username=safe_username, brand=brand)
+    body_text = named_copy(lang, "email_verification.body", user.first_name, brand=brand)
     cta = t(lang, "email_verification.cta")
     copy_paste = t(lang, "email_verification.copy_paste")
 

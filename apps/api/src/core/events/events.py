@@ -107,6 +107,15 @@ def startup_app(app: FastAPI) -> Callable:
         from src.services.payments.schema import ensure_payments_indexes
         await ensure_payments_indexes()
 
+        # Sanar y Criar: newsletter columns create_all cannot add either; every
+        # query of the subscriber model needs them. Never raises. One it could
+        # not add (a busy table) is retried in the background until it is in
+        # place, instead of leaving the sign-up broken until the next start.
+        from src.services.newsletter.schema import ensure_newsletter_schema
+        from src.services.newsletter.schema import start_retry as start_newsletter_schema_retry
+        if not all((await ensure_newsletter_schema()).values()):
+            start_newsletter_schema_retry()
+
         # Sanar y Criar: every 5 minutes, reconcile open payment orders with
         # the provider (lost webhooks, closed tabs). Never raises.
         from src.services.payments.reconcile import start_scheduler as start_payments_reconcile
@@ -154,6 +163,9 @@ def shutdown_app(app: FastAPI) -> Callable:
         # Sanar y Criar: stop the payments reconciliation tick.
         from src.services.payments.reconcile import stop_scheduler as stop_payments_reconcile
         await stop_payments_reconcile()
+        # Sanar y Criar: and the newsletter column retry, if it is still running.
+        from src.services.newsletter.schema import stop_retry as stop_newsletter_schema_retry
+        await stop_newsletter_schema_retry()
         await close_database(app)
 
     return close_app

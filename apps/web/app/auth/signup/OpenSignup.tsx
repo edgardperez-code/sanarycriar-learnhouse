@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { signup, resendVerificationEmail } from '@services/auth/auth'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { signIn } from '@components/Contexts/AuthContext'
-import { getLEARNHOUSE_TOP_DOMAIN_VAL, isOnCustomDomain } from '@services/config/config'
+import { getLEARNHOUSE_TOP_DOMAIN_VAL, getUriWithOrg, isOnCustomDomain } from '@services/config/config'
 import { getErrorMessage } from '@services/utils/ts/errorMessage'
 import { useTranslation } from 'react-i18next'
 // Sanar y Criar: keep ?redirect (back to an offer or course) on the login links.
@@ -28,9 +28,13 @@ import { readSignupFields, type SignupFieldItem } from '@services/settings/org'
 import { safeInternalPath } from '@services/security/url'
 // Sanar y Criar: unverified accounts get our own "check your email" copy, and
 // the ?redirect is remembered for /verify-email (the email link has none).
-import { currentAuthRedirect } from '@components/Payments/useAuthRedirect'
+import { currentAuthRedirect, useAuthRedirect } from '@components/Payments/useAuthRedirect'
 import { rememberReturnPath } from '@components/SanarYCriar/freeAccessGate'
 import { useLearningT } from '@components/SanarYCriar/useLearningT'
+// Sanar y Criar: a sign-up for the gift page (?redirect=/regalo…) says so,
+// sends that path for the verification email and goes straight back there.
+import { regaloPathFrom, saveSignupMark } from '@components/SanarYCriar/regalo'
+import RegaloAuthBanner from '@components/SanarYCriar/RegaloAuthBanner'
 
 const validate = (values: any, t: any, customFields: SignupFieldItem[]) => {
   const errors: any = {}
@@ -50,13 +54,13 @@ const validate = (values: any, t: any, customFields: SignupFieldItem[]) => {
     }
   }
 
-  if (!values.username) {
-    errors.username = t('validation.required')
-  } else if (values.username.length < 4) {
-    errors.username = t('validation.username_min_length')
+  // Sanar y Criar: no username or bio on this form (client request,
+  // 2026-11-05); the API generates the username (services/users/sc_username.py).
+  // «Nombre» is required instead: the platform greets her by it, never by
+  // that username. Spaces alone are no name.
+  if (!values.first_name?.trim()) {
+    errors.first_name = t('validation.required')
   }
-
-  // Bio is optional - no validation required
 
   // The org's admin-defined fields. Client-side only; the server revalidates.
   const customFieldErrors = validateCustomFields(customFields, values.custom_fields, t)
@@ -82,7 +86,9 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const contextOrg = useOrg() as any
   const org = (contextOrg && (contextOrg.id || contextOrg.slug)) ? contextOrg : propOrg
-  const _router = useRouter()
+  const router = useRouter()
+  // Sanar y Criar: the canonical /regalo path of ?redirect, or null.
+  const regaloPath = regaloPathFrom(useAuthRedirect())
   const [error, setError] = React.useState('')
   const [message, setMessage] = React.useState<{ email_verified: boolean } | null>(null)
   const [resendState, setResendState] = React.useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
@@ -110,8 +116,7 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
       org_id: org?.id,
       email: '',
       password: '',
-      username: '',
-      bio: '',
+      // Sanar y Criar: no username / bio (see validate); the API generates the username.
       first_name: '',
       last_name: '',
       custom_fields: initialCustomFieldValues(customFields),
@@ -123,14 +128,27 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
       setError('')
       setMessage(null)
       setIsSubmitting(true)
-      track(AnalyticsEvent.SignupSubmitted, { invite_code_present: false, has_bio: !!values.bio })
+      // Sanar y Criar: no bio field any more, so no has_bio either.
+      track(AnalyticsEvent.SignupSubmitted, { invite_code_present: false })
       try {
-        let res = await signup(values)
+        // Sanar y Criar: the first name goes trimmed (validate requires one).
+        const body = { ...values, first_name: values.first_name.trim() }
+        // Sanar y Criar: the verification email of a /regalo sign-up links back there.
+        let res = await signup(regaloPath ? { ...body, return_path: regaloPath } : body)
         let message = await res.json().catch(() => ({}))
         if (res.status == 200) {
           track(AnalyticsEvent.SignupSucceeded, { email_verified: message.email_verified })
           if (message.email_verified === false) rememberReturnPath(currentAuthRedirect())
           setMessage(message)
+          // Sanar y Criar: the new account is not signed in yet (the email
+          // must be verified first), so /regalo learns from a sessionStorage
+          // mark that this tab just created it, and with which email, and
+          // shows the result with "we sent you an email". Replace: going
+          // back should not land on the filled-in form again.
+          if (regaloPath) {
+            saveSignupMark({ path: regaloPath, email: values.email, verified: message.email_verified === true })
+            router.replace(getUriWithOrg(org?.slug, regaloPath))
+          }
         } else {
           // Surface the backend's actual error detail for ANY non-2xx (incl. 409
           // already-exists, 422 validation, 503 email-service-down) instead of
@@ -188,6 +206,8 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
       {/* Header */}
       <h1 className="text-[28px] md:text-[32px] font-black text-black tracking-tight leading-tight">{t('auth.create_account')}</h1>
       <p className="mt-2 text-black/45 text-[15px] font-medium">{t('auth.fill_in_details')}</p>
+      {/* Sanar y Criar: what the account is for, when it comes from the test or the free ebook. */}
+      <RegaloAuthBanner path={regaloPath} mode="signup" />
 
       <div className="mt-8">
         {/* Error/Success Messages */}
@@ -220,7 +240,8 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
                   setResendState('sending')
                   // org?.id is undefined on the org-less apex; that's fine, the
                   // backend resends by email without an org.
-                  const res = await resendVerificationEmail(formik.values.email, org?.id)
+                  // Sanar y Criar: a /regalo sign-up keeps its return path.
+                  const res = await resendVerificationEmail(formik.values.email, org?.id, regaloPath)
                   setResendState(res.success ? 'sent' : 'error')
                 }}
                 className="text-xs font-semibold text-green-800 hover:underline disabled:opacity-50 text-start w-fit"
@@ -290,12 +311,14 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
                   </span>
                 )}
               </div>
+              {/* Sanar y Criar: required (see validate). */}
               <Form.Control asChild>
                 <input
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   value={formik.values.first_name}
                   type="text"
+                  required
                   className="box-border w-full bg-neutral-50 text-black rounded-lg px-4 border border-neutral-200 inline-flex h-[44px] appearance-none items-center focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-400 transition-all placeholder:text-black/25 text-sm"
                 />
               </Form.Control>
@@ -346,42 +369,7 @@ function OpenSignUpComponent({ org: propOrg }: OpenSignUpComponentProps = {}) {
             <PasswordStrengthIndicator password={formik.values.password} />
           </FormField>
 
-          <FormField name="username">
-            <div className="flex items-center space-x-2 mb-1.5">
-              <Form.Label className="grow text-[13px] font-semibold text-black/70">{t('user.username')}</Form.Label>
-              {formik.touched.username && formik.errors.username && (
-                <span className="text-red-500 text-xs flex items-center space-x-1">
-                  <Info size={11} />
-                  <span>{formik.errors.username}</span>
-                </span>
-              )}
-            </div>
-            <Form.Control asChild>
-              <input
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.username}
-                type="text"
-                required
-                className="box-border w-full bg-neutral-50 text-black rounded-lg px-4 border border-neutral-200 inline-flex h-[44px] appearance-none items-center focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-400 transition-all placeholder:text-black/25 text-sm"
-              />
-            </Form.Control>
-          </FormField>
-
-          <FormField name="bio">
-            <div className="flex items-center space-x-2 mb-1.5">
-              <Form.Label className="grow text-[13px] font-semibold text-black/70">{`${t('user.bio')} (${t('common.optional')})`}</Form.Label>
-            </div>
-            <Form.Control asChild>
-              <textarea
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                value={formik.values.bio}
-                placeholder={t('user.bio_placeholder')}
-                className="box-border w-full bg-neutral-50 text-black rounded-lg px-4 py-3 border border-neutral-200 appearance-none focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-neutral-400 transition-all placeholder:text-black/25 text-sm resize-none min-h-[80px]"
-              />
-            </Form.Control>
-          </FormField>
+          {/* Sanar y Criar: the «Nombre de usuario» and «Biografía» fields were here. */}
 
           <CustomSignupFields fields={customFields} formik={formik} />
 

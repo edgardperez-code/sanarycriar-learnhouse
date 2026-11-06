@@ -77,8 +77,9 @@ class TestNewsletterCors:
 
     async def test_lookalike_paths_stay_closed(self):
         async with await _client() as client:
+            # ``/subscribe/me`` is the platform's own (same origin, with a session).
             for path in (SUBSCRIBE + "/", SUBSCRIBE + "x", "/api/v1/newsletter/abc/subscribe",
-                         "/x" + SUBSCRIBE):
+                         "/x" + SUBSCRIBE, SUBSCRIBE + "/me"):
                 preflight = await client.options(path, headers=_preflight_headers("POST"))
                 assert preflight.status_code == 400, path
 

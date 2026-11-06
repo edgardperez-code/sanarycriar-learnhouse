@@ -24,6 +24,7 @@ from src.services.email.utils import (
     get_trusted_base_url_from_request,
 )
 from src.services.security.rate_limiting import check_verification_resend_rate_limit
+from src.services.users.sc_return_path import keep_return_path
 from src.services.webhooks.dispatch import dispatch_webhooks
 
 
@@ -70,6 +71,7 @@ async def send_verification_email(
     db_session: AsyncSession,
     user: User,
     org_id: int | None = None,
+    return_path: str | None = None,
 ) -> str:
     """
     Generate a verification token, store in Redis, and send verification email.
@@ -79,6 +81,9 @@ async def send_verification_email(
         db_session: Database session
         user: User to send verification email to
         org_id: Organization ID (None for platform signups without org)
+        return_path: Sanar y Criar: page the link sends the user back to once
+            verified (``/regalo?…`` only; see ``sc_return_path``). Without
+            one, the path kept by an earlier mail is used.
 
     Returns:
         Success message
@@ -139,6 +144,10 @@ async def send_verification_email(
     redis_key = f"email_verification:{user.user_uuid}:org:{org_uuid}:token:{token}"
     r.setex(redis_key, TOKEN_TTL_SECONDS, json.dumps(verification_data))
 
+    # Sanar y Criar: kept per user as long as the newest link lives, so the
+    # link works from any browser. Never raises.
+    return_path = keep_return_path(r, user.user_uuid, return_path, TOKEN_TTL_SECONDS)
+
     # Convert to Read model for email function
     user_read = UserRead.model_validate(user)
 
@@ -183,6 +192,7 @@ async def send_verification_email(
         organization=org_read,
         email=user.email,
         base_url=base_url,
+        return_path=return_path,
         **branding_kwargs,
     )
 
@@ -288,6 +298,14 @@ async def verify_email_token(
 
     bump_access_version()
 
+    # Sanar y Criar: /users/session is cached per user for 10 minutes and
+    # carries email_verified, which the gift page (/regalo) reads. Drop the
+    # copy taken while the address was unverified, so the page and the
+    # session the link signs in see it verified right away.
+    from src.routers.users import _invalidate_session_cache
+
+    _invalidate_session_cache(user.id)
+
     # Dispatch webhook; resolve org_id from org_uuid
     if org_uuid != NO_ORG_UUID:
         org_statement = select(Organization).where(Organization.org_uuid == org_uuid)
@@ -310,6 +328,7 @@ async def resend_verification_email(
     db_session: AsyncSession,
     email: EmailStr,
     org_id: int | None = None,
+    return_path: str | None = None,
 ) -> str:
     """
     Resend verification email with rate limiting.
@@ -319,6 +338,8 @@ async def resend_verification_email(
         db_session: Database session
         email: User email
         org_id: Organization ID (None for platform signups without org)
+        return_path: Sanar y Criar: a safe one replaces the page the signup
+            kept; otherwise the kept one is used again.
 
     Returns:
         Success message
@@ -344,7 +365,7 @@ async def resend_verification_email(
     user = (await db_session.execute(statement)).scalars().first()
 
     if user and not user.email_verified:
-        await send_verification_email(request, db_session, user, org_id)
+        await send_verification_email(request, db_session, user, org_id, return_path=return_path)
 
     return GENERIC_RESPONSE
 

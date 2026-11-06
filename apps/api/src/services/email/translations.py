@@ -1161,6 +1161,41 @@ for _lang, _bundle in EMAIL_TRANSLATIONS.items():
     if _lang in ACCOUNT_CREATION_FOOTER:
         _bundle["account_creation.footer"] = ACCOUNT_CREATION_FOOTER[_lang]
 
+# Sanar y Criar: mail greets the account holder by first name, never by
+# username (sign-up generates it, services/users/sc_username.py). The
+# ``{username}`` placeholder of the copy above now carries the first name
+# (``named_copy`` in email/sc_greeting.py); an account without one gets the
+# ``<key>_noname`` variant below, the same sentence with no name. Spanish and
+# English only: any other locale falls back to Spanish, as ``t()`` does for
+# every key it lacks.
+NAMELESS_COPY: Final[dict[str, dict[str, str]]] = {
+    "es": {
+        "account_creation.subject_noname": "¡Te damos la bienvenida a Sanar y Criar!",
+        "account_creation.heading_noname": "¡Hola!",
+        "account_creation.subject_org_noname": "¡Te damos la bienvenida a {org_name}!",
+        "email_changed.body_noname": "Hola, el correo de tu cuenta se cambió a {new_email}. Si hiciste este cambio, no tienes que hacer nada más.",
+        "password_reset.body_noname": "Hola, recibimos una solicitud para restablecer tu contraseña. Usa el código de abajo o haz clic en el botón.",
+        "org_join.heading_noname": "¡Ya estás dentro!",
+        "role_changed.body_1_noname": "Hola, tu rol en <strong>{org_name}</strong> cambió a <strong>{role}</strong>.",
+        "email_verification.body_noname": "Hola, ¡te damos la bienvenida a {brand}! Haz clic en el botón de abajo para verificar tu correo y activar tu cuenta.",
+        "magic_login.body_noname": "Hola, haz clic en el botón de abajo para iniciar sesión. Este enlace funciona una sola vez y vence en 15 minutos. Si no lo pediste, puedes ignorar este correo.",
+    },
+    "en": {
+        "account_creation.subject_noname": "Welcome to Sanar y Criar!",
+        "account_creation.heading_noname": "Welcome!",
+        "account_creation.subject_org_noname": "Welcome to {org_name}!",
+        "email_changed.body_noname": "Hi, the email address on your account was changed to {new_email}. If you made this change, no action is needed.",
+        "password_reset.body_noname": "Hi, we received a request to reset your password. Use the code below or click the button.",
+        "org_join.heading_noname": "You're in!",
+        "role_changed.body_1_noname": "Hi, your role in <strong>{org_name}</strong> has been changed to <strong>{role}</strong>.",
+        "email_verification.body_noname": "Hi, welcome to {brand}! Click the button below to verify your email address and activate your account.",
+        "magic_login.body_noname": "Hi, click the button below to sign in. This link works once and expires in 15 minutes. If you didn't request it, you can safely ignore this email.",
+    },
+}
+
+for _lang, _keys in NAMELESS_COPY.items():
+    EMAIL_TRANSLATIONS[_lang].update(_keys)
+
 
 def normalize_language(lang: str | None) -> str:
     """Return a supported locale code, falling back to DEFAULT_LANGUAGE."""

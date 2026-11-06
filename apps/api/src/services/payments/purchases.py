@@ -41,6 +41,7 @@ from src.db.organizations import Organization
 from src.db.payments.payments import PaymentsConfig, PaymentsEnrollment, PaymentsOffer, PaymentsOrder
 from src.db.payments.purchases import PaymentsPurchase, PaymentsPurchaseItem
 from src.db.users import AnonymousUser, APITokenUser, SuperadminAPITokenUser, User
+from src.services.email.sc_greeting import email_first_name
 from src.services.payments import purchase_emails
 from src.services.payments.access import ACCESS_STATUSES, get_course_access
 from src.services.payments.checkout import (
@@ -266,6 +267,13 @@ def display_name(user) -> str:
         return ""
     full = " ".join(p for p in [(user.first_name or "").strip(), (user.last_name or "").strip()] if p)
     return full or (user.username or "")
+
+
+def greeting_name(user) -> str:
+    """The first name the buyer's emails greet her by (link-free), or "" and
+    they say just "Hola". Never the username: sign-up generates it
+    (services/users/sc_username.py) and it means nothing to her."""
+    return email_first_name(user.first_name if user is not None else None)
 
 
 def whatsapp_message(code: str, amount_ves, amount, names: list[str], buyer: str) -> str:
@@ -1511,7 +1519,7 @@ async def _send_created_emails(db_session: AsyncSession, request: Optional[Reque
         if ctx.buyer is not None and ctx.buyer.email:
             subject, document = purchase_emails.render_created(
                 branding=ctx.branding,
-                first_name=(ctx.buyer.first_name or ctx.buyer.username or "").strip(),
+                first_name=greeting_name(ctx.buyer),
                 code=purchase.code,
                 payment=details,
                 whatsapp_url=url,
@@ -1571,7 +1579,7 @@ async def _send_paid_email_once(db_session: AsyncSession, request: Optional[Requ
         cta = resources[0][1] if resources else f"{ctx.platform}/store/purchases/{purchase.purchase_uuid}"
         subject, document = purchase_emails.render_paid(
             branding=ctx.branding,
-            first_name=(ctx.buyer.first_name or ctx.buyer.username or "").strip(),
+            first_name=greeting_name(ctx.buyer),
             code=purchase.code,
             resources=resources,
             cta_url=cta,
@@ -1599,7 +1607,7 @@ async def _send_rejected_email(db_session: AsyncSession, request: Optional[Reque
         number = ctx.settings.get("whatsapp") or (purchase.payment_details or {}).get("whatsapp") or None
         subject, document = purchase_emails.render_rejected(
             branding=ctx.branding,
-            first_name=(ctx.buyer.first_name or ctx.buyer.username or "").strip(),
+            first_name=greeting_name(ctx.buyer),
             code=purchase.code,
             reason=purchase.reject_reason or "",
             whatsapp_number=number,

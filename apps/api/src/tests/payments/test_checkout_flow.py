@@ -18,6 +18,7 @@ from src.db.payments.payments import (
 from src.db.trail_runs import TrailRun
 from src.db.trails import Trail
 from src.db.user_organizations import UserOrganization
+from src.db.users import User
 from src.tests.payments.conftest import ORG_ID, REDIRECT, start_checkout
 from src.tests.payments.fake_paypal import (
     capture_completed_event,
@@ -490,3 +491,27 @@ class TestRoutesAndOffers:
         assert transactions["has_more"] is False and transactions["data"][0]["paid"] is True
         assert (await client.get(f"{BASE}/stripe/subscriptions")).json() == {"data": []}
         assert (await client.post(f"{BASE}/billing/portal")).status_code == 404
+
+
+class TestPurchaseEmailGreeting:
+    """The "ya tienes acceso" email greets the buyer by first name; without
+    one it says just "¡Gracias por tu compra!", never the username sign-up
+    generated for her."""
+
+    @pytest.mark.parametrize("first_name,heading", [
+        ("María", ">¡Gracias por tu compra, María!</h1>"),
+        ("", ">¡Gracias por tu compra!</h1>"),
+    ])
+    async def test_greeting(self, client, current, db, outsider, offer, fake_paypal, sent_emails, first_name,
+                            heading):
+        row = await db.get(User, outsider.id)
+        row.first_name, row.username = first_name, "outsider583735"
+        db.add(row)
+        await db.commit()
+        data, _ = await _checkout_and_approve(client, current, outsider, offer, fake_paypal)
+        response = await client.post(f"{BASE}/orders/{data['order_uuid']}/capture")
+        assert response.status_code == 200, response.text
+        assert sent_emails.call_count == 1
+        body = sent_emails.call_args.kwargs["body"]
+        assert heading in body
+        assert "outsider583735" not in body

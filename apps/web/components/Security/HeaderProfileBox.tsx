@@ -26,6 +26,8 @@ import { signOut } from '@components/Contexts/AuthContext'
 import { useTranslation } from 'react-i18next'
 import { useLHAnalytics, AnalyticsEvent } from '@services/analytics'
 import { getMenuColorClasses } from '@services/utils/ts/colorUtils'
+// Sanar y Criar: the user's first name, not the username sign-up generates.
+import { ownDisplayName } from '@components/SanarYCriar/ownName'
 
 interface RoleInfo {
   name: string;
@@ -191,7 +193,8 @@ export const HeaderProfileBox = ({ primaryColor = '', variant = 'desktop' }: { p
                   <UserAvatar border="border-2" rounded="rounded-lg" width={30} shadow={primaryColor ? '' : undefined} />
                   <div className="flex flex-col items-start space-y-0">
                     <div className="flex items-center space-x-2">
-                      <p className={`text-sm font-semibold capitalize ${colors.profileName}`}>{session.data.user.username}</p>
+                      {/* Sanar y Criar: her first name, not the generated username. */}
+                      <p className={`text-sm font-semibold capitalize ${colors.profileName}`}>{ownDisplayName(session.data.user)}</p>
                       {/* Sanar y Criar: the label is translated, so compare with the
                           translated learner role (learners see no badge). */}
                       {userRoleInfo && userRoleInfo.name !== t('roles.role_user') && (
@@ -231,7 +234,8 @@ export const HeaderProfileBox = ({ primaryColor = '', variant = 'desktop' }: { p
                   <div className="flex items-center space-x-2">
                     <UserAvatar border="border-2" rounded="rounded-full" width={24} />
                     <div>
-                      <p className="text-sm font-medium">{session.data.user.username}</p>
+                      {/* Sanar y Criar: her first name, not the generated username. */}
+                      <p className="text-sm font-medium">{ownDisplayName(session.data.user)}</p>
                       <p className="text-xs text-gray-500 capitalize">{session.data.user.email}</p>
                     </div>
                   </div>

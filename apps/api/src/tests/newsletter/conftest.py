@@ -54,8 +54,8 @@ class FakeResend:
         self.remove_error: Exception | None = None
         self._next = 0
 
-    def create_contact(self, api_key, email, segment_id):
-        self.calls.append(("create", api_key, email, segment_id))
+    def create_contact(self, api_key, email, segment_id, first_name=None):
+        self.calls.append(("create", api_key, email, segment_id, first_name))
         if self.create_error is not None:
             raise self.create_error
         self._next += 1
@@ -133,3 +133,36 @@ async def subscribe(client, email, **extra):
     response = await client.post(f"{BASE}/subscribe", json=payload)
     await resend_sync.wait_for_background()
     return response
+
+
+# First names that carry a link the first version of the check let through
+# (verification F9). Each family also comes bare, without the ":" or the "/x"
+# that would give it away on their own.
+HIDDEN_LINK_NAMES = [
+    # Domains whose TLD contains_url does not list.
+    pytest.param("Ana, tu pago fallo: entra a pago-sanarycriar.lat", id="lat"),
+    pytest.param("Ana, tu pago fallo: entra a pago-sanarycriar.mx", id="mx"),
+    pytest.param("Ana, tu pago fallo: entra a pago-sanarycriar.ve", id="ve"),
+    pytest.param("Ana, tu pago fallo: entra a pago-sanarycriar.page", id="page"),
+    pytest.param("Ana entra a pago-sanarycriar.lat", id="lat-bare"),
+    pytest.param("Ana entra a pago-sanarycriar.mx", id="mx-bare"),
+    pytest.param("Ana entra a pago-sanarycriar.ve", id="ve-bare"),
+    pytest.param("Ana entra a pago-sanarycriar.page", id="page-bare"),
+    # Full stops IDNA reads as dots: fullwidth, ideographic, halfwidth ideographic.
+    pytest.param("pago-sanarycriar\uff0ecom/x", id="fullwidth-stop"),
+    pytest.param("pago-sanarycriar\u3002com/x", id="ideographic-stop"),
+    pytest.param("pago-sanarycriar\uff61com/x", id="halfwidth-ideographic-stop"),
+    pytest.param("pago-sanarycriar\uff0elat", id="fullwidth-stop-bare"),
+    pytest.param("pago-sanarycriar\u3002lat", id="ideographic-stop-bare"),
+    pytest.param("pago-sanarycriar\uff61lat", id="halfwidth-ideographic-stop-bare"),
+    # Invisible default-ignorable marks (category Mn) right after the dot.
+    pytest.param("pago-sanarycriar.\ufe0fcom/x", id="vs16"),
+    pytest.param("pago-sanarycriar.\u034fcom/x", id="cgj"),
+    pytest.param("pago-sanarycriar.\u034flat", id="cgj-bare"),
+    pytest.param("pago-sanarycriar.\ufe00lat", id="vs1-bare"),
+    pytest.param("pago-sanarycriar.\ufe0flat", id="vs16-bare"),
+    pytest.param("pago-sanarycriar.\u180blat", id="mongolian-fvs1-bare"),
+    pytest.param("pago-sanarycriar.\u180dlat", id="mongolian-fvs3-bare"),
+    pytest.param("pago-sanarycriar.\U000e0100lat", id="vs17-bare"),
+    pytest.param("pago-sanarycriar.\U000e01eflat", id="vs256-bare"),
+]

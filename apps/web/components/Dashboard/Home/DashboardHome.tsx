@@ -22,6 +22,8 @@ import RecentCourses from './RecentCourses'
 import RecentMembers from './RecentMembers'
 import ContentOverview from './ContentOverview'
 import UsageOverview from './UsageOverview'
+// Sanar y Criar: the user's first name, not the username sign-up generates.
+import { ownDisplayName } from '@components/SanarYCriar/ownName'
 
 const PLAN_COLORS: Record<string, { bg: string; text: string }> = {
   free: { bg: 'bg-gray-100', text: 'text-gray-600' },
@@ -38,7 +40,8 @@ export default function DashboardHome() {
 
   const token = session?.data?.tokens?.access_token
   const orgId = org?.id
-  const username = session?.data?.user?.username || ''
+  // Sanar y Criar: "Hola de nuevo, María", not the generated username.
+  const username = ownDisplayName(session?.data?.user)
 
   // TanStack Query will dedupe with UsageOverview's identical call via shared queryKey
   const { data: usageData } = useQuery<OrgUsageResponse>({
