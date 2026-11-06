@@ -1,10 +1,12 @@
 'use client'
-// Sanar y Criar: /dash/orders ("Pedidos"). Lists the Pago Móvil orders by
-// status ("Por confirmar" first), with a search by code, e-mail, name or bank
-// reference, 25 per page, refreshed every 30 s while the tab is visible. A row
-// opens the order's detail, where she marks it as paid, rejects or voids it.
-// ?code=SYC-XXXXXX (the link of the new-order e-mail and of the charges) looks
-// for that code among all orders and opens it.
+// Sanar y Criar: /dash/orders ("Pedidos"). Lists the orders paid by hand
+// (Pago Móvil, bank transfer, Zelle, Binance) by status ("Por confirmar"
+// first), with a search by code, e-mail, name or reference, 25 per page,
+// refreshed every 30 s while the tab is visible. Each row shows what the buyer
+// pays in its own currency and the method. A row opens the order's detail,
+// where she marks it as paid, rejects or voids it. ?code=SYC-XXXXXX (the link
+// of the new-order e-mail and of the charges) looks for that code among all
+// orders and opens it.
 import React, { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -24,18 +26,19 @@ import {
   ORDERS_PAGE_SIZE,
   OrderTab,
   PurchaseAdmin,
+  anyManualMethodReady,
   cleanSearch,
   customerName,
-  formatBs,
   formatDateTime,
-  formatUsd,
+  formatPurchasePay,
   pageRange,
   parsePurchaseCode,
   productSummary,
+  usdLine,
 } from './ordersForm'
-import { ExpiresBadge, StatusChip, useNow } from './OrderBits'
+import { ExpiresBadge, MethodChip, StatusChip, useNow } from './OrderBits'
 import OrderDetailDialog from './OrderDetailDialog'
-import { isForbidden, useManualSettings, usePurchasesList } from './useOrdersApi'
+import { isForbidden, useManualMethods, useManualSettings, usePurchasesList } from './useOrdersApi'
 import { OrdersTranslate, ordersLabel, useOrdersT } from './useOrdersT'
 
 const SEARCH_DEBOUNCE_MS = 300
@@ -93,6 +96,11 @@ export default function OrdersPage({ orgslug }: { orgslug: string }) {
     offset: filters.offset,
   })
   const { data: manual } = useManualSettings()
+  const { data: methods, isPending: methodsPending } = useManualMethods()
+  // The cart offers no manual method at all (Pago Móvil and the others off or
+  // incomplete). Waits for both answers; a failed /manual/methods counts as
+  // "the others off".
+  const noneOn = !!manual && !methodsPending && !anyManualMethodReady(manual, methods)
 
   const items = data?.items ?? []
   const counts = data?.counts ?? EMPTY_COUNTS
@@ -275,7 +283,7 @@ export default function OrdersPage({ orgslug }: { orgslug: string }) {
         className="flex-1 overflow-y-auto"
       >
         <div className="ms-4 me-4 sm:ms-10 sm:me-10 pb-10 space-y-4">
-          {manual && manual.enabled === false && (
+          {noneOn && (
             <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 sm:flex-row sm:items-center sm:justify-between">
               <p className="flex items-start gap-2">
                 <AlertTriangle size={16} className="mt-0.5 shrink-0" aria-hidden />
@@ -392,6 +400,7 @@ type RowProps = {
 
 function OrderRow({ item, now, lng, ot, onOpen }: RowProps) {
   const name = customerName(item.customer)
+  const usd = usdLine(item)
   return (
     <TableRow className="cursor-pointer hover:bg-[#FFFCF9]" onClick={() => onOpen(item)}>
       <TableCell className="align-top">
@@ -420,8 +429,9 @@ function OrderRow({ item, now, lng, ot, onOpen }: RowProps) {
         <Products item={item} ot={ot} />
       </TableCell>
       <TableCell className="whitespace-nowrap text-end align-top">
-        <p className="text-base font-semibold text-[#190933]">{formatBs(item.amount_ves)}</p>
-        <p className="text-xs text-gray-500">{formatUsd(item.amount)}</p>
+        <p className="text-base font-semibold text-[#190933]">{formatPurchasePay(item)}</p>
+        {usd && <p className="text-xs text-gray-500">{usd}</p>}
+        <MethodChip method={item.method} provider={item.provider} ot={ot} className="mt-1" />
       </TableCell>
       <TableCell className="align-top">
         <div className="flex flex-col items-start gap-1">
@@ -436,6 +446,7 @@ function OrderRow({ item, now, lng, ot, onOpen }: RowProps) {
 // A button holds phrasing content only, so the card is built from spans.
 function OrderCard({ item, now, lng, ot, onOpen }: RowProps) {
   const name = customerName(item.customer)
+  const usd = usdLine(item)
   return (
     <button
       type="button"
@@ -456,9 +467,10 @@ function OrderCard({ item, now, lng, ot, onOpen }: RowProps) {
         <Products item={item} ot={ot} />
       </span>
       <span className="mt-2 flex items-end justify-between gap-3">
-        <span className="block">
-          <span className="block text-lg font-bold leading-tight tracking-tight text-[#190933]">{formatBs(item.amount_ves)}</span>
-          <span className="block text-xs text-gray-500">{formatUsd(item.amount)}</span>
+        <span className="block min-w-0">
+          <span className="block text-lg font-bold leading-tight tracking-tight text-[#190933]">{formatPurchasePay(item)}</span>
+          {usd && <span className="block text-xs text-gray-500">{usd}</span>}
+          <MethodChip method={item.method} provider={item.provider} ot={ot} className="mt-1" />
         </span>
         <span className="flex flex-col items-end gap-0.5 text-end">
           {item.status === 'pending' && <ExpiresBadge expiresAt={item.expires_at} now={now} ot={ot} />}

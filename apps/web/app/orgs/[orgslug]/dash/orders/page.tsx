@@ -1,5 +1,6 @@
 'use client'
-// Sanar y Criar: "Pedidos", the Pago Móvil orders of the cart. Behind the
+// Sanar y Criar: "Pedidos", the cart orders paid by hand (Pago Móvil, bank
+// transfer, Zelle, Binance). Behind the
 // payments feature like the rest of Pagos; the API enforces the org-admin
 // permission. Accepts ?code=SYC-XXXXXX to open that order.
 import React, { Suspense, use } from 'react'

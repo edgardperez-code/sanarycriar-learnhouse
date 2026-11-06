@@ -1,12 +1,18 @@
 'use client'
-// Sanar y Criar: "Pedidos con Pago Móvil" in Mis compras (contract §D.6).
-// Renders nothing when the buyer has no orders.
+// Sanar y Criar: the cart orders in Mis compras (contract §D.6), each with
+// what she pays in its method's currency and the method
+// (contrato-pagos-manuales.md §A.6). Renders nothing when the buyer has no
+// orders.
 import React from 'react'
 import Link from 'next/link'
-import { ArrowRight, CalendarDays, Clock, Smartphone } from 'lucide-react'
+import { ArrowRight, CalendarDays, Clock, ReceiptText } from 'lucide-react'
 import { getUriWithOrg } from '@services/config/config'
-import { formatBs, formatCaracasDateTime, formatUsd, sortPurchasesPendingFirst } from '@/lib/sc-cart'
+import { methodLabel } from '@components/Payments/commerce'
+import { useScT } from '@components/Payments/useScT'
+import { formatCaracasDateTime, sortPurchasesPendingFirst } from '@/lib/sc-cart'
+import { MethodIcon } from './MethodIcon'
 import { PurchaseStatusChip } from './PurchaseStatusChip'
+import { payAmountText, payEquivalent, purchasePay } from './payMethods'
 import { useCartT } from './useCartT'
 import type { Purchase } from './types'
 
@@ -14,9 +20,12 @@ const SHOWN_NAMES = 2
 
 function PurchaseCard({ purchase, orgslug }: { purchase: Purchase; orgslug: string }) {
   const { ct, lng } = useCartT()
+  const { sc } = useScT()
   const names = (purchase.items ?? []).map((i) => i.name).filter(Boolean)
   const extra = names.length - SHOWN_NAMES
   const pending = purchase.status === 'pending'
+  const pay = purchasePay(purchase)
+  const equivalent = payEquivalent(pay, purchase.amount, ct)
 
   return (
     <li className="bg-white rounded-[20px] nice-shadow overflow-hidden">
@@ -32,11 +41,17 @@ function PurchaseCard({ purchase, orgslug }: { purchase: Purchase; orgslug: stri
         </p>
 
         <p className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-black text-lg text-[#190933] tabular-nums leading-tight">{formatBs(purchase.amount_ves)}</span>
-          <span className="text-xs text-[#6D6485] tabular-nums">{formatUsd(purchase.amount)}</span>
+          <span className="font-black text-lg text-[#190933] tabular-nums leading-tight">
+            {payAmountText(pay, purchase.amount)}
+          </span>
+          {equivalent && <span className="text-xs text-[#6D6485] tabular-nums">{equivalent}</span>}
         </p>
 
         <div className="text-xs text-[#6D6485] space-y-1">
+          <p className="flex items-center gap-1.5 font-semibold text-[#584F72]">
+            <MethodIcon method={pay.method} size={12} className="shrink-0" />
+            {methodLabel(pay.method, sc)}
+          </p>
           {purchase.created_at && (
             <p className="flex items-center gap-1.5">
               <CalendarDays size={12} className="shrink-0" aria-hidden="true" />
@@ -70,13 +85,13 @@ export function MyPurchasesSection({ purchases, orgslug }: { purchases: Purchase
   const sorted = sortPurchasesPendingFirst(purchases)
 
   return (
-    <section aria-labelledby="sc-pago-movil-orders" className="space-y-3">
+    <section aria-labelledby="sc-cart-orders" className="space-y-3">
       <div className="flex items-center gap-3 px-1">
         <div className="w-9 h-9 rounded-xl bg-[#EEEDFF] flex items-center justify-center shrink-0">
-          <Smartphone size={16} className="text-[#6559CA]" aria-hidden="true" />
+          <ReceiptText size={16} className="text-[#6559CA]" aria-hidden="true" />
         </div>
         <div className="min-w-0">
-          <h2 id="sc-pago-movil-orders" className="font-bold text-[#190933]">{ct('account.title')}</h2>
+          <h2 id="sc-cart-orders" className="font-bold text-[#190933]">{ct('account.title')}</h2>
           <p className="text-xs text-[#6D6485]">{ct('account.subtitle')}</p>
         </div>
       </div>

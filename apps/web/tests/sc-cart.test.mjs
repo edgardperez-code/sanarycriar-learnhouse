@@ -1,6 +1,8 @@
 // Sanar y Criar: the cart kept in the browser (lib/sc-cart.ts), the money and
-// date formatting of the cart and order pages, and the sc_cart strings.
-// Contract: carrito-contrato.md §D.1, §D.8. All fixtures are synthetic.
+// date formatting of the cart and order pages, the manual payment methods
+// (Pago Móvil, transferencia, Zelle, Binance) and the sc_cart strings.
+// Contract: carrito-contrato.md §D.1, §D.8; contrato-pagos-manuales.md §0,
+// §A.4, §A.6. All fixtures are synthetic.
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import fs from 'node:fs'
@@ -10,6 +12,7 @@ const {
   CART_MAX_ITEMS,
   CART_EVENT,
   PURCHASE_STATUSES,
+  USDT_NETWORK_LABELS,
   cartStorageKey,
   isValidOfferUuid,
   readCart,
@@ -22,9 +25,21 @@ const {
   formatAmount,
   formatUsd,
   formatBs,
+  formatUsdt,
+  formatPayAmount,
   formatRate,
   amountForCopy,
+  amountForCopyIn,
   digitsOnly,
+  formatAccountNumber,
+  usPhoneDigits,
+  usdtNetworkLabel,
+  joinWithOr,
+  quoteMethods,
+  isMethodUsable,
+  pickMethod,
+  readCartMethod,
+  saveCartMethod,
   formatWhatsappNumber,
   whatsappChatUrl,
   safeWhatsappUrl,
@@ -36,6 +51,9 @@ const {
   isPlausiblePurchaseUuid,
 } = await import('../lib/sc-cart.ts')
 const { apiMessage, errorList, CartApiError } = await import('../components/Store/Cart/types.ts')
+const { cartMethods, knownMethods, purchasePay, payAmountText, payEquivalent } = await import(
+  '../components/Store/Cart/payMethods.ts'
+)
 
 class FakeStorage {
   constructor() {
@@ -283,6 +301,240 @@ describe('money (es-VE, contract §0.8)', () => {
   })
 })
 
+describe('manual methods: the amount in each currency (§0)', () => {
+  test('Bs., US$ and USDT', () => {
+    expect(formatUsdt(40)).toBe('40,00 USDT')
+    expect(formatUsdt(1234.5)).toBe('1.234,50 USDT')
+    expect(formatUsdt(null)).toBe('')
+    expect(formatPayAmount(35492.08, 'VES')).toBe('Bs. 35.492,08')
+    expect(formatPayAmount(40, 'USD')).toBe('US$ 40,00')
+    expect(formatPayAmount(40, 'USDT')).toBe('40,00 USDT')
+    expect(formatPayAmount(40, ' usdt ')).toBe('40,00 USDT')
+    expect(formatPayAmount(40, 'EUR')).toBe('')
+    expect(formatPayAmount(40, null)).toBe('')
+    expect(formatPayAmount(null, 'USD')).toBe('')
+  })
+
+  test('"Copiar": bolívares with a comma, dollars and USDT with a dot (US apps read it that way)', () => {
+    expect(amountForCopyIn(35492.08, 'VES')).toBe('35492,08')
+    expect(amountForCopyIn(40, 'USD')).toBe('40.00')
+    expect(amountForCopyIn(1234.5, 'USDT')).toBe('1234.50')
+    expect(amountForCopyIn(1234567.5, 'USD')).toBe('1234567.50')
+    expect(amountForCopyIn(null, 'USD')).toBe('')
+    // An unknown currency copies as Pago Móvil always did.
+    expect(amountForCopyIn(40, undefined)).toBe('40,00')
+  })
+})
+
+describe('manual methods: details as shown and copied', () => {
+  test('a bank account grouped as banks print it, copied as its 20 digits', () => {
+    expect(formatAccountNumber('01340000000000000001')).toBe('0134 0000 00 0000000001')
+    expect(formatAccountNumber('0134-0000-00 0000000001')).toBe('0134 0000 00 0000000001')
+    expect(digitsOnly('0134 0000 00 0000000001')).toBe('01340000000000000001')
+    // Not 20 digits: as it came.
+    expect(formatAccountNumber(' 0134 5678 ')).toBe('0134 5678')
+    expect(formatAccountNumber(null)).toBe('')
+  })
+
+  test('the Zelle phone is copied as the 10 digits of the US number', () => {
+    expect(usPhoneDigits('+1 305-555-1234')).toBe('3055551234')
+    expect(usPhoneDigits('(305) 555-1234')).toBe('3055551234')
+    expect(usPhoneDigits('13055551234')).toBe('3055551234')
+    expect(usPhoneDigits('555-1234')).toBe('5551234')
+    expect(usPhoneDigits(undefined)).toBe('')
+  })
+
+  test('USDT networks by their display names (the API ids, in its order)', () => {
+    expect(Object.keys(USDT_NETWORK_LABELS)).toEqual(['TRC20', 'BEP20', 'ERC20', 'SOL', 'POLYGON', 'ARBITRUM'])
+    expect(usdtNetworkLabel('TRC20')).toBe('TRC20 (Tron)')
+    expect(usdtNetworkLabel('BEP20')).toBe('BEP20 (BNB Smart Chain)')
+    expect(usdtNetworkLabel('ERC20')).toBe('ERC20 (Ethereum)')
+    expect(usdtNetworkLabel('SOL')).toBe('Solana')
+    expect(usdtNetworkLabel('POLYGON')).toBe('Polygon')
+    expect(usdtNetworkLabel('arbitrum')).toBe('Arbitrum One')
+    expect(usdtNetworkLabel('TON')).toBe('TON')
+    expect(usdtNetworkLabel('')).toBe('')
+    expect(usdtNetworkLabel(null)).toBe('')
+  })
+
+  test('a list joined with "o" in Spanish and "or" in English', () => {
+    expect(joinWithOr(['Pago Móvil', 'transferencia', 'Zelle', 'Binance'], 'es')).toBe(
+      'Pago Móvil, transferencia, Zelle o Binance'
+    )
+    expect(joinWithOr(['Pago Móvil', 'Zelle'], 'es')).toBe('Pago Móvil o Zelle')
+    expect(joinWithOr(['Zelle'], 'es')).toBe('Zelle')
+    expect(joinWithOr(['', 'Zelle'], 'es')).toBe('Zelle')
+    expect(joinWithOr([], 'es')).toBe('')
+    expect(joinWithOr(['Zelle', 'Binance'], 'en')).toBe('Zelle or Binance')
+    expect(joinWithOr(['Pago Móvil', 'bank transfer', 'Zelle', 'Binance'], 'en-US')).toBe(
+      'Pago Móvil, bank transfer, Zelle, or Binance'
+    )
+  })
+})
+
+describe('manual methods of a quote (§A.4)', () => {
+  const KNOWN = ['pago_movil', 'transferencia', 'zelle', 'binance']
+  const bcv = { rate: 887.302, rate_date: '2026-10-27', rate_source: 'bcv', error: null }
+  const none = { rate: null, rate_date: null, rate_source: null, error: null }
+  const allOn = {
+    methods: [
+      { method: 'pago_movil', currency: 'VES', amount: 35492.08, ...bcv },
+      { method: 'transferencia', currency: 'VES', amount: 35492.08, ...bcv },
+      { method: 'zelle', currency: 'USD', amount: 40.0, ...none },
+      { method: 'binance', currency: 'USDT', amount: 40.0, ...none },
+    ],
+    pago_movil: { enabled: true, rate: 887.302, rate_date: '2026-10-27', rate_source: 'bcv', amount_ves: 35492.08, error: null },
+  }
+  const noRate = {
+    methods: [
+      { method: 'pago_movil', currency: 'VES', amount: null, ...none, error: 'FX_UNAVAILABLE' },
+      { method: 'transferencia', currency: 'VES', amount: null, ...none, error: 'FX_UNAVAILABLE' },
+      { method: 'zelle', currency: 'USD', amount: 40.0, ...none },
+    ],
+    pago_movil: { enabled: true, rate: null, rate_date: null, rate_source: null, amount_ves: null, error: 'FX_UNAVAILABLE' },
+  }
+
+  test('the API list, as the page uses it', () => {
+    const methods = quoteMethods(allOn, KNOWN)
+    expect(methods.map((m) => m.method)).toEqual(KNOWN)
+    expect(methods[0]).toEqual({ method: 'pago_movil', currency: 'VES', amount: 35492.08, ...bcv })
+    expect(methods[3]).toEqual({ method: 'binance', currency: 'USDT', amount: 40, ...none })
+    expect(methods.every(isMethodUsable)).toBe(true)
+    // The store helper is the same with the page's known methods.
+    expect(cartMethods(allOn)).toEqual(methods)
+  })
+
+  test('a method in bolívares without its rate is listed but cannot be paid; the others can', () => {
+    const methods = quoteMethods(noRate, KNOWN)
+    expect(methods.map((m) => [m.method, isMethodUsable(m)])).toEqual([
+      ['pago_movil', false],
+      ['transferencia', false],
+      ['zelle', true],
+    ])
+    // Bolívares with an amount but no rate: no rate line to show, not payable.
+    expect(isMethodUsable({ method: 'pago_movil', currency: 'VES', amount: 10, rate: null, error: null })).toBe(false)
+    expect(isMethodUsable(null)).toBe(false)
+  })
+
+  test('unknown, repeated and broken entries are dropped; the known order wins', () => {
+    const messy = {
+      methods: [
+        { method: 'binance', currency: 'usdt', amount: 40 },
+        { method: 'crypto_x', currency: 'BTC', amount: 1 },
+        null,
+        { currency: 'USD', amount: 40 },
+        { method: 'zelle', currency: 'USD', amount: 'x' },
+        { method: 'binance', currency: 'USDT', amount: 99 },
+      ],
+    }
+    const methods = quoteMethods(messy, KNOWN)
+    expect(methods.map((m) => m.method)).toEqual(['zelle', 'binance'])
+    expect(methods[1]).toEqual({ method: 'binance', currency: 'USDT', amount: 40, ...none })
+    // A non-numeric amount is no amount.
+    expect(isMethodUsable(methods[0])).toBe(false)
+    expect(quoteMethods(null, KNOWN)).toEqual([])
+    expect(quoteMethods({ methods: [] , pago_movil: { enabled: true, amount_ves: 1, rate: 1 } }, KNOWN)).toEqual([])
+  })
+
+  test('from an API older than the methods: Pago Móvil out of pago_movil', () => {
+    const { methods: _drop, ...old } = allOn
+    expect(quoteMethods(old, KNOWN)).toEqual([{ method: 'pago_movil', currency: 'VES', amount: 35492.08, ...bcv }])
+    expect(quoteMethods({ pago_movil: { enabled: false } }, KNOWN)).toEqual([])
+    const { methods: _drop2, ...oldNoRate } = noRate
+    expect(quoteMethods(oldNoRate, KNOWN).map(isMethodUsable)).toEqual([false])
+  })
+
+  test('selected: her choice while it can be paid, else the first that can', () => {
+    const all = quoteMethods(allOn, KNOWN)
+    expect(pickMethod(all, null)).toBe('pago_movil')
+    expect(pickMethod(all, 'binance')).toBe('binance')
+    // Her choice left the quote (switched off): the first one.
+    expect(pickMethod(all.filter((m) => m.method !== 'binance'), 'binance')).toBe('pago_movil')
+    // Pago Móvil without a rate: Zelle, also for whoever had picked Pago Móvil.
+    const degraded = quoteMethods(noRate, KNOWN)
+    expect(pickMethod(degraded, null)).toBe('zelle')
+    expect(pickMethod(degraded, 'pago_movil')).toBe('zelle')
+    expect(pickMethod(degraded.slice(0, 2), 'pago_movil')).toBe(null)
+    expect(pickMethod([], 'zelle')).toBe(null)
+  })
+
+  test('her choice is kept per organization for the visit (sessionStorage)', () => {
+    const session = new FakeStorage()
+    setGlobal('sessionStorage', session)
+    try {
+      const a = freshOrg()
+      const b = freshOrg()
+      expect(readCartMethod(a)).toBe(null)
+      saveCartMethod(a, 'zelle')
+      expect(readCartMethod(a)).toBe('zelle')
+      expect(readCartMethod(b)).toBe(null)
+      expect(session.getItem(`sanarycriar:carrito-metodo:v1:${a}`)).toBe('zelle')
+      // Not a cart key: other tabs' cart listeners ignore it.
+      expect(`sanarycriar:carrito-metodo:v1:${a}`.startsWith(cartStorageKey(''))).toBe(false)
+      saveCartMethod(a, null)
+      expect(readCartMethod(a)).toBe(null)
+      // Junk in storage or a bad org is ignored.
+      session.setItem(`sanarycriar:carrito-metodo:v1:${b}`, '<img src=x>')
+      expect(readCartMethod(b)).toBe(null)
+      saveCartMethod('../x', 'zelle')
+      expect(readCartMethod('../x')).toBe(null)
+      // Storage that throws: nothing kept, nothing breaks.
+      setGlobal('sessionStorage', new BrokenStorage())
+      saveCartMethod(a, 'binance')
+      expect(readCartMethod(a)).toBe(null)
+      delete globalThis.sessionStorage
+      expect(readCartMethod(a)).toBe(null)
+    } finally {
+      delete globalThis.sessionStorage
+    }
+  })
+})
+
+describe('how an order is paid (§A.6)', () => {
+  const es = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, '../locales-sc/cart.es.json'), 'utf8')).sc_cart
+  const ct = (key, options = {}) =>
+    key.split('.').reduce((node, part) => node?.[part], es).replace(/\{\{(\w+)\}\}/g, (_, name) => String(options[name]))
+
+  test('pay_currency and pay_amount; old orders are Pago Móvil in bolívares', () => {
+    const zelle = { method: 'zelle', pay_currency: 'USD', pay_amount: 40, amount: 40, amount_ves: null }
+    expect(purchasePay(zelle)).toEqual({ method: 'zelle', currency: 'USD', amount: 40 })
+    const binance = { method: 'binance', pay_currency: 'USDT', pay_amount: 40, amount: 40, amount_ves: null }
+    expect(purchasePay(binance)).toEqual({ method: 'binance', currency: 'USDT', amount: 40 })
+    const transfer = { method: 'transferencia', pay_currency: 'VES', pay_amount: 35492.08, amount: 40, amount_ves: 35492.08 }
+    expect(purchasePay(transfer)).toEqual({ method: 'transferencia', currency: 'VES', amount: 35492.08 })
+    // An API from before the methods sent no pay_currency / pay_amount.
+    expect(purchasePay({ method: 'pago_movil', amount: 40, amount_ves: 35492.08 })).toEqual({
+      method: 'pago_movil',
+      currency: 'VES',
+      amount: 35492.08,
+    })
+    expect(purchasePay({ method: 'zelle', amount: 40, amount_ves: null })).toEqual({ method: 'zelle', currency: 'USD', amount: 40 })
+    expect(purchasePay({ method: 'otro', amount: 40, amount_ves: 1 }).method).toBe('pago_movil')
+  })
+
+  test('the big amount and the line under it', () => {
+    const ves = { method: 'pago_movil', currency: 'VES', amount: 35492.08 }
+    const usd = { method: 'zelle', currency: 'USD', amount: 40 }
+    const usdt = { method: 'binance', currency: 'USDT', amount: 40 }
+    expect([payAmountText(ves, 40), payEquivalent(ves, 40, ct)]).toEqual(['Bs. 35.492,08', 'US$ 40,00'])
+    expect([payAmountText(usd, 40), payEquivalent(usd, 40, ct)]).toEqual(['US$ 40,00', ''])
+    expect([payAmountText(usdt, 40), payEquivalent(usdt, 40, ct)]).toEqual(['40,00 USDT', '= US$ 40,00'])
+    // No amount to pay (should not happen): the dollars.
+    expect(payAmountText({ ...ves, amount: null }, 40)).toBe('US$ 40,00')
+  })
+
+  test('the methods of the checkout providers, known ones in display order', () => {
+    expect(knownMethods(['zelle', 'pago_movil', 'binance', 'transferencia'])).toEqual([
+      'pago_movil',
+      'transferencia',
+      'zelle',
+      'binance',
+    ])
+    expect(knownMethods(['zelle', 'crypto_x', 7, 'zelle'])).toEqual(['zelle'])
+    expect(knownMethods(undefined)).toEqual([])
+  })
+})
+
 describe('WhatsApp', () => {
   test('number shown as +58 424 882 4634', () => {
     expect(formatWhatsappNumber('584248824634')).toBe('+58 424 882 4634')
@@ -462,6 +714,27 @@ describe('sc_cart strings', () => {
     }
     expect(checked).toBeGreaterThan(60)
     expect(missing).toEqual([])
+  })
+
+  test('the manual methods: Pago Móvil keeps its wording, the generic texts name no method', () => {
+    expect(es['sc_cart.add.pago_movil_hint']).toBe('Pagas con Pago Móvil, en bolívares, a la tasa del día.')
+    expect(es['sc_cart.purchase.step1_title']).toBe('Haz un Pago Móvil por')
+    expect(es['sc_cart.confirm.hint_pago_movil']).toBe('Al confirmar te mostramos los datos para hacer el Pago Móvil.')
+    const list = ['pago_movil', 'transferencia', 'zelle', 'binance'].map((m) => es[`sc_cart.method.list_${m}`])
+    expect(es['sc_cart.add.methods_hint'].replace('{{methods}}', joinWithOr(list, 'es'))).toBe(
+      'Pagas en el carrito con Pago Móvil, transferencia, Zelle o Binance.'
+    )
+    for (const key of [
+      'add.access_note', 'cart.subtitle', 'cart.empty_description', 'summary.to_pay', 'method.unavailable',
+      'confirm.hint', 'purchase.cancel_description', 'course.pending_description', 'account.title', 'account.subtitle',
+    ]) {
+      expect({ key, named: /Pago M[oó]vil/i.test(es[`sc_cart.${key}`]) }).toEqual({ key, named: false })
+    }
+  })
+
+  test('no em dashes in the cart copy', () => {
+    const dashed = [...Object.entries(es), ...Object.entries(en)].filter(([, v]) => v.includes('—')).map(([k]) => k)
+    expect(dashed).toEqual([])
   })
 
   test('Pago Móvil wording in sc_commerce', () => {

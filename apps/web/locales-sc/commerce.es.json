@@ -22,6 +22,12 @@
       "manual": "Manual",
       "pago_movil": "Pago Móvil"
     },
+    "methods": {
+      "pago_movil": "Pago Móvil",
+      "transferencia": "Transferencia bancaria",
+      "zelle": "Zelle",
+      "binance": "Binance"
+    },
     "status": {
       "active": "Activo",
       "completed": "Completado",
@@ -65,7 +71,7 @@
     },
     "config": {
       "title": "Métodos de cobro",
-      "subtitle": "Conecta PayPal o activa Pago Móvil para cobrar tus cursos y ebooks.",
+      "subtitle": "Conecta PayPal o activa los pagos manuales (Pago Móvil, transferencia, Zelle o Binance) para cobrar tus cursos y ebooks.",
       "load_error": "No pudimos cargar la configuración de pagos.",
       "paypal_tagline": "Cobra con PayPal o con tarjeta (sin que tu cliente necesite cuenta PayPal).",
       "paypal_developer_link": "Abrir el panel de desarrolladores de PayPal",

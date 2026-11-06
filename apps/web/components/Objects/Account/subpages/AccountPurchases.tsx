@@ -1,7 +1,7 @@
 'use client'
 // Sanar y Criar: purchases list with a direct link to each course/ebook the
-// purchase unlocks. No billing portal: PayPal (and later Pago Móvil) have
-// none; receipts come from the provider by email.
+// purchase unlocks. No billing portal: PayPal and the cart's manual methods
+// have none; receipts come by email.
 import React from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
@@ -18,7 +18,7 @@ import { billingIntervalLabel } from '@/lib/payments/billingInterval'
 import { useScT, ScTranslate } from '@components/Payments/useScT'
 import { normalizeProductType, stripCoursePrefix } from '@components/Payments/commerce'
 import { safeImageSrc } from '@services/security/url'
-// Sanar y Criar: Pago Móvil orders (pending ones first) above the purchases.
+// Sanar y Criar: cart orders (any manual method; pending ones first) above the purchases.
 import { MyPurchasesSection } from '@components/Store/Cart/MyPurchasesSection'
 import { useMyPurchases } from '@components/Store/Cart/useMyPurchases'
 
@@ -207,7 +207,7 @@ function AccountPurchases({ orgId, orgslug }: AccountPurchasesProps) {
 
       <MyPurchasesSection purchases={manualOrders} orgslug={orgslug} />
 
-      {/* Enrollment list (no "empty" card when there are Pago Móvil orders above) */}
+      {/* Enrollment list (no "empty" card when there are cart orders above) */}
       {enrollments.length === 0 && manualOrders.length > 0 ? null : enrollments.length === 0 ? (
         <div className="bg-white rounded-xl nice-shadow p-12 flex flex-col items-center justify-center text-center">
           <div className="w-14 h-14 rounded-2xl bg-[#EEEDFF] flex items-center justify-center mb-4">

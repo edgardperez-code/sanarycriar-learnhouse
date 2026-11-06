@@ -2,8 +2,10 @@
 // Sanar y Criar: provider-agnostic sales dashboard (overview, customers,
 // transactions). Uses /overview and /transactions instead of the Stripe
 // endpoints; subscriptions, MRR/ARR and churn are hidden because only
-// one-time purchases exist; a provider chip replaces the card brand. A charge
-// of a Pago Móvil order also shows the order code, linked to Pedidos.
+// one-time purchases exist; a provider chip replaces the card brand (for an
+// order paid by hand, its method: Pago Móvil, bank transfer, Zelle or
+// Binance). A charge of such an order also shows the order code, linked to
+// Pedidos.
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useOrg } from '@components/Contexts/OrgContext'
@@ -29,7 +31,8 @@ import {
 } from 'lucide-react'
 import { getUserAvatarMediaDirectory } from '@services/media/media'
 import UserAvatar from '@components/Objects/UserAvatar'
-import { usePaymentsEnabled } from '@hooks/usePaymentsEnabled'
+// Sanar y Criar: also counts a complete bank transfer, Zelle or Binance.
+import { usePaymentsConfigured } from './usePaymentsConfigured'
 import UnconfiguredPaymentsDisclaimer from '@components/Pages/Payments/UnconfiguredPaymentsDisclaimer'
 import { Button } from '@components/ui/button'
 import {
@@ -42,7 +45,7 @@ import {
 } from '@components/ui/table'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { useScT, ScTranslate } from '@components/Payments/useScT'
-import { providerLabel } from '@components/Payments/commerce'
+import { paymentLabel } from '@components/Payments/commerce'
 import { safeExternalUrl } from '@services/security/url'
 import { parsePurchaseCode } from '@components/Dashboard/Pages/Orders/ordersForm'
 import { useOrdersT } from '@components/Dashboard/Pages/Orders/useOrdersT'
@@ -59,8 +62,8 @@ function useFormatters() {
   return { sc, fmt, fmtDate }
 }
 
-function ProviderChip({ provider, sc }: { provider?: string | null; sc: ScTranslate }) {
-  const label = providerLabel(provider, sc)
+function ProviderChip({ provider, method, sc }: { provider?: string | null; method?: string | null; sc: ScTranslate }) {
+  const label = paymentLabel(provider, method, sc)
   if (!label) return <span className="text-gray-400">—</span>
   const isPaypal = (provider ?? '').toLowerCase() === 'paypal'
   return (
@@ -74,7 +77,7 @@ function ProviderChip({ provider, sc }: { provider?: string | null; sc: ScTransl
   )
 }
 
-/** Sanar y Criar: the Pago Móvil order a charge belongs to, linked to Pedidos. */
+/** Sanar y Criar: the cart order (paid by hand) a charge belongs to, linked to Pedidos. */
 function PurchaseCodeLink({ code }: { code?: string | null }) {
   const { ot } = useOrdersT()
   const clean = parsePurchaseCode(code)
@@ -90,11 +93,21 @@ function PurchaseCodeLink({ code }: { code?: string | null }) {
   )
 }
 
-/** Provider chip plus, for a Pago Móvil order, its code. */
-function ProviderWithOrder({ provider, purchaseCode, sc }: { provider?: string | null; purchaseCode?: string | null; sc: ScTranslate }) {
+/** Provider (or manual method) chip plus, for a cart order, its code. */
+function ProviderWithOrder({
+  provider,
+  method,
+  purchaseCode,
+  sc,
+}: {
+  provider?: string | null
+  method?: string | null
+  purchaseCode?: string | null
+  sc: ScTranslate
+}) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5">
-      <ProviderChip provider={provider} sc={sc} />
+      <ProviderChip provider={provider} method={method} sc={sc} />
       <PurchaseCodeLink code={purchaseCode} />
     </span>
   )
@@ -239,7 +252,12 @@ function OverviewTab({ orgId, accessToken }: { orgId: number; accessToken: strin
                 </div>
                 <div className="flex items-center space-x-3">
                   <ChargeFlags charge={ch} sc={sc} />
-                  <ProviderWithOrder provider={ch.provider ?? ch.payment?.provider} purchaseCode={ch.purchase_code} sc={sc} />
+                  <ProviderWithOrder
+                    provider={ch.provider ?? ch.payment?.provider}
+                    method={ch.method ?? ch.payment?.method}
+                    purchaseCode={ch.purchase_code}
+                    sc={sc}
+                  />
                   <span className="font-semibold text-gray-900">{fmt(ch.amount, ch.currency)}</span>
                   <StatusPill status={ch.paid ? 'paid' : ch.status} sc={sc} />
                 </div>
@@ -308,7 +326,9 @@ function CustomersTab({ orgId, accessToken }: { orgId: number; accessToken: stri
                 </TableCell>
                 <TableCell className="font-medium">{offer?.name ?? '—'}</TableCell>
                 <TableCell>{offer ? fmt(offer.amount, offer.currency) : '—'}</TableCell>
-                <TableCell><ProviderWithOrder provider={payment?.provider} purchaseCode={payment?.purchase_code} sc={sc} /></TableCell>
+                <TableCell>
+                  <ProviderWithOrder provider={payment?.provider} method={payment?.method} purchaseCode={payment?.purchase_code} sc={sc} />
+                </TableCell>
                 <TableCell>
                   {payment?.last_charge_date ? (
                     <div className="flex flex-col">
@@ -391,7 +411,14 @@ function TransactionsTab({ orgId, accessToken }: { orgId: number; accessToken: s
                     )}
                   </div>
                 </TableCell>
-                <TableCell><ProviderWithOrder provider={ch.provider ?? ch.payment?.provider} purchaseCode={ch.purchase_code} sc={sc} /></TableCell>
+                <TableCell>
+                  <ProviderWithOrder
+                    provider={ch.provider ?? ch.payment?.provider}
+                    method={ch.method ?? ch.payment?.method}
+                    purchaseCode={ch.purchase_code}
+                    sc={sc}
+                  />
+                </TableCell>
                 <TableCell className="font-semibold">{fmt(ch.amount, ch.currency)}</TableCell>
                 <TableCell className="text-sm">
                   {Number(ch.amount_refunded) > 0 ? (
@@ -453,7 +480,7 @@ function PaymentsCustomersPage() {
   const org = useOrg() as any
   const session = useLHSession() as any
   const access_token = session?.data?.tokens?.access_token
-  const { isEnabled, isLoading } = usePaymentsEnabled()
+  const { isEnabled, isLoading } = usePaymentsConfigured()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const { sc } = useScT()
 

@@ -1,13 +1,15 @@
 'use client'
 // Sanar y Criar: react-query hooks for the "Pedidos" dashboard (list, one
-// order, Pago Móvil settings) and the error type they throw.
+// order) and the manual payment settings (Pago Móvil and the shared ones;
+// bank transfer, Zelle and Binance), and the error type they throw.
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useOrg } from '@components/Contexts/OrgContext'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { queryKeys } from '@/lib/query/keys'
-import { getManualSettings, getPurchaseAdmin, getPurchasesAdmin } from '@services/payments/orders'
+import { getManualMethods, getManualSettings, getPurchaseAdmin, getPurchasesAdmin } from '@services/payments/orders'
 import {
   EMPTY_COUNTS,
+  ManualMethods,
   ManualSettings,
   ORDERS_PAGE_SIZE,
   OrderTab,
@@ -65,6 +67,18 @@ export function useManualSettings() {
   return useQuery<ManualSettings, OrdersRequestError>({
     queryKey: queryKeys.orders.manualSettings(orgId),
     queryFn: async () => unwrap<ManualSettings>(await getManualSettings(orgId, accessToken as string)),
+    enabled: ready,
+    staleTime: 60_000,
+    retry: retryUnlessFinal,
+  })
+}
+
+/** Bank transfer, Zelle and Binance in one query (GET /manual/methods). */
+export function useManualMethods() {
+  const { orgId, accessToken, ready } = useOrdersAuth()
+  return useQuery<ManualMethods, OrdersRequestError>({
+    queryKey: queryKeys.orders.manualMethods(orgId),
+    queryFn: async () => unwrap<ManualMethods>(await getManualMethods(orgId, accessToken as string)),
     enabled: ready,
     staleTime: 60_000,
     retry: retryUnlessFinal,

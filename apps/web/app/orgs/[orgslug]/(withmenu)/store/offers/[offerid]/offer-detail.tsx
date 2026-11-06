@@ -30,7 +30,7 @@ import { safeExternalUrl } from '@services/security/url'
 import {
   ArrowLeft, ArrowRight, SquareCheck, Sparkles, BookOpen, BookMarked,
   Mic, Puzzle, AlertCircle, Loader2, ShieldCheck, Zap, CheckCircle2,
-  Clock, XCircle, CreditCard, UserPlus, LogIn, Smartphone,
+  Clock, XCircle, CreditCard, UserPlus, LogIn, Smartphone, Wallet,
 } from 'lucide-react'
 import { SiPaypal } from '@icons-pack/react-simple-icons'
 import toast from 'react-hot-toast'
@@ -51,10 +51,14 @@ import {
   stripCoursePrefix,
   withRedirect,
 } from '@components/Payments/commerce'
-// Sanar y Criar: Pago Móvil is paid from the cart (contract §D.3).
+// Sanar y Criar: the manual methods (Pago Móvil, transferencia, Zelle,
+// Binance) are paid from the cart (contract §D.3).
 import { AddToCartButton } from '@components/Store/Cart/AddToCartButton'
+import { MethodIcon } from '@components/Store/Cart/MethodIcon'
+import { knownMethods, methodInSentence } from '@components/Store/Cart/payMethods'
 import { useCart } from '@components/Store/Cart/useCart'
 import { useCartT } from '@components/Store/Cart/useCartT'
+import { joinWithOr } from '@/lib/sc-cart'
 
 interface Resource {
   resource_uuid: string
@@ -264,8 +268,9 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
     (p: CheckoutProvider) => p.currencies.length === 0 || p.currencies.map((c) => c.toUpperCase()).includes(currency),
     [currency]
   )
-  // Sanar y Criar: "manual" (Pago Móvil) never gets a direct-checkout button:
-  // it is paid from the cart, and the offer checkout answers 400 for it.
+  // Sanar y Criar: "manual" (Pago Móvil, transferencia, Zelle, Binance) never
+  // gets a direct-checkout button: it is paid from the cart, and the offer
+  // checkout answers 400 for it.
   const payButtons = useMemo(
     () =>
       providers
@@ -274,10 +279,22 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
         .flatMap((p) => (p.methods.length ? p.methods : ['paypal']).map((method) => ({ provider: p, method }))),
     [providers, chargesCurrency]
   )
-  const hasManual =
-    offer?.offer_type !== 'subscription' &&
-    providers.some((p) => p.provider.toLowerCase() === 'manual' && chargesCurrency(p))
+  // Listed while at least one manual method is on; `methods` says which.
+  const manualProvider =
+    offer?.offer_type !== 'subscription'
+      ? providers.find((p) => p.provider.toLowerCase() === 'manual' && chargesCurrency(p))
+      : undefined
+  const hasManual = !!manualProvider
+  const manualMethods = knownMethods(manualProvider?.methods)
   const { ct } = useCartT()
+  // "Pagas en el carrito con Pago Móvil, transferencia, Zelle o Binance."
+  // Pago Móvil alone keeps its own hint (bolívares, the day's rate).
+  const manualHint =
+    manualMethods.length === 1 && manualMethods[0] === 'pago_movil'
+      ? ct('add.pago_movil_hint')
+      : manualMethods.length > 0
+        ? ct('add.methods_hint', { methods: joinWithOr(manualMethods.map((m) => methodInSentence(m, ct)), lng) })
+        : null
   const cart = useCart(orgId)
   const [pendingPurchase, setPendingPurchase] = useState<{ uuid: string; code: string } | null>(null)
 
@@ -673,7 +690,7 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
       return <OwnedResourceLinks resources={phase.resources.length ? phase.resources : resources} orgslug={orgslug} sc={sc} />
     }
 
-    // Sanar y Criar: already in a Pago Móvil order awaiting confirmation.
+    // Sanar y Criar: already in a cart order awaiting confirmation.
     if (pendingPurchase) {
       return (
         <div role="status" className="p-4 bg-amber-50 border border-amber-200 rounded-[20px] space-y-2">
@@ -752,7 +769,7 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
     const testMode = payButtons.some((b) => b.provider.test_mode)
     return (
       <div className="space-y-2.5">
-        {/* Sanar y Criar: Pago Móvil (cart) first; PayPal below, if active. */}
+        {/* Sanar y Criar: the cart (manual methods) first; PayPal below, if active. */}
         {hasManual && (
           <>
             <button
@@ -761,11 +778,16 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
               disabled={!!starting || busy}
               className="w-full flex items-center justify-center gap-2 min-h-[48px] py-3 px-5 rounded-full font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed bg-[#190933] hover:bg-[#41375B] text-white"
             >
-              {methodIcon('manual', 'pago_movil')}
+              {/* One method: its icon; several: a neutral wallet. */}
+              {manualMethods.length === 1 ? (
+                <MethodIcon method={manualMethods[0]} size={16} />
+              ) : (
+                <Wallet size={16} aria-hidden="true" />
+              )}
               <span>{ct('add.buy_now')}</span>
             </button>
             <AddToCartButton orgslug={orgslug} offerUuid={canonicalUuid} />
-            <p className="text-xs text-center text-[#6D6485] leading-relaxed">{ct('add.pago_movil_hint')}</p>
+            {manualHint && <p className="text-xs text-center text-[#6D6485] leading-relaxed">{manualHint}</p>}
             {payButtons.length > 0 && (
               <p className="flex items-center gap-3 pt-1 text-xs text-[#6D6485]">
                 <span className="h-px flex-1 bg-[#EAE8F2]" aria-hidden="true" />
@@ -928,7 +950,7 @@ export default function OfferDetailClient({ orgslug, orgId, offerUuid, offer, ac
                 )}
                 <p className="text-xs text-[#6D6485] flex items-center gap-1.5">
                   <Zap size={12} className="text-[#6559CA] shrink-0" />{' '}
-                  {/* Sanar y Criar: Pago Móvil access waits for the confirmation. */}
+                  {/* Sanar y Criar: with the cart's methods, access waits for the confirmation. */}
                   {hasManual ? ct('add.access_note') : sc('offer_page.instant_access')}
                 </p>
                 <p className="text-xs text-[#6D6485] flex items-center gap-1.5">

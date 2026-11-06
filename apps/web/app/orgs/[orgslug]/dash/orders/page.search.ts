@@ -1,4 +1,4 @@
-// Sanar y Criar: command-palette entry for "Pedidos" (Pago Móvil orders).
+// Sanar y Criar: command-palette entry for "Pedidos" (cart orders paid by hand).
 import { Receipt } from '@phosphor-icons/react'
 import type { SearchMeta } from '@/lib/dashboard-search/types'
 

@@ -1,9 +1,11 @@
-// Sanar y Criar: the shopping cart (kept in the browser, one per organization)
-// and the money/date formatting of the cart and order pages.
+// Sanar y Criar: the shopping cart (kept in the browser, one per organization),
+// the manual payment methods of a quote (Pago Móvil, transferencia, Zelle,
+// Binance) and the money/date formatting of the cart and order pages.
 //
 // Pure TypeScript on purpose: no React, no Next imports, because
 // tests/sc-cart.test.mjs imports this file directly.
-// Contract: carrito-contrato.md §0.2, §0.1 and §D.1 (docs/spec-tecnica.md §7).
+// Contract: carrito-contrato.md §0.2, §0.1 and §D.1 (docs/spec-tecnica.md §7),
+// contrato-pagos-manuales.md §0 and §A.4.
 
 // ---------------------------------------------------------------------------
 // Cart
@@ -41,10 +43,16 @@ export function isValidOfferUuid(value: unknown): value is string {
   return typeof value === 'string' && OFFER_UUID_RE.test(value)
 }
 
-function keyFor(orgId: OrgId): string | null {
+/** The organization part of a storage key, or null when it is not a plain id. */
+function orgPart(orgId: OrgId): string | null {
   if (orgId === null || orgId === undefined) return null
   const id = String(orgId).trim()
-  return /^[0-9A-Za-z_-]{1,64}$/.test(id) ? cartStorageKey(id) : null
+  return /^[0-9A-Za-z_-]{1,64}$/.test(id) ? id : null
+}
+
+function keyFor(orgId: OrgId): string | null {
+  const id = orgPart(orgId)
+  return id ? cartStorageKey(id) : null
 }
 
 const emptyCart = (): CartState => ({ v: CART_VERSION, items: [] })
@@ -192,11 +200,19 @@ export function subscribeCart(callback: () => void): () => void {
 }
 
 // ---------------------------------------------------------------------------
-// Money (contract §0.8: es-VE, two decimals, "US$ 40,00" and "Bs. 35.492,08")
+// Money (contract §0.8: es-VE, two decimals, "US$ 40,00", "Bs. 35.492,08" and
+// "40,00 USDT")
 // ---------------------------------------------------------------------------
 
 const AMOUNT_FORMAT = new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const PLAIN_AMOUNT_FORMAT = new Intl.NumberFormat('es-VE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  useGrouping: false,
+})
+// Dollar amounts are copied with a dot ("40.00"): US banking apps (Zelle) and
+// Binance read a comma as a thousands separator.
+const DOT_AMOUNT_FORMAT = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
   useGrouping: false,
@@ -231,14 +247,230 @@ export function formatRate(value: unknown): string {
   return formatAmount(value)
 }
 
+/** 40 -> "40,00 USDT" (Binance: 1 USDT = 1 US$). */
+export function formatUsdt(value: unknown): string {
+  const amount = formatAmount(value)
+  return amount ? `${amount} USDT` : ''
+}
+
+function currencyCode(currency: unknown): string {
+  return typeof currency === 'string' ? currency.trim().toUpperCase() : ''
+}
+
+/**
+ * An amount in the currency a manual method is paid in: "Bs. 35.492,08"
+ * (VES), "US$ 40,00" (USD) or "40,00 USDT". "" for an unknown currency.
+ */
+export function formatPayAmount(value: unknown, currency: unknown): string {
+  switch (currencyCode(currency)) {
+    case 'VES':
+      return formatBs(value)
+    case 'USD':
+      return formatUsd(value)
+    case 'USDT':
+      return formatUsdt(value)
+    default:
+      return ''
+  }
+}
+
 /** What "Copiar" puts on the clipboard for an amount: no thousands dots, "35492,08". */
 export function amountForCopy(value: unknown): string {
   const n = toNumber(value)
   return n === null ? '' : PLAIN_AMOUNT_FORMAT.format(n)
 }
 
+/**
+ * "Copiar" for an amount in its currency: bolívares as the Venezuelan banks
+ * read them ("35492,08"), dollars and USDT with a dot ("40.00").
+ */
+export function amountForCopyIn(value: unknown, currency: unknown): string {
+  const code = currencyCode(currency)
+  if (code !== 'USD' && code !== 'USDT') return amountForCopy(value)
+  const n = toNumber(value)
+  return n === null ? '' : DOT_AMOUNT_FORMAT.format(n)
+}
+
 export function digitsOnly(value: unknown): string {
   return typeof value === 'string' || typeof value === 'number' ? String(value).replace(/\D/g, '') : ''
+}
+
+/**
+ * A Venezuelan account number grouped as banks print it (bank, branch,
+ * check digits, account): "01340000000000000001" -> "0134 0000 00 0000000001".
+ * Anything that is not 20 digits is shown as it came.
+ */
+export function formatAccountNumber(value: unknown): string {
+  const digits = digitsOnly(value)
+  if (digits.length !== 20) return typeof value === 'string' ? value.trim() : digits
+  return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 10)} ${digits.slice(10)}`
+}
+
+/**
+ * The 10 digits of a US phone, as Zelle asks for them: "+1 305-555-1234" ->
+ * "3055551234". Other numbers: their digits.
+ */
+export function usPhoneDigits(value: unknown): string {
+  const digits = digitsOnly(value)
+  return digits.length === 11 && digits.startsWith('1') ? digits.slice(1) : digits
+}
+
+/** The API's USDT network ids and how they are shown (proper names, same in every language). */
+export const USDT_NETWORK_LABELS: Record<string, string> = {
+  TRC20: 'TRC20 (Tron)',
+  BEP20: 'BEP20 (BNB Smart Chain)',
+  ERC20: 'ERC20 (Ethereum)',
+  SOL: 'Solana',
+  POLYGON: 'Polygon',
+  ARBITRUM: 'Arbitrum One',
+}
+
+/** "TRC20" -> "TRC20 (Tron)"; an unknown network as it came; "" for none. */
+export function usdtNetworkLabel(value: unknown): string {
+  const code = typeof value === 'string' ? value.trim() : ''
+  return USDT_NETWORK_LABELS[code.toUpperCase()] ?? code
+}
+
+/**
+ * "Pago Móvil, transferencia, Zelle o Binance" (es) / "…, Zelle, or Binance"
+ * (en): a list joined with "or" in the reader's language.
+ */
+export function joinWithOr(items: readonly string[], lng: string = 'es'): string {
+  const list = (items || []).filter((s) => typeof s === 'string' && s.trim() !== '')
+  const english = String(lng || '').toLowerCase().startsWith('en')
+  try {
+    const ListFormat = (Intl as any).ListFormat
+    if (typeof ListFormat === 'function') {
+      return new ListFormat(english ? 'en' : 'es', { style: 'long', type: 'disjunction' }).format(list)
+    }
+  } catch {
+    /* fall back to a plain join */
+  }
+  if (list.length <= 1) return list.join('')
+  return `${list.slice(0, -1).join(', ')} ${english ? 'or' : 'o'} ${list[list.length - 1]}`
+}
+
+// ---------------------------------------------------------------------------
+// Payment methods of a cart quote (contract §A.4)
+// ---------------------------------------------------------------------------
+
+/** One manual method of a quote: what this cart costs with it. */
+export interface QuoteMethodEntry {
+  method: string
+  /** "VES" | "USD" | "USDT". */
+  currency: string
+  /** null when its rate failed (error "FX_UNAVAILABLE"). */
+  amount: number | null
+  rate: number | null
+  rate_date: string | null
+  rate_source: string | null
+  error: string | null
+}
+
+const textOrNull = (value: unknown): string | null => (typeof value === 'string' && value ? value : null)
+const numberOrNull = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null
+
+function quoteEntry(raw: any): QuoteMethodEntry | null {
+  if (!raw || typeof raw !== 'object' || typeof raw.method !== 'string' || !raw.method) return null
+  return {
+    method: raw.method,
+    currency: currencyCode(raw.currency),
+    amount: numberOrNull(raw.amount),
+    rate: numberOrNull(raw.rate),
+    rate_date: textOrNull(raw.rate_date),
+    rate_source: textOrNull(raw.rate_source),
+    error: textOrNull(raw.error),
+  }
+}
+
+/**
+ * The manual methods of a quote that this page knows (`known`, in that order,
+ * each once): the API's `methods`, or, from an API older than them, Pago
+ * Móvil out of the `pago_movil` key.
+ */
+export function quoteMethods(quote: unknown, known: readonly string[]): QuoteMethodEntry[] {
+  const q = quote && typeof quote === 'object' ? (quote as any) : null
+  if (!q) return []
+  let entries: QuoteMethodEntry[]
+  if (Array.isArray(q.methods)) {
+    entries = q.methods.map(quoteEntry).filter((e: QuoteMethodEntry | null): e is QuoteMethodEntry => e !== null)
+  } else if (q.pago_movil && q.pago_movil.enabled === true) {
+    const pm = q.pago_movil
+    entries = [
+      {
+        method: 'pago_movil',
+        currency: 'VES',
+        amount: numberOrNull(pm.amount_ves),
+        rate: numberOrNull(pm.rate),
+        rate_date: textOrNull(pm.rate_date),
+        rate_source: textOrNull(pm.rate_source),
+        error: textOrNull(pm.error),
+      },
+    ]
+  } else {
+    entries = []
+  }
+  const byMethod = new Map<string, QuoteMethodEntry>()
+  for (const entry of entries) if (!byMethod.has(entry.method)) byMethod.set(entry.method, entry)
+  return known.map((m) => byMethod.get(m)).filter((e): e is QuoteMethodEntry => !!e)
+}
+
+/** It can be paid right now: it has an amount (and, in bolívares, the rate). */
+export function isMethodUsable(entry: QuoteMethodEntry | null | undefined): boolean {
+  if (!entry || entry.error || entry.amount === null) return false
+  return entry.currency !== 'VES' || entry.rate !== null
+}
+
+/** The method to show selected: her choice while it can be paid, else the first that can. */
+export function pickMethod(entries: readonly QuoteMethodEntry[], preferred: string | null | undefined): string | null {
+  const usable = entries.filter(isMethodUsable)
+  if (preferred && usable.some((e) => e.method === preferred)) return preferred
+  return usable[0]?.method ?? null
+}
+
+// Her choice, for the rest of the visit (sessionStorage, one per organization).
+const METHOD_KEY_PREFIX = 'sanarycriar:carrito-metodo:v1:'
+const METHOD_ID_RE = /^[a-z_]{2,32}$/
+
+function methodKeyFor(orgId: OrgId): string | null {
+  const id = orgPart(orgId)
+  return id ? `${METHOD_KEY_PREFIX}${id}` : null
+}
+
+function sessionStore(): Storage | null {
+  try {
+    const s = (globalThis as any).sessionStorage as Storage | undefined
+    return s && typeof s.getItem === 'function' ? s : null
+  } catch {
+    return null
+  }
+}
+
+/** The method she picked in this tab's visit, or null. */
+export function readCartMethod(orgId: OrgId): string | null {
+  const key = methodKeyFor(orgId)
+  if (!key) return null
+  try {
+    const value = sessionStore()?.getItem(key) ?? null
+    return value && METHOD_ID_RE.test(value) ? value : null
+  } catch {
+    return null
+  }
+}
+
+/** Remembers her pick (null forgets it). Storage refused: it simply is not kept. */
+export function saveCartMethod(orgId: OrgId, method: string | null): void {
+  const key = methodKeyFor(orgId)
+  if (!key) return
+  try {
+    const s = sessionStore()
+    if (!s) return
+    if (method && METHOD_ID_RE.test(method)) s.setItem(key, method)
+    else s.removeItem(key)
+  } catch {
+    /* a convenience only */
+  }
 }
 
 /** "584248824634" -> "+58 424 882 4634" (other numbers: "+" and the digits). */

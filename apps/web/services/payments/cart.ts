@@ -1,5 +1,6 @@
 'use server';
-// Sanar y Criar: cart and Pago Móvil order calls (contract §B.2, §D.2).
+// Sanar y Criar: cart and manual-payment order calls (contract §B.2, §D.2;
+// methods: contrato-pagos-manuales.md §A.4, §A.5).
 // Every call returns getResponseMetadata ({success, data, status}) and never
 // throws on an HTTP error, so callers can read the backend `detail`
 // ({code, message, ...}) of a 4xx.
@@ -8,7 +9,11 @@ import { RequestBodyWithAuthHeader, getResponseMetadata, secureFetch } from '@se
 
 const paymentsBase = (orgId: number) => `${getAPIUrl()}payments/${encodeURIComponent(String(orgId))}`;
 
-/** Prices, status of each product and the total in US$ and Bs. Public (uses the session when there is one). */
+/**
+ * Prices, status of each product, the total in US$ and what it costs with
+ * each manual method that is on (`methods`). Public (uses the session when
+ * there is one).
+ */
 export async function getCartQuote(orgId: number, offerUuids: string[], access_token?: string | null) {
   const result = await secureFetch(
     `${paymentsBase(orgId)}/cart/quote`,
@@ -17,13 +22,16 @@ export async function getCartQuote(orgId: number, offerUuids: string[], access_t
   return getResponseMetadata(result);
 }
 
-/** Creates the order (HTTP 201 with the Purchase). Only Pago Móvil goes through the cart. */
-export async function checkoutCart(orgId: number, offerUuids: string[], access_token: string) {
+/**
+ * Creates the order (HTTP 201 with the Purchase), paid with one of the manual
+ * methods: "pago_movil" | "transferencia" | "zelle" | "binance".
+ */
+export async function checkoutCart(orgId: number, offerUuids: string[], method: string, access_token: string) {
   const result = await secureFetch(
     `${paymentsBase(orgId)}/cart/checkout`,
     RequestBodyWithAuthHeader(
       'POST',
-      { offer_uuids: offerUuids, provider: 'manual', method: 'pago_movil' },
+      { offer_uuids: offerUuids, provider: 'manual', method },
       null,
       access_token
     )

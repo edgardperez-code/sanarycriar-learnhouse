@@ -1,5 +1,7 @@
 'use client'
-// Sanar y Criar: one Pago Móvil order (/store/purchases/<uuid>), contract §D.5.
+// Sanar y Criar: one cart order (/store/purchases/<uuid>), contract §D.5,
+// paid with its manual method (Pago Móvil, transferencia, Zelle or Binance;
+// contrato-pagos-manuales.md §A.6).
 //
 // Pending: three steps (pay with every value one tap away from the clipboard,
 // send the receipt on WhatsApp with a prefilled message, wait for the
@@ -12,7 +14,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { SiWhatsapp } from '@icons-pack/react-simple-icons'
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Ban, BookMarked, BookOpen, CalendarX, Check, CheckCircle2,
+  AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, Ban, BookMarked, BookOpen, CalendarX, Check, CheckCircle2,
   Clock, Copy, Info, Loader2, LogIn, Mail, RefreshCw, ShoppingCart, XCircle,
 } from 'lucide-react'
 import {
@@ -29,27 +31,33 @@ import { getUriWithOrg } from '@services/config/config'
 import { revalidateTags } from '@services/utils/ts/requests'
 import { cancelPurchase, getPurchase } from '@services/payments/cart'
 import { queryKeys } from '@/lib/query/keys'
-import { normalizeProductType, stripCoursePrefix, withRedirect } from '@components/Payments/commerce'
+import { methodLabel, normalizeProductType, stripCoursePrefix, withRedirect } from '@components/Payments/commerce'
+import { useScT, type ScTranslate } from '@components/Payments/useScT'
 import {
-  amountForCopy,
+  amountForCopyIn,
   digitsOnly,
-  formatBs,
+  formatAccountNumber,
   formatCaracasDateTime,
   formatIsoDate,
+  formatPayAmount,
   formatRate,
   formatUsd,
   formatWhatsappNumber,
   isPlausiblePurchaseUuid,
   purchaseStatus,
   safeWhatsappUrl,
+  usPhoneDigits,
+  usdtNetworkLabel,
   whatsappChatUrl,
 } from '@/lib/sc-cart'
 import { useCart } from './useCart'
 import { useCartT, type CartTranslate } from './useCartT'
 import { cartKeys } from './cartKeys'
 import { copyText } from './clipboard'
+import { MethodIcon } from './MethodIcon'
 import { PurchaseStatusChip } from './PurchaseStatusChip'
-import { CartApiError, apiMessage, type Purchase, type PurchaseResource } from './types'
+import { payAmountText, payEquivalent, payStepTitle, purchasePay, type PurchasePay } from './payMethods'
+import { CartApiError, apiMessage, type Purchase, type PurchasePayment, type PurchaseResource } from './types'
 
 const POLL_MS = 20_000
 
@@ -72,12 +80,16 @@ function CopyRow({
   value,
   copyValue,
   emphasis = false,
+  mono = false,
   ct,
 }: {
   label: string
   value: string
-  copyValue: string
+  /** What "Copiar" puts on the clipboard; without it the row has no button (a value she picks from a list). */
+  copyValue?: string
   emphasis?: boolean
+  /** Long codes (a USDT address): monospace, broken anywhere. */
+  mono?: boolean
   ct: CartTranslate
 }) {
   const [copied, setCopied] = useState(false)
@@ -87,6 +99,7 @@ function CopyRow({
   }, [])
 
   const onCopy = async () => {
+    if (!copyValue) return
     const ok = await copyText(copyValue)
     if (!ok) {
       toast.error(ct('purchase.copy_error'))
@@ -98,31 +111,180 @@ function CopyRow({
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 border-b border-[#EAE8F2] last:border-b-0">
+    <div className="flex min-h-[68px] items-center justify-between gap-3 py-3 border-b border-[#EAE8F2] last:border-b-0">
       <div className="min-w-0">
         <dt className="text-xs font-medium text-[#6D6485]">{label}</dt>
         <dd
-          className={`mt-0.5 break-words tabular-nums text-[#190933] select-all ${
-            emphasis ? 'text-xl font-black' : 'text-[17px] font-semibold'
-          }`}
+          className={`mt-0.5 text-[#190933] select-all ${
+            mono ? 'break-all font-mono text-[15px] font-semibold leading-snug' : 'break-words tabular-nums'
+          } ${mono ? '' : emphasis ? 'text-xl font-black' : 'text-[17px] font-semibold'}`}
         >
           {value}
         </dd>
       </div>
-      <button
-        type="button"
-        onClick={onCopy}
-        aria-label={ct('purchase.copy_aria', { label })}
-        className={`shrink-0 inline-flex min-h-[44px] min-w-[96px] items-center justify-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7D75E2] ${
-          copied
-            ? 'border-green-200 bg-green-50 text-green-800'
-            : 'border-[#BBBBFF] bg-white text-[#4F43A4] hover:bg-[#EEEDFF]'
-        }`}
-      >
-        {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-        <span aria-live="polite">{copied ? ct('purchase.copied') : ct('purchase.copy')}</span>
-      </button>
+      {copyValue ? (
+        <button
+          type="button"
+          onClick={onCopy}
+          aria-label={ct('purchase.copy_aria', { label })}
+          className={`shrink-0 inline-flex min-h-[44px] min-w-[96px] items-center justify-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7D75E2] ${
+            copied
+              ? 'border-green-200 bg-green-50 text-green-800'
+              : 'border-[#BBBBFF] bg-white text-[#4F43A4] hover:bg-[#EEEDFF]'
+          }`}
+        >
+          {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+          <span aria-live="polite">{copied ? ct('purchase.copied') : ct('purchase.copy')}</span>
+        </button>
+      ) : null}
     </div>
+  )
+}
+
+const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
+
+interface DetailRow {
+  key: string
+  label: string
+  value: string
+  copy?: string
+  mono?: boolean
+  emphasis?: boolean
+}
+
+function accountTypeLabel(value: unknown, ct: CartTranslate): string {
+  const type = text(value).toLowerCase()
+  if (type === 'corriente') return ct('purchase.account_type_corriente')
+  if (type === 'ahorro') return ct('purchase.account_type_ahorro')
+  return text(value)
+}
+
+/** The details of the order's method, in the order she types them in her bank or app. */
+function detailRows(pay: PurchasePay, payment: PurchasePayment, ct: CartTranslate): DetailRow[] {
+  const bankName = text(payment.bank_name)
+  const bankCode = text(payment.bank_code)
+  const bank: DetailRow = {
+    key: 'bank',
+    label: ct('purchase.field_bank'),
+    value: bankName && bankCode ? `${bankName} (${bankCode})` : bankName || bankCode,
+    copy: bankCode || bankName,
+  }
+  const holder = text(payment.holder_name)
+  const holderRow: DetailRow = { key: 'holder', label: ct('purchase.field_holder'), value: holder, copy: holder }
+  const idDocument = text(payment.id_document)
+  const idRow: DetailRow = {
+    key: 'id',
+    label: ct('purchase.field_id'),
+    value: idDocument,
+    copy: digitsOnly(idDocument) || idDocument,
+  }
+  const amount: DetailRow = {
+    key: 'amount',
+    label: ct('purchase.field_amount'),
+    value: formatPayAmount(pay.amount, pay.currency),
+    copy: amountForCopyIn(pay.amount, pay.currency),
+    emphasis: true,
+  }
+
+  switch (pay.method) {
+    case 'transferencia': {
+      const account = text(payment.account_number)
+      return [
+        bank,
+        {
+          key: 'account',
+          label: ct('purchase.field_account_number'),
+          value: formatAccountNumber(account),
+          copy: digitsOnly(account) || account,
+        },
+        // Picked from a list in the bank app: nothing to copy.
+        { key: 'account_type', label: ct('purchase.field_account_type'), value: accountTypeLabel(payment.account_type, ct) },
+        holderRow,
+        idRow,
+        amount,
+      ]
+    }
+    case 'zelle': {
+      const email = text(payment.email)
+      const phone = text(payment.phone)
+      return [
+        { key: 'email', label: ct('purchase.field_zelle_email'), value: email, copy: email },
+        { key: 'phone', label: ct('purchase.field_zelle_phone'), value: phone, copy: usPhoneDigits(phone) || phone },
+        holderRow,
+        amount,
+      ]
+    }
+    case 'binance': {
+      const payId = text(payment.pay_id)
+      const address = text(payment.usdt_address)
+      return [
+        { key: 'pay_id', label: ct('purchase.field_pay_id'), value: payId, copy: payId },
+        { key: 'address', label: ct('purchase.field_usdt_address'), value: address, copy: address, mono: true },
+        // The network is chosen from a list in Binance: nothing to copy.
+        {
+          key: 'network',
+          label: ct('purchase.field_network'),
+          value: address ? usdtNetworkLabel(payment.usdt_network) : '',
+        },
+        amount,
+      ]
+    }
+    default: {
+      const phone = text(payment.phone)
+      return [
+        bank,
+        { key: 'phone', label: ct('purchase.field_phone'), value: phone, copy: digitsOnly(phone) || phone },
+        idRow,
+        holderRow,
+        amount,
+      ]
+    }
+  }
+}
+
+function PaymentDetails({ pay, payment, ct }: { pay: PurchasePay; payment: PurchasePayment; ct: CartTranslate }) {
+  // Empty fields are not shown.
+  const rows = detailRows(pay, payment, ct).filter((row) => row.value)
+  if (rows.length === 0) return null
+  return (
+    <dl className="rounded-2xl border border-[#EAE8F2] bg-[#FFFCF9] px-4">
+      {rows.map((row) => (
+        <CopyRow
+          key={row.key}
+          label={row.label}
+          value={row.value}
+          copyValue={row.copy || undefined}
+          emphasis={row.emphasis}
+          mono={row.mono}
+          ct={ct}
+        />
+      ))}
+    </dl>
+  )
+}
+
+/** Binance: the network warning for an address, or that a Pay ID has no fee. */
+function BinanceNote({ payment, ct }: { payment: PurchasePayment; ct: CartTranslate }) {
+  const address = text(payment.usdt_address)
+  if (address) {
+    const network = usdtNetworkLabel(payment.usdt_network)
+    return (
+      <div role="note" className="mt-3 flex items-start gap-2.5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-700" aria-hidden="true" />
+        <div className="min-w-0 space-y-1 text-sm leading-relaxed text-amber-900">
+          <p className="font-semibold">{ct('purchase.binance_address_title')}</p>
+          {network && <p>{ct('purchase.binance_network_warning', { network })}</p>}
+          <p>{ct('purchase.binance_fee_note')}</p>
+        </div>
+      </div>
+    )
+  }
+  if (!text(payment.pay_id)) return null
+  return (
+    <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-[#584F72]">
+      <Info size={14} className="mt-px shrink-0 text-[#6559CA]" aria-hidden="true" />
+      <span>{ct('purchase.binance_pay_id_note')}</span>
+    </p>
   )
 }
 
@@ -226,7 +388,18 @@ function ResourceLinks({ purchase, orgslug, ct }: { purchase: Purchase; orgslug:
   )
 }
 
-function ProductsCard({ purchase, ct }: { purchase: Purchase; ct: CartTranslate }) {
+function ProductsCard({
+  purchase,
+  pay,
+  ct,
+  sc,
+}: {
+  purchase: Purchase
+  pay: PurchasePay
+  ct: CartTranslate
+  sc: ScTranslate
+}) {
+  const equivalent = payEquivalent(pay, purchase.amount, ct)
   return (
     <section className="rounded-[20px] nice-shadow bg-white p-4 sm:p-6" aria-labelledby="purchase-products-title">
       <h2
@@ -259,8 +432,15 @@ function ProductsCard({ purchase, ct }: { purchase: Purchase; ct: CartTranslate 
       <div className="mt-2 flex items-baseline justify-between gap-3 border-t border-[#EAE8F2] pt-3">
         <span className="text-sm font-semibold text-[#584F72]">{ct('purchase.total')}</span>
         <span className="text-end">
-          <span className="block font-black text-[#190933] tabular-nums">{formatBs(purchase.amount_ves)}</span>
-          <span className="block text-xs text-[#6D6485] tabular-nums">{formatUsd(purchase.amount)}</span>
+          <span className="block font-black text-[#190933] tabular-nums">{payAmountText(pay, purchase.amount)}</span>
+          {equivalent && <span className="block text-xs text-[#6D6485] tabular-nums">{equivalent}</span>}
+        </span>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-[#EAE8F2] pt-3">
+        <span className="text-sm font-semibold text-[#584F72]">{ct('purchase.method_label')}</span>
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#190933]">
+          <MethodIcon method={pay.method} size={15} className="shrink-0 text-[#6559CA]" />
+          {methodLabel(pay.method, sc)}
         </span>
       </div>
     </section>
@@ -405,6 +585,7 @@ export default function PurchasePage({
   purchaseUuid: string
 }) {
   const { ct, lng } = useCartT()
+  const { sc } = useScT()
   const router = useRouter()
   const queryClient = useQueryClient()
   const session = useLHSession() as any
@@ -566,18 +747,23 @@ export default function PurchasePage({
   // -------------------------------------------------------------------------
 
   const payment = purchase.payment
+  // Its method, and what she pays in that method's currency.
+  const pay = purchasePay(purchase)
   const waUrl = safeWhatsappUrl(purchase.whatsapp_url, purchase.whatsapp_number ?? undefined)
   const waNumber = formatWhatsappNumber(purchase.whatsapp_number)
   // Plain chat (no prefilled message): rejected, voided or closed orders.
   const chatUrl = whatsappChatUrl(purchase.whatsapp_number)
+  // Only the methods paid in bolívares have a rate.
   const rateLine =
-    purchase.fx_source === 'manual'
-      ? ct('purchase.rate_manual', { usd: formatUsd(purchase.amount), rate: formatRate(purchase.fx_rate) })
-      : ct('purchase.rate_bcv', {
-          usd: formatUsd(purchase.amount),
-          rate: formatRate(purchase.fx_rate),
-          date: formatIsoDate(purchase.fx_date),
-        })
+    pay.currency !== 'VES'
+      ? ''
+      : purchase.fx_source === 'manual'
+        ? ct('purchase.rate_manual', { usd: formatUsd(purchase.amount), rate: formatRate(purchase.fx_rate) })
+        : ct('purchase.rate_bcv', {
+            usd: formatUsd(purchase.amount),
+            rate: formatRate(purchase.fx_rate),
+            date: formatIsoDate(purchase.fx_date),
+          })
 
   const whatsappButton = waUrl ? (
     <a href={waUrl} target="_blank" rel="noopener" className={`${WHATSAPP_BTN} w-full min-h-[56px] px-6 py-3.5 text-base`}>
@@ -604,44 +790,14 @@ export default function PurchasePage({
           n={1}
           title={
             <>
-              {ct('purchase.step1_title')}{' '}
-              <strong className="whitespace-nowrap font-black text-[#4F43A4]">{formatBs(purchase.amount_ves)}</strong>
+              {payStepTitle(pay.method, ct)}{' '}
+              <strong className="whitespace-nowrap font-black text-[#4F43A4]">{payAmountText(pay, purchase.amount)}</strong>
             </>
           }
         >
-          {payment ? (
-            <dl className="rounded-2xl border border-[#EAE8F2] bg-[#FFFCF9] px-4">
-              <CopyRow
-                label={ct('purchase.field_bank')}
-                value={payment.bank_code ? `${payment.bank_name} (${payment.bank_code})` : payment.bank_name}
-                copyValue={payment.bank_code || payment.bank_name}
-                ct={ct}
-              />
-              <CopyRow
-                label={ct('purchase.field_phone')}
-                value={payment.phone}
-                copyValue={digitsOnly(payment.phone) || payment.phone}
-                ct={ct}
-              />
-              <CopyRow
-                label={ct('purchase.field_id')}
-                value={payment.id_document}
-                copyValue={digitsOnly(payment.id_document) || payment.id_document}
-                ct={ct}
-              />
-              {payment.holder_name && (
-                <CopyRow label={ct('purchase.field_holder')} value={payment.holder_name} copyValue={payment.holder_name} ct={ct} />
-              )}
-              <CopyRow
-                label={ct('purchase.field_amount')}
-                value={formatBs(purchase.amount_ves)}
-                copyValue={amountForCopy(purchase.amount_ves)}
-                emphasis
-                ct={ct}
-              />
-            </dl>
-          ) : null}
-          <p className="mt-3 text-xs text-[#584F72] tabular-nums">{rateLine}</p>
+          {payment ? <PaymentDetails pay={pay} payment={payment} ct={ct} /> : null}
+          {rateLine && <p className="mt-3 text-xs text-[#584F72] tabular-nums">{rateLine}</p>}
+          {payment && pay.method === 'binance' && <BinanceNote payment={payment} ct={ct} />}
           {payment?.instructions && (
             <div className="mt-3 rounded-2xl bg-[#EEEDFF] px-4 py-3">
               <p className="text-xs font-semibold text-[#4F43A4]">{ct('purchase.instructions_title')}</p>
@@ -794,7 +950,7 @@ export default function PurchasePage({
           <div className="space-y-4">
             {status === 'pending' ? renderPending() : renderClosed()}
 
-            <ProductsCard purchase={purchase} ct={ct} />
+            <ProductsCard purchase={purchase} pay={pay} ct={ct} sc={sc} />
 
             {status === 'pending' && purchase.can_cancel && (
               <div className="pt-2 text-center">

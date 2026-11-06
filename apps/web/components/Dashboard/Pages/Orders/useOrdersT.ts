@@ -1,6 +1,6 @@
 'use client'
-// Sanar y Criar: translation helper for the "Pedidos" dashboard and the Pago
-// Móvil settings card.
+// Sanar y Criar: translation helper for the "Pedidos" dashboard and the cards
+// of "Pagos manuales" in Pagos › Configuración.
 //
 // Strings live in locales-sc/orders.<lng>.json under the "sc_orders" prefix
 // and get merged into locales/*.json by tools/i18n/apply.cjs. The bundled copy
@@ -10,7 +10,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import ordersEs from '@/locales-sc/orders.es.json'
 import ordersEn from '@/locales-sc/orders.en.json'
-import { ORDER_STATUSES } from './ordersForm'
+import { ACCOUNT_TYPES, MISSING_TOKENS, ORDER_STATUSES } from './ordersForm'
 
 type Tree = Record<string, any>
 
@@ -48,8 +48,16 @@ function fallbackFor(lng: string, key: string, count?: number): string {
 
 export type OrdersTranslate = (_key: string, _options?: Record<string, any>) => string
 
-/** Label groups whose keys are API values (states.pending, tabs.all, …). */
-export type OrdersLabelGroup = 'states' | 'changed' | 'tabs' | 'empty' | 'late_warning' | 'fields' | 'expires'
+/** Label groups whose keys are API values (states.pending, tabs.all, missing.whatsapp, …). */
+export type OrdersLabelGroup =
+  | 'states'
+  | 'changed'
+  | 'tabs'
+  | 'empty'
+  | 'late_warning'
+  | 'expires'
+  | 'missing'
+  | 'account_types'
 
 /**
  * Label for an API value, e.g. ordersLabel(ot, 'states', 'paid').
@@ -63,6 +71,17 @@ export function ordersLabel(ot: OrdersTranslate, group: OrdersLabelGroup, value:
 export function stateLabel(ot: OrdersTranslate, status: string | null | undefined): string {
   const value = String(status ?? '')
   return (ORDER_STATUSES as readonly string[]).includes(value) ? ordersLabel(ot, 'states', value) : value
+}
+
+/** Name of a missing datum ("titular", "correo o teléfono de Zelle"); an unknown token as it came. */
+export function missingLabel(ot: OrdersTranslate, token: string): string {
+  return (MISSING_TOKENS as readonly string[]).includes(token) ? ordersLabel(ot, 'missing', token) : token
+}
+
+/** "Corriente" / "Ahorro"; anything else as it came. */
+export function accountTypeLabel(ot: OrdersTranslate, value: string | null | undefined): string {
+  const type = String(value ?? '')
+  return (ACCOUNT_TYPES as readonly string[]).includes(type) ? ordersLabel(ot, 'account_types', type) : type
 }
 
 /** `ot('detail.title')` resolves `sc_orders.detail.title`. */

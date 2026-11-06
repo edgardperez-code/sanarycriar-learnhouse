@@ -1,5 +1,5 @@
 'use client'
-// Sanar y Criar: how many Pago Móvil orders wait for confirmation, for the
+// Sanar y Criar: how many orders paid by hand wait for confirmation, for the
 // "Pedidos (3)" menu label. Asked only for someone who can manage the org,
 // with a session and with payments on; every 60 s and again when the window
 // gets the focus back. A 403 (not an admin after all) or a 404 (an API

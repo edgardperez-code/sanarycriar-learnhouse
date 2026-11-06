@@ -28,7 +28,8 @@ import Modal from '@components/Objects/StyledElements/Modal/Modal';
 import ConfirmationModal from '@components/Objects/StyledElements/ConfirmationModal/ConfirmationModal';
 import toast from 'react-hot-toast';
 import { getOrgCourses } from '@services/courses/courses';
-import { usePaymentsEnabled } from '@hooks/usePaymentsEnabled';
+// Sanar y Criar: also counts a complete bank transfer, Zelle or Binance.
+import { usePaymentsConfigured } from './usePaymentsConfigured';
 import UnconfiguredPaymentsDisclaimer from '@components/Pages/Payments/UnconfiguredPaymentsDisclaimer';
 import { useScT } from '@components/Payments/useScT';
 import { describePaymentError } from '@components/Payments/commerce';
@@ -405,7 +406,7 @@ export default function PaymentsGroupsPage() {
   const org = useOrg() as any;
   const session = useLHSession() as any;
   const token = session?.data?.tokens?.access_token;
-  const { isEnabled, isLoading } = usePaymentsEnabled();
+  const { isEnabled, isLoading } = usePaymentsConfigured();
   const queryClient = useQueryClient();
   const { sc } = useScT();
 

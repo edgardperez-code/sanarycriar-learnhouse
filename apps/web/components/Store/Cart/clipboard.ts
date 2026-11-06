@@ -1,5 +1,5 @@
 'use client'
-// Sanar y Criar: copy a value to the clipboard (Pago Móvil details).
+// Sanar y Criar: copy a value to the clipboard (how to pay an order).
 // navigator.clipboard needs a secure context; the textarea fallback covers
 // plain-http previews and older browsers.
 export async function copyText(text: string): Promise<boolean> {

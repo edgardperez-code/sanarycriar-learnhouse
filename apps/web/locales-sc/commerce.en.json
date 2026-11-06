@@ -22,6 +22,12 @@
       "manual": "Manual",
       "pago_movil": "Pago Móvil"
     },
+    "methods": {
+      "pago_movil": "Pago Móvil",
+      "transferencia": "Bank transfer",
+      "zelle": "Zelle",
+      "binance": "Binance"
+    },
     "status": {
       "active": "Active",
       "completed": "Completed",
@@ -65,7 +71,7 @@
     },
     "config": {
       "title": "Payment methods",
-      "subtitle": "Connect PayPal or turn on Pago Móvil to get paid for your courses and ebooks.",
+      "subtitle": "Connect PayPal or turn on manual payments (Pago Móvil, bank transfer, Zelle or Binance) to get paid for your courses and ebooks.",
       "load_error": "We could not load the payment settings.",
       "paypal_tagline": "Get paid with PayPal or by card (your customer does not need a PayPal account).",
       "paypal_developer_link": "Open the PayPal developer dashboard",

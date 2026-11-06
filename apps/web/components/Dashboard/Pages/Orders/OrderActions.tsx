@@ -10,6 +10,11 @@
 // it) nothing is sent and the detail says so. A 409 or a server error
 // refreshes the order lists. Buttons stay disabled while a request runs and
 // the API's message shows in the form.
+//
+// "Marcar como pagado" speaks the order's method (manual methods contract
+// §A.7): where to check the money (the bank for bolívares, Zelle, Binance),
+// in its currency, and which reference to copy (the bank's, Zelle's
+// confirmation number, Binance Pay's order id or the TxID, up to 100).
 import React, { useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Ban, CheckCircle2, Loader2, RefreshCw, ShieldAlert, XCircle } from 'lucide-react'
@@ -35,6 +40,8 @@ import {
   isValidReference,
   needsLateWarning,
   normalizeReference,
+  purchasePay,
+  referenceMaxLength,
   textLength,
 } from './ordersForm'
 import { BoldText } from './OrderBits'
@@ -307,6 +314,31 @@ function FormButtons({
 // Marcar como pagado
 // ---------------------------------------------------------------------------
 
+/** "Antes de confirmar, revisa en tu banco / tu Zelle / Binance que recibiste **…**." */
+function checkMoneyText(purchase: PurchaseAdmin, ot: OrdersTranslate): string {
+  const amount = formatAmount(purchasePay(purchase).amount)
+  switch (purchase.method) {
+    case 'zelle':
+      return ot('confirm_form.check_zelle', { amount })
+    case 'binance':
+      return ot('confirm_form.check_binance', { amount })
+    default:
+      return ot('confirm_form.check_bank', { amount })
+  }
+}
+
+/** Label and hint of the reference: the bank's, Zelle's confirmation number or Binance's order id / TxID. */
+function referenceTexts(method: string, ot: OrdersTranslate): { label: string; hint: string } {
+  switch (method) {
+    case 'zelle':
+      return { label: ot('confirm_form.reference_label_zelle'), hint: ot('confirm_form.reference_hint_zelle') }
+    case 'binance':
+      return { label: ot('confirm_form.reference_label_binance'), hint: ot('confirm_form.reference_hint_binance') }
+    default:
+      return { label: ot('confirm_form.reference_label'), hint: ot('confirm_form.reference_hint') }
+  }
+}
+
 function ConfirmForm({ purchase, ot, onBack, onDone, onChanged }: FormProps) {
   const { sc } = useScT()
   const { orgId, accessToken, currentStatus, afterFailure } = useActionGuard(purchase, onChanged)
@@ -318,7 +350,11 @@ function ConfirmForm({ purchase, ot, onBack, onDone, onChanged }: FormProps) {
   // Codes of the paid orders that already carry this reference (REFERENCE_USED).
   const [reusedIn, setReusedIn] = useState<string[] | null>(null)
 
-  const referenceOk = isValidReference(reference)
+  const referenceMax = referenceMaxLength(purchase.method)
+  // Room for the spaces, dots and dashes that get removed.
+  const referenceInputMax = referenceMax + 30
+  const referenceText = referenceTexts(purchase.method, ot)
+  const referenceOk = isValidReference(reference, purchase.method)
   const noteOk = isValidNote(note)
   const showReferenceError = touched && !referenceOk
 
@@ -363,7 +399,7 @@ function ConfirmForm({ purchase, ot, onBack, onDone, onChanged }: FormProps) {
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
       <p className="rounded-xl bg-[#EEEDFF]/70 px-3 py-2.5 text-sm text-[#41375B]">
-        <BoldText text={ot('confirm_form.check_bank', { amount: formatAmount(purchase.amount_ves) })} />
+        <BoldText text={checkMoneyText(purchase, ot)} />
       </p>
 
       {needsLateWarning(purchase.status) && (
@@ -375,7 +411,7 @@ function ConfirmForm({ purchase, ot, onBack, onDone, onChanged }: FormProps) {
 
       <div className="space-y-1.5">
         <Label htmlFor="order-reference" id="order-reference-label" className="text-[#190933]">
-          {ot('confirm_form.reference_label')}
+          {referenceText.label}
         </Label>
         <Input
           id="order-reference"
@@ -390,16 +426,20 @@ function ConfirmForm({ purchase, ot, onBack, onDone, onChanged }: FormProps) {
           autoCapitalize="characters"
           spellCheck={false}
           autoFocus
-          maxLength={60}
+          maxLength={referenceInputMax}
           aria-labelledby="order-reference-label"
           aria-invalid={showReferenceError ? true : undefined}
           aria-describedby={describedBy('order-reference-hint', showReferenceError && 'order-reference-error')}
           className={`font-mono uppercase ${showReferenceError ? 'border-red-400 focus-visible:ring-red-400' : ''}`}
         />
         <p id="order-reference-hint" className="text-xs text-gray-500">
-          {ot('confirm_form.reference_hint')}
+          {referenceText.hint}
         </p>
-        {showReferenceError && <FieldError id="order-reference-error">{ot('confirm_form.reference_invalid')}</FieldError>}
+        {showReferenceError && (
+          <FieldError id="order-reference-error">
+            {ot('confirm_form.reference_invalid', { min: ORDER_LIMITS.reference_min, max: referenceMax })}
+          </FieldError>
+        )}
       </div>
 
       <div className="space-y-1.5">

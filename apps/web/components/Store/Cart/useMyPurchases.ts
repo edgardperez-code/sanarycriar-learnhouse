@@ -1,5 +1,5 @@
 'use client'
-// Sanar y Criar: the buyer's Pago Móvil orders (GET purchases/mine). Any
+// Sanar y Criar: the buyer's cart orders (GET purchases/mine). Any
 // failure (no session, payments off, API not deployed) is an empty list: the
 // callers only use it to show extra notices.
 import { useQuery } from '@tanstack/react-query'
