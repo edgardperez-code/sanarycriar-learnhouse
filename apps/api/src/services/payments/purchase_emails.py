@@ -160,7 +160,9 @@ def _code(code: str) -> str:
     return f'<span style="white-space: nowrap;">{_e(code)}</span>'
 
 
-def _layout(branding, *, title: str, body: str, preheader: str, footer: str) -> str:
+def _layout(branding, *, title: str, body: str, preheader: str, footer: str,
+            eyebrow: str = "", signature: bool = True) -> str:
+    """The shared layout; buyer mail is signed by Hilda, the admin notice is not."""
     from src.services.users.emails import _brand_logo_html, _email_layout
 
     return _email_layout(
@@ -171,6 +173,8 @@ def _layout(branding, *, title: str, body: str, preheader: str, footer: str) -> 
         preheader=preheader,
         powered_by=branding.powered_by,
         lang="es",
+        eyebrow=eyebrow,
+        signature=signature,
     )
 
 
@@ -187,32 +191,41 @@ def _button(branding, url: str, label: str) -> str:
 
 
 def _items_table(items: list[ItemLine]) -> str:
+    from src.services.users.emails import BORDE, VIOLETA, VIOLETA_600
+
     rows = "".join(
         '<tr>'
-        f'<td style="padding: 6px 0; text-align: left; color: #000000; font-weight: 600;">{_e(item.name)}</td>'
-        f'<td style="padding: 6px 0 6px 12px; text-align: right; white-space: nowrap;">US$ {format_bs(item.amount)}</td>'
+        f'<td style="padding: 12px 0; border-bottom: 1px solid {BORDE}; text-align: left; color: {VIOLETA}; '
+        f'font-weight: 600;">{_e(item.name)}</td>'
+        f'<td style="padding: 12px 0 12px 12px; border-bottom: 1px solid {BORDE}; text-align: right; '
+        f'white-space: nowrap; color: {VIOLETA_600};">US$ {format_bs(item.amount)}</td>'
         '</tr>'
         for item in items
     )
     return (
         '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" '
-        'style="margin: 0 0 20px 0; border-collapse: collapse; font-size: 14px; color: rgba(0,0,0,0.6);">'
+        f'style="margin: 0 0 22px 0; border-collapse: collapse; font-size: 15px; border-top: 1px solid {BORDE};">'
         f"{rows}</table>"
     )
 
 
 def _details_table(rows: list[tuple[str, str]]) -> str:
+    """The payment details on a lavanda card, large enough to copy from a phone."""
+    from src.services.users.emails import LAVANDA_100, VIOLETA, VIOLETA_400
+
     cells = "".join(
         '<tr>'
-        f'<td style="padding: 8px 12px; text-align: left; color: rgba(0,0,0,0.45);">{_e(label)}</td>'
-        f'<td style="padding: 8px 12px 8px 0; text-align: left; color: #000000; font-weight: 700;">{_e(value)}</td>'
+        f'<td style="padding: 9px 10px 9px 14px; text-align: left; color: {VIOLETA_400}; font-size: 14px; '
+        f'vertical-align: top;">{_e(label)}</td>'
+        f'<td style="padding: 9px 14px 9px 0; text-align: left; color: {VIOLETA}; font-weight: 600; '
+        f'font-size: 15px; word-break: break-word; overflow-wrap: anywhere;">{_e(value)}</td>'
         '</tr>'
         for label, value in rows if value
     )
     return (
         '<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" '
-        'style="margin: 0 0 20px 0; border-collapse: separate; font-size: 14px; background-color: #fafafa; '
-        f'border: 1px solid #eeeeee; border-radius: 10px;">{cells}</table>'
+        f'style="margin: 0 0 22px 0; border-collapse: separate; background-color: {LAVANDA_100}; '
+        f'border-radius: 16px; padding: 6px 0;">{cells}</table>'
     )
 
 
@@ -325,6 +338,7 @@ def render_created(*, branding, first_name: str, code: str, items: list[ItemLine
         body=body,
         preheader=f"Paga {pay} con {_with(method)} y envíanos el comprobante.",
         footer="Recibes este correo porque hiciste un pedido con esta cuenta.",
+        eyebrow="Tu pedido",
     )
     return subject, document
 
@@ -364,6 +378,8 @@ def render_admin_notice(*, branding, code: str, buyer_name: str, buyer_email: st
         body=body,
         preheader=f"{buyer_name}: {pay} por confirmar.",
         footer="Recibes este aviso porque tu correo está configurado para los avisos de pedidos nuevos.",
+        eyebrow="Pedido nuevo",
+        signature=False,
     )
     return subject, document
 
@@ -395,6 +411,7 @@ def render_paid(*, branding, first_name: str, code: str, resources: list[tuple[s
         body=body,
         preheader=f"Tu pedido {code} está confirmado.",
         footer="Recibes este correo porque realizaste una compra con esta cuenta.",
+        eyebrow="Pago confirmado",
     )
     return subject, document
 
@@ -423,5 +440,6 @@ def render_rejected(*, branding, first_name: str, code: str, reason: str,
         body=body,
         preheader=f"Tu pedido {code} no se pudo confirmar.",
         footer="Recibes este correo porque hiciste un pedido con esta cuenta.",
+        eyebrow="Tu pedido",
     )
     return subject, document

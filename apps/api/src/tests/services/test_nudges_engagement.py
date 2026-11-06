@@ -64,7 +64,7 @@ class TestPreheader:
         before = _email_layout("T", "<p>b</p>", footer_note="note")
         assert "<body style=" in before
         assert "mso-hide" not in before
-        assert '<body style="margin: 0; padding: 0; background-color: #f5f5f5;' in before
+        assert '<body style="margin: 0; padding: 0; background-color: #fdf5ee;' in before
 
     def test_preheader_is_hidden_from_the_rendered_body(self):
         html = _email_layout("T", "<p>b</p>", preheader="Second line of info")

@@ -285,6 +285,8 @@ def _purchase_email_html(*, first_name: str, offer_name: str, courses: list[tupl
         preheader=f"Tu acceso a {offer_name} está listo.",
         powered_by=branding.powered_by,
         lang="es",
+        eyebrow="Pago confirmado",
+        signature=True,
     )
     return subject, document
 

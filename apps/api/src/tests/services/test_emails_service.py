@@ -10,7 +10,11 @@ from src.db.users import UserRead
 from src.services.email.translations import ACADEMY_LINK_TEXT, FOOTER_LINE
 from src.services.users.emails import (
     ACADEMY_URL,
+    EMAIL_AVATAR_URL,
+    INSTAGRAM_URL,
     PLATFORM_LOGO_HTML,
+    SITE_URL,
+    STYLES,
     send_account_creation_email,
     send_account_deleted_email,
     send_email_verification_email,
@@ -38,11 +42,6 @@ def _user(**overrides):
     )
     data.update(overrides)
     return UserRead(**data)
-
-
-def _wordmark(escaped_name: str) -> str:
-    """The org-name header an org-branded mail shows when it has no logo."""
-    return f'line-height: 1.2;">{escaped_name}</span>'
 
 
 def _org(**overrides):
@@ -109,7 +108,8 @@ class TestEmailsService:
         assert "encuentras cómo escribirnos" in call["body"]
         assert "LearnHouse" not in call["body"]
         assert "learnhouse.io" not in call["body"]
-        assert "<img" not in call["body"]
+        # Sanar y Criar: the website's logo heads every email.
+        assert PLATFORM_LOGO_HTML in call["body"]
 
     def test_welcome_is_whitelabeled_when_org_supplied(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
@@ -125,24 +125,24 @@ class TestEmailsService:
         assert "Acme &amp; Co" in call["subject"]
         assert "Welcome to LearnHouse" not in call["subject"]
         assert "Acme &amp; Co" in call["body"]
-        # Org logo replaces the mark; site footer note is gone; powered-by remains.
-        assert '<img src="https://api.test/content/orgs/org_uuid/logos/logo.png"' in call["body"]
+        # Sanar y Criar: one brand, so the site logo stays even when the org
+        # uploaded its own; the site footer note is gone; the brand line remains.
+        assert PLATFORM_LOGO_HTML in call["body"]
+        assert "api.test/content/orgs" not in call["body"]
         assert "encuentras cómo escribirnos" not in call["body"]
-        assert PLATFORM_LOGO_HTML not in call["body"]
         assert "LearnHouse" not in call["body"]
         assert FOOTER_LINE["es"] in call["body"]  # Sanar y Criar footer line
         assert "https://acme.test/home" in call["body"]
 
-    def test_whitelabel_without_logo_uses_the_org_name_as_wordmark(self):
+    def test_whitelabel_without_logo_still_uses_the_site_logo(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
             send_account_creation_email(
                 _user(), "user@test.com", org_name="Acme & Co", logo_url=None
             )
         call = send_email.call_args.kwargs
-        # No org logo → the org's own name up top, never the LearnHouse mark.
-        assert "<img" not in call["body"]
+        # Sanar y Criar: the site logo up top, never the LearnHouse mark.
+        assert PLATFORM_LOGO_HTML in call["body"]
         assert "<svg" not in call["body"]
-        assert _wordmark("Acme &amp; Co") in call["body"]
         assert "Acme &amp; Co" in call["subject"]
         assert FOOTER_LINE["es"] in call["body"]  # Sanar y Criar footer line
 
@@ -172,8 +172,9 @@ class TestEmailsService:
         body = send_email.call_args.kwargs["body"]
         assert "Ir a Acme" not in body  # Sanar y Criar: Spanish CTA text
         assert 'href="/"' not in body
-        # The only link left is the footer attribution, never a CTA.
-        assert body.count("<a href") == 1
+        # Only the logo and the footer links are left, never a CTA button.
+        assert STYLES["button"] not in body
+        assert body.count("<a href") == 3
         assert FOOTER_LINE["es"] in body
 
     def test_org_join_email_is_whitelabeled_and_links_to_the_org(self):
@@ -186,15 +187,15 @@ class TestEmailsService:
                 logo_url="https://api.test/content/orgs/org_uuid/logos/logo.png",
             ) is True
         call = send_email.call_args.kwargs
-        # Named after the org, with the org's own logo, not the LearnHouse mark.
+        # Named after the org, under the site logo (Sanar y Criar: one brand).
         assert "Acme &amp; Co" in call["subject"]
-        assert '<img src="https://api.test/content/orgs/org_uuid/logos/logo.png"' in call["body"]
+        assert PLATFORM_LOGO_HTML in call["body"]
         # The whole point of the email: a working way back into the org.
         assert "https://acme.test/home" in call["body"]
         # Hostile username/org names are escaped, never rendered as markup.
         assert "<script>" not in call["body"]
 
-    def test_org_join_email_uses_the_org_name_as_wordmark_without_logo(self):
+    def test_org_join_email_uses_the_site_logo_without_an_org_logo(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
             send_org_join_email(
                 email="user@test.com",
@@ -203,9 +204,8 @@ class TestEmailsService:
                 cta_url="https://acme.test/home",
             )
         call = send_email.call_args.kwargs
-        assert "<img" not in call["body"]
+        assert PLATFORM_LOGO_HTML in call["body"]
         assert "<svg" not in call["body"]
-        assert _wordmark("Acme") in call["body"]
 
     def test_org_join_email_translates(self):
         with patch("src.services.users.emails.send_email", return_value=True) as send_email:
@@ -592,15 +592,16 @@ class TestWhiteLabel:
             assert "LearnHouse" not in call["body"], call["subject"]
             assert "LearnHouse" not in call["subject"]
             assert "<svg" not in call["body"]
-            assert f'<img src="{self.LOGO}" alt="Acme &amp; Co"' in call["body"]
+            assert PLATFORM_LOGO_HTML in call["body"]
+            assert self.LOGO not in call["body"]
             assert call["sender_name"] == "Acme Academy"
 
-    def test_brand_color_tints_the_button(self):
+    def test_buttons_keep_the_site_violet_whatever_the_org_color(self):
+        # Sanar y Criar: every email matches the website, so the panel's
+        # accent color never repaints the button.
         for call in self._all_org_scoped_sends(**self.BRANDING):
-            assert "background-color: #ff5500;" in call["body"], call["subject"]
-            assert "background-color: #000000;" not in call["body"]
-            # Orange is light enough that white text would fail contrast.
-            assert "color: #000000; text-decoration: none" in call["body"]
+            assert STYLES["button"] in call["body"], call["subject"]
+            assert "#ff5500" not in call["body"]
 
     def test_watermark_on_adds_exactly_one_powered_by_line(self):
         # Sanar y Criar: the footer line is our own brand, LearnHouse never shows.
@@ -619,31 +620,23 @@ class TestWhiteLabel:
             assert call["body"].count(FOOTER_LINE["es"]) == 1, call["subject"]
             assert "Powered by" not in call["body"]
 
-    def test_square_logo_renders_as_a_square_box_and_wide_logo_letterboxed(self):
+    def test_uploaded_org_logos_never_replace_the_site_logo(self):
         square = "https://api.test/content/orgs/org_uuid/square_logos/sq.png"
         with patch("src.services.users.emails.send_email", return_value=True) as sent:
-            send_invitation_email(
-                email="user@test.com", org_name="Acme", inviter_username="owner",
-                signup_url="https://acme.test/signup", logo_url=square,
-            )
-            square_body = sent.call_args.kwargs["body"]
-            send_invitation_email(
-                email="user@test.com", org_name="Acme", inviter_username="owner",
-                signup_url="https://acme.test/signup", logo_url=self.LOGO,
-            )
-            wide_body = sent.call_args.kwargs["body"]
-        assert f'<img src="{square}" alt="Acme" width="56" height="56"' in square_body
-        assert "border-radius: 12px" in square_body
-        assert f'<img src="{self.LOGO}" alt="Acme" height="40"' in wide_body
-        assert "max-width: 180px" in wide_body
-        assert "width=\"56\"" not in wide_body
+            for logo in (square, self.LOGO):
+                send_invitation_email(
+                    email="user@test.com", org_name="Acme", inviter_username="owner",
+                    signup_url="https://acme.test/signup", logo_url=logo,
+                )
+                body = sent.call_args.kwargs["body"]
+                assert PLATFORM_LOGO_HTML in body, logo
+                assert logo not in body
 
-    def test_org_without_logo_or_color_gets_wordmark_and_default_button(self):
+    def test_org_without_logo_or_color_gets_the_site_logo_and_button(self):
         for call in self._all_org_scoped_sends(powered_by=False):
-            assert _wordmark("Acme &amp; Co") in call["body"], call["subject"]
-            assert "<img" not in call["body"]
+            assert PLATFORM_LOGO_HTML in call["body"], call["subject"]
             assert "<svg" not in call["body"]
-            assert "background-color: #000000;" in call["body"]
+            assert STYLES["button"] in call["body"]
 
     def test_invalid_brand_color_keeps_the_default_button(self):
         for bad in ("red", "#12345", "#ff5500; color: red", "url(x)", "", None):
@@ -656,7 +649,7 @@ class TestWhiteLabel:
                     brand_color=bad,
                 )
             body = sent.call_args.kwargs["body"]
-            assert "background-color: #000000;" in body, bad
+            assert STYLES["button"] in body, bad
             assert "color: red" not in body
             assert "url(" not in body
 
@@ -734,3 +727,64 @@ class TestWhiteLabel:
                 assert "Acme" in call["body"], lang
             assert "LearnHouse" not in sent_magic.call_args.kwargs["body"], lang
             assert "LearnHouse" not in sent_magic.call_args.kwargs["subject"], lang
+
+
+class TestSanarYCriarLook:
+    """Sanar y Criar (2026-11): every email wears the website's look."""
+
+    def _send(self, fn, **kwargs):
+        with patch("src.services.users.emails.send_email", return_value=True) as sent:
+            fn(**kwargs)
+        return sent.call_args.kwargs["body"]
+
+    def test_client_mail_is_signed_by_hilda(self):
+        bodies = [
+            self._send(send_email_verification_email, token="tok", user=_user(), organization=_org(),
+                       email="user@test.com", base_url="https://acme.test"),
+            self._send(send_account_creation_email, user=_user(), email="user@test.com", org_name="Acme"),
+            self._send(send_org_join_email, email="user@test.com", username="learner", org_name="Acme",
+                       cta_url="https://acme.test"),
+        ]
+        for body in bodies:
+            assert EMAIL_AVATAR_URL in body
+            assert "Con cariño," in body
+            assert "Hilda Hernández" in body
+
+    def test_invitation_is_not_signed_by_hilda(self):
+        # The inviter may be another admin, named in the body.
+        body = self._send(send_invitation_email, email="user@test.com", org_name="Acme",
+                          inviter_username="owner", signup_url="https://acme.test/signup")
+        assert ">Invitación</p>" in body
+        assert EMAIL_AVATAR_URL not in body
+
+    def test_title_is_not_escaped_twice(self):
+        from src.services.users.emails import _email_layout
+
+        html_doc = _email_layout("Acme &amp; Co", "<p>b</p>")
+        assert "<title>Acme &amp; Co</title>" in html_doc
+
+    def test_outlook_gets_a_fixed_width_table(self):
+        body = self._send(send_account_deleted_email, email="user@test.com", username="user")
+        assert '<!--[if mso]><table role="presentation" width="560"' in body
+
+    def test_password_reset_has_a_label_and_no_signature(self):
+        body = self._send(send_password_reset_email, generated_reset_code="CODE1234", user=_user(),
+                          organization=_org(), email="user@test.com", base_url="https://acme.test")
+        assert ">Tu cuenta</p>" in body
+        assert EMAIL_AVATAR_URL not in body
+        assert "CODE1234" in body
+
+    def test_every_footer_links_the_site_and_instagram(self):
+        for body in (
+            self._send(send_account_deleted_email, email="user@test.com", username="user"),
+            self._send(send_role_changed_email, email="user@test.com", username="learner", org_name="Acme",
+                       new_role_name="Admin"),
+        ):
+            assert f'href="{SITE_URL}"' in body
+            assert f'href="{INSTAGRAM_URL}"' in body
+
+    def test_site_colors_and_fonts(self):
+        body = self._send(send_account_deleted_email, email="user@test.com", username="user")
+        assert "background-color: #fdf5ee;" in body  # nube, the site's page color
+        assert "Playfair Display" in body
+        assert '<meta name="color-scheme" content="light">' in body

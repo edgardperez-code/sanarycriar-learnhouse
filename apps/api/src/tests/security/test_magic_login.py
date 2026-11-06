@@ -209,8 +209,12 @@ class TestSendMagicLoginEmail:
         # Plain-text subject carries the raw org name; the HTML body escapes it.
         assert call["subject"] == "Votre lien de connexion Acme & Co"
         assert "Connectez-vous à Acme &amp; Co" in call["body"]
-        assert '<img src="https://api.test/content/orgs/o/logos/l.png"' in call["body"]
-        assert "background-color: #1d4ed8;" in call["body"]
+        # Sanar y Criar: the website's logo and violet button, whatever the org uploaded.
+        from src.services.users.emails import PLATFORM_LOGO_HTML, STYLES
+        assert PLATFORM_LOGO_HTML in call["body"]
+        assert "api.test/content/orgs/o/logos/l.png" not in call["body"]
+        assert STYLES["button"] in call["body"]
+        assert "#1d4ed8" not in call["body"]
         assert "LearnHouse" not in call["body"]
         assert "<svg" not in call["body"]
         assert call["sender_name"] == "Acme Academy"

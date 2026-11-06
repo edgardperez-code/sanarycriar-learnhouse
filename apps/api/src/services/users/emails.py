@@ -42,123 +42,141 @@ def _send_notification_email(**kwargs):
 ACADEMY_URL = "https://www.sanarycriarve.com"
 
 
-# Sanar y Criar: the platform mark of org-less mail is the "Sanar y Criar" text
-# wordmark (the brand manual uses no image logo; same lockup as ScWordmark.tsx
-# on the web), linked to our site. Plain HTML with inline styles, so it renders
-# in every mail client (Gmail strips inline SVG). Replaces the LearnHouse SVG.
+# Sanar y Criar (2026-11): every email wears the website's look (client
+# request): warm cream page, the "Sanar y Criar · Hilda Hernández" logo,
+# Playfair titles, Poppins text, violet pill buttons, and Hilda's signature.
+# Colors are the site's tokens (web/src/styles/global.css). The images live on
+# the website (web/public/correo/) as PNG/JPG, which every mail client shows.
+SITE_URL = "https://www.sanarycriarve.com"
+INSTAGRAM_URL = "https://www.instagram.com/sanarycriarve/"
+EMAIL_LOGO_URL = f"{SITE_URL}/correo/logo-sanar-y-criar.png"
+EMAIL_AVATAR_URL = f"{SITE_URL}/correo/hilda.jpg"
+
+SANS = "'Poppins', 'Segoe UI', Helvetica, Arial, sans-serif"
+SERIF = "'Playfair Display', Georgia, 'Times New Roman', serif"
+VIOLETA = "#190933"
+VIOLETA_600 = "#41375b"
+VIOLETA_400 = "#6d6485"
+NUBE = "#fdf5ee"
+BLANCO_CALIDO = "#fffcf9"
+BORDE = "#eae8f2"
+LAVANDA_100 = "#eeedff"
+LAVANDA_300 = "#bbbbff"
+LAVANDA_500 = "#7d75e2"
+LAVANDA_700 = "#4f43a4"
+ROSA_300 = "#f0b4df"
+ROSA_600 = "#ac4691"
+
+# The header logo of every email (org-scoped ones too: Sanar y Criar is one
+# brand). If the client blocks images, the alt text shows in the brand serif.
 PLATFORM_LOGO_HTML = (
     f'<a href="{ACADEMY_URL}" style="text-decoration: none;">'
-    '<span style="display: inline-block; font-family: Georgia, \'Times New Roman\', serif; '
-    'font-size: 26px; font-weight: 600; color: #190933; letter-spacing: -0.01em; line-height: 1.2;">'
-    'Sanar <em style="font-style: italic; font-weight: 500; color: #7D75E2;">y</em> Criar'
-    "</span></a>"
+    f'<img src="{EMAIL_LOGO_URL}" alt="Sanar y Criar" width="230" '
+    f'style="width: 230px; max-width: 80%; height: auto; display: inline-block; border: 0; '
+    f'font-family: {SERIF}; font-size: 26px; font-weight: 600; color: {VIOLETA};" />'
+    "</a>"
 )
 # Upstream name, kept so existing imports (services/auth/magic_login.py) work.
 LOGO_SVG = PLATFORM_LOGO_HTML
 
-# Shared email styles matching the platform's design system
+# Shared email styles. The content block is centered (buttons and codes sit in
+# the middle); titles and text are left-aligned, like the site's letters.
 STYLES = {
-    "body": "margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;",
-    "wrapper": "padding: 48px 24px;",
-    "container": "max-width: 480px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e5e5e5;",
-    "header": "padding: 48px 48px 0 48px; text-align: center;",
-    "content": "padding: 36px 48px 48px 48px; text-align: center;",
-    "h1": "margin: 0 0 12px 0; font-size: 22px; font-weight: 900; color: #000000; letter-spacing: -0.02em; line-height: 1.3;",
-    "p": "margin: 0 0 20px 0; font-size: 14px; color: rgba(0,0,0,0.45); font-weight: 500; line-height: 1.7;",
-    "button": "display: inline-block; padding: 14px 32px; background-color: #000000; color: #ffffff; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 700; line-height: 1;",
-    "link_text": "margin: 24px 0 0 0; font-size: 11px; color: rgba(0,0,0,0.2); word-break: break-all; font-weight: 500; line-height: 1.6;",
-    "divider": "margin: 28px 0; border: none; border-top: 1px solid #f0f0f0;",
-    "footer": "padding: 0 48px 40px 48px; text-align: center;",
-    "footer_text": "margin: 0; font-size: 12px; color: rgba(0,0,0,0.2); font-weight: 500; line-height: 1.6;",
-    "code": "display: inline-block; padding: 14px 28px; background-color: #fafafa; border: 1px solid #e5e5e5; border-radius: 10px; font-size: 28px; font-weight: 900; letter-spacing: 0.12em; color: #000000; font-family: monospace;",
+    "body": f"margin: 0; padding: 0; background-color: {NUBE}; font-family: {SANS};",
+    "wrapper": "padding: 24px 12px;",
+    "container": (
+        f"max-width: 560px; margin: 0 auto; background-color: {BLANCO_CALIDO}; border-radius: 24px; "
+        f"overflow: hidden; border: 1px solid {BORDE};"
+    ),
+    "band": (
+        f"height: 6px; line-height: 6px; font-size: 1px; background-color: {ROSA_300}; "
+        f"background-image: linear-gradient(90deg, {ROSA_300}, {LAVANDA_300});"
+    ),
+    "header": "padding: 30px 28px 4px 28px; text-align: center;",
+    "content": "padding: 22px 28px 30px 28px; text-align: center;",
+    "eyebrow": (
+        f"margin: 0 0 10px 0; font-size: 12px; font-weight: 600; letter-spacing: 0.18em; "
+        f"text-transform: uppercase; color: {ROSA_600}; text-align: left;"
+    ),
+    "h1": (
+        f"margin: 0 0 16px 0; font-family: {SERIF}; font-size: 28px; font-weight: 600; color: {VIOLETA}; "
+        "letter-spacing: -0.01em; line-height: 1.25; text-align: left;"
+    ),
+    "p": (
+        f"margin: 0 0 18px 0; font-size: 16px; color: {VIOLETA_600}; font-weight: 400; line-height: 1.7; "
+        "text-align: left;"
+    ),
+    "button": (
+        f"display: inline-block; margin: 8px 0 6px 0; padding: 16px 34px; background-color: {VIOLETA}; "
+        f"color: {NUBE}; text-decoration: none; border-radius: 999px; font-size: 15px; font-weight: 600; "
+        "line-height: 1.2;"
+    ),
+    "link_text": (
+        f"margin: 20px 0 0 0; font-size: 12px; color: {VIOLETA_400}; word-break: break-all; font-weight: 400; "
+        "line-height: 1.6; text-align: left;"
+    ),
+    "divider": f"margin: 0 0 20px 0; border: none; border-top: 1px solid {BORDE};",
+    "footer": "padding: 0 28px 30px 28px; text-align: center;",
+    "footer_text": f"margin: 0; font-size: 12px; color: {VIOLETA_400}; font-weight: 400; line-height: 1.6;",
+    "footer_link": f"color: {VIOLETA_600}; text-decoration: none; font-weight: 600;",
+    "code": (
+        f"display: inline-block; padding: 14px 28px; background-color: {LAVANDA_100}; "
+        f"border: 1px dashed {LAVANDA_300}; border-radius: 16px; font-size: 30px; font-weight: 700; "
+        f"letter-spacing: 0.14em; color: {LAVANDA_700}; font-family: 'Courier New', monospace;"
+    ),
 }
 
 
-# Media directory of the square logo variant (see ``upload_org_square_logo``).
-# The URL path is the one place the shape of an uploaded logo is knowable
-# without a database round-trip, so the renderer keys off it.
-SQUARE_LOGO_DIR = "/square_logos/"
-
-
-def _org_logo_img(logo_url: str, alt: str) -> str:
-    """<img> for a white-labeled org logo.
-
-    A square logo (uploaded on the branding page, served from
-    ``square_logos/``) sits in a 56px rounded box; a wide logo is letterboxed
-    into the same footprint as the LearnHouse wordmark. Raster logos (PNG/JPG)
-    render in every mail client; an SVG logo may be stripped by some (e.g.
-    Gmail), in which case the ``alt`` (the org name) shows instead: still
-    org-branded, never a broken LearnHouse mark.
-
-    The ``height``/``width`` attributes are for desktop Outlook, whose
-    Word-based renderer ignores ``max-width``/``max-height`` and would
-    otherwise paint the upload at its native pixel size; every other client
-    lets the inline style win.
-    """
-    src = html.escape(logo_url)
-    safe_alt = html.escape(alt)
-    if SQUARE_LOGO_DIR in logo_url:
-        return (
-            f'<img src="{src}" alt="{safe_alt}" width="56" height="56" '
-            'style="width: 56px; height: 56px; object-fit: cover; border-radius: 12px; '
-            'display: inline-block; border: 0;" />'
-        )
-    return (
-        f'<img src="{src}" alt="{safe_alt}" height="40" '
-        'style="max-height: 40px; max-width: 180px; height: auto; width: auto; '
-        'display: inline-block; border: 0;" />'
-    )
-
-
-def _org_wordmark(org_name: str) -> str:
-    """The org's name set as a wordmark, for orgs that have not uploaded a logo.
-
-    An org-scoped email must never open with the LearnHouse mark. The
-    recipient has a relationship with the academy, not the platform, and a
-    foreign logo above "Reset your Acme Academy password" reads as phishing.
-    """
-    return (
-        f'<span style="display: inline-block; font-size: 20px; font-weight: 900; '
-        f'color: #000000; letter-spacing: -0.02em; line-height: 1.2;">'
-        f"{html.escape(email_org_name(org_name))}</span>"
-    )
-
-
 def _brand_logo_html(logo_url: str | None, org_name: str) -> str:
-    """Header mark for an org-branded email: its logo, else its name."""
-    if logo_url:
-        return _org_logo_img(logo_url, org_name)
-    return _org_wordmark(org_name)
+    """Header mark for an org-branded email.
+
+    Sanar y Criar: always the website's logo (one brand, client request
+    2026-11). The org's uploaded square logo is the pink seal, which reads as
+    an avatar rather than a header; ``logo_url``/``org_name`` are kept in the
+    signature so the upstream call sites stay untouched.
+    """
+    return PLATFORM_LOGO_HTML
 
 
 def _button_style(brand_color: str | None) -> str:
-    """CTA button style, tinted with the org's brand color when it has one.
+    """CTA button style: the site's violet pill.
 
-    ``brand_color`` must already be normalized (``#rrggbb``); see
-    ``services.email.branding.normalize_brand_color``; anything else keeps the
-    default black button rather than risk an unbalanced ``style`` attribute.
+    Sanar y Criar: the button keeps the website's colors whatever the org's
+    accent says (the panel's color is the same violet), so every email matches
+    the site. ``brand_color`` stays in the signature for the upstream callers.
     """
-    from src.services.email.branding import contrasting_text_color, normalize_brand_color
-
-    color = normalize_brand_color(brand_color)
-    if not color:
-        return STYLES["button"]
-    return (
-        STYLES["button"]
-        .replace("background-color: #000000;", f"background-color: {color};")
-        .replace("color: #ffffff;", f"color: {contrasting_text_color(color)};")
-    )
+    return STYLES["button"]
 
 
 def _powered_by_html(lang: str) -> str:
-    """The small "Powered by LearnHouse" line under an org-branded footer."""
-    from src.services.email.branding import POWERED_BY_URL
-
+    """The brand line under the footer links ("Sanar y Criar · Hilda …")."""
     return (
-        f'\n            <p style="{STYLES["footer_text"]} margin-top: 12px;">'
-        f'<a href="{POWERED_BY_URL}" style="color: rgba(0,0,0,0.35); text-decoration: none;">'
-        f'{t(lang, "common.powered_by")}</a></p>'
+        f'\n            <p style="{STYLES["footer_text"]} margin-top: 6px;">'
+        f'{t(lang, "common.powered_by")}</p>'
     )
+
+
+def _signature_html() -> str:
+    """Hilda's sign-off, as in the website's letters: photo, "Con cariño", name."""
+    return f"""
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
+                       style="margin: 26px 0 0 0; border-collapse: collapse;">
+                  <tr><td align="left" style="text-align: left;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 0 14px 0 0; vertical-align: middle;">
+                      <img src="{EMAIL_AVATAR_URL}" alt="Hilda" width="56" height="56"
+                           style="width: 56px; height: 56px; border-radius: 50%; display: block; border: 2px solid {ROSA_300};" />
+                    </td>
+                    <td style="vertical-align: middle; text-align: left;">
+                      <div style="font-family: {SERIF}; font-style: italic; font-size: 17px; color: {LAVANDA_500}; line-height: 1.3;">Con cariño,</div>
+                      <div style="font-family: {SERIF}; font-size: 18px; font-weight: 600; color: {VIOLETA}; line-height: 1.3;">Hilda Hernández</div>
+                      <div style="font-size: 12px; color: {VIOLETA_400}; line-height: 1.5;">Psicóloga infanto-juvenil</div>
+                    </td>
+                  </tr>
+                </table>
+                  </td></tr>
+                </table>"""
 
 
 def _first_sentence(text: str, limit: int = 110) -> str:
@@ -207,10 +225,10 @@ def _stat_strip(stats: list[tuple[str, int]]) -> str:
     for label, value in stats:
         cells.append(
             '<td style="padding: 0 14px; text-align: center;">'
-            '<div style="font-size: 22px; font-weight: 900; color: #000000; '
+            f'<div style="font-family: {SERIF}; font-size: 24px; font-weight: 600; color: {VIOLETA}; '
             f'line-height: 1.2;">{value}</div>'
-            '<div style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; '
-            'text-transform: uppercase; color: rgba(0,0,0,0.35); margin-top: 2px;">'
+            '<div style="font-size: 10px; font-weight: 600; letter-spacing: 0.12em; '
+            f'text-transform: uppercase; color: {VIOLETA_400}; margin-top: 2px;">'
             f"{html.escape(label)}</div>"
             "</td>"
         )
@@ -257,66 +275,81 @@ def _email_layout(
     preheader: str = "",
     powered_by: bool = False,
     lang: str = DEFAULT_LANGUAGE,
+    eyebrow: str = "",
+    signature: bool = False,
 ) -> str:
     """Wrap content in the standard email layout.
 
-    ``logo_html`` defaults to the platform mark (Sanar y Criar: our text
-    wordmark, ``PLATFORM_LOGO_HTML``); white-labeled emails pass the org's
-    logo <img> (or its name as a wordmark) instead.
-
-    ``powered_by`` adds the "Powered by LearnHouse" line to the footer. Only
-    org-branded mail sets it, and only when the org's watermark is on; a
-    platform email already carries the LearnHouse mark up top.
+    Sanar y Criar (2026-11): the website's look. A cream page, a warm white
+    card with a rosa-to-lavanda band on top, the site logo, then the body.
+    ``eyebrow`` is the small rosa label over the title ("Tu cuenta", "Tu
+    pedido"); ``signature`` adds Hilda's sign-off with her photo (mail to
+    clients, not the admin notices). Every footer links the website and
+    Instagram; ``powered_by`` adds the brand line under them ("Sanar y Criar ·
+    Hilda Hernández, psicóloga infanto-juvenil").
 
     ``unsubscribe_url`` is set only by bulk lifecycle mail. Transactional email
-    (password reset, invitation, verification) leaves it empty and renders
-    byte-identically to before; you cannot unsubscribe from a password reset.
-    The link is deliberately legible rather than hidden: someone who wants out
-    and can't find the exit reports spam instead, which costs the sending domain
-    far more than the opt-out does.
+    (password reset, invitation, verification) leaves it empty; you cannot
+    unsubscribe from a password reset. The link is deliberately legible rather
+    than hidden: someone who wants out and can't find the exit reports spam
+    instead, which costs the sending domain far more than the opt-out does.
     """
     note_html = ""
     if footer_note:
-        note_html = f'\n            <p style="{STYLES["footer_text"]}">{footer_note}</p>'
+        note_html = f'\n            <p style="{STYLES["footer_text"]} margin-bottom: 14px;">{footer_note}</p>'
 
     unsub_html = ""
     if unsubscribe_url:
         unsub_html = (
-            f'\n            <p style="{STYLES["footer_text"]} margin-top: 12px;">'
+            f'\n            <p style="{STYLES["footer_text"]} margin-bottom: 14px;">'
             f'<a href="{html.escape(unsubscribe_url)}" '
-            'style="color: rgba(0,0,0,0.35); text-decoration: underline;">'
+            f'style="color: {VIOLETA_400}; text-decoration: underline;">'
             f'{html.escape(unsubscribe_label)}</a></p>'
         )
 
+    links_html = (
+        f'\n            <p style="{STYLES["footer_text"]}">'
+        f'<a href="{SITE_URL}" style="{STYLES["footer_link"]}">sanarycriarve.com</a>'
+        "&nbsp;&middot;&nbsp;"
+        f'<a href="{INSTAGRAM_URL}" style="{STYLES["footer_link"]}">Instagram @sanarycriarve</a></p>'
+    )
     powered_html = _powered_by_html(lang) if powered_by else ""
 
-    footer_html = ""
-    if note_html or unsub_html or powered_html:
-        footer_html = f"""
-        <div style="{STYLES['footer']}">
-            <hr style="{STYLES['divider']}" />{note_html}{unsub_html}{powered_html}
-        </div>"""
+    eyebrow_html = f'<p style="{STYLES["eyebrow"]}">{html.escape(eyebrow)}</p>' if eyebrow else ""
+    signature_html = _signature_html() if signature else ""
 
-    # Prefixed with its own newline so that an absent preheader leaves the
-    # document byte-identical to before; the twelve transactional emails
-    # share this layout and none of their output may shift.
     block = _preheader_block(preheader)
     preheader_html = f"\n    {block}" if block else ""
 
     return f"""<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<html lang="{html.escape(lang or DEFAULT_LANGUAGE)}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,500&amp;family=Poppins:wght@400;600&amp;display=swap" rel="stylesheet">
+<title>{html.escape(html.unescape(title or ""))}</title>
+<!--[if mso]><style>body, table, td, div, p, a, span {{ font-family: Arial, Helvetica, sans-serif !important; }} h1 {{ font-family: Georgia, serif !important; }}</style><![endif]-->
+</head>
 <body style="{STYLES['body']}">{preheader_html}
     <div style="{STYLES['wrapper']}">
+        <!--[if mso]><table role="presentation" width="560" align="center" cellpadding="0" cellspacing="0" border="0"><tr><td><![endif]-->
         <div style="{STYLES['container']}">
+            <div style="{STYLES['band']}">&nbsp;</div>
             <div style="{STYLES['header']}">
                 {logo_html}
             </div>
             <div style="{STYLES['content']}">
+                {eyebrow_html}
                 {body_content}
+                {signature_html}
             </div>
-            {footer_html}
+            <div style="{STYLES['footer']}">
+                <hr style="{STYLES['divider']}" />{note_html}{unsub_html}{links_html}{powered_html}
+            </div>
         </div>
+        <!--[if mso]></td></tr></table><![endif]-->
     </div>
 </body>
 </html>"""
@@ -367,7 +400,7 @@ def send_account_creation_email(
         body_text = t(lang, "account_creation.body")
         academy_link = (
             f'<a href="{ACADEMY_URL}" '
-            'style="color: rgba(0,0,0,0.35); text-decoration: underline;">'
+            f'style="color: {VIOLETA_600}; text-decoration: underline;">'
             f'{t(lang, "academy_link_text")}</a>'
         )
         footer_note = t(lang, "account_creation.footer", academy_link=academy_link)
@@ -393,6 +426,8 @@ def send_account_creation_email(
             logo_html=logo_html,
             powered_by=white_label and powered_by,
             lang=lang,
+            eyebrow="Tu cuenta",
+            signature=True,
         ),
         sender_name=sender_name,
     )
@@ -471,6 +506,7 @@ def send_account_deleted_email(
             title=heading,
             body_content=body_content,
             footer_note=t(lang, "account_deleted.footer"),
+            eyebrow="Tu cuenta",
         ),
     )
 
@@ -504,6 +540,7 @@ def send_email_changed_notice(
             title=heading,
             body_content=body_content,
             footer_note=t(lang, "email_changed.footer"),
+            eyebrow="Tu cuenta",
         ),
     )
 
@@ -560,6 +597,7 @@ def send_password_reset_email(
             logo_html=_brand_logo_html(logo_url, organization.name),
             powered_by=powered_by,
             lang=lang,
+            eyebrow="Tu cuenta",
         ),
         sender_name=sender_name,
     )
@@ -602,6 +640,7 @@ def send_password_reset_email_platform(
             title=heading,
             body_content=body_content,
             footer_note=t(lang, "password_reset.footer_platform"),
+            eyebrow="Tu cuenta",
         ),
     )
 
@@ -664,6 +703,7 @@ def send_invitation_email(
             logo_html=_brand_logo_html(logo_url, org_name),
             powered_by=powered_by,
             lang=lang,
+            eyebrow="Invitación",
         ),
         sender_name=sender_name,
     )
@@ -721,6 +761,8 @@ def send_org_join_email(
             logo_html=_brand_logo_html(logo_url, org_name),
             powered_by=powered_by,
             lang=lang,
+            eyebrow="Tu cuenta",
+            signature=True,
         ),
         sender_name=sender_name,
     )
@@ -787,6 +829,7 @@ def send_role_changed_email(
             logo_html=_brand_logo_html(logo_url, org_name),
             powered_by=powered_by,
             lang=lang,
+            eyebrow="Tu cuenta",
         ),
         sender_name=sender_name,
     )
@@ -870,6 +913,8 @@ def send_email_verification_email(
             logo_html=_brand_logo_html(logo_url, organization.name) if organization else PLATFORM_LOGO_HTML,
             powered_by=bool(organization) and powered_by,
             lang=lang,
+            eyebrow="Tu cuenta",
+            signature=True,
         ),
         sender_name=sender_name,
     )

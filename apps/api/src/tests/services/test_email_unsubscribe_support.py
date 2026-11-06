@@ -5,29 +5,31 @@ The regression guard matters most: twelve transactional emails share this
 layout, and none of their output may shift.
 """
 
+import re
+
 from src.services.users.emails import _email_layout
 
 
 class TestLayoutRegression:
-    def test_no_unsubscribe_url_renders_identically_to_before(self):
-        """The pre-existing footer HTML, byte for byte.
+    def test_no_unsubscribe_url_renders_the_note_and_site_links(self):
+        """The footer HTML, pinned as a literal (Sanar y Criar look, 2026-11).
 
-        Pinned as a literal rather than compared against another call of the
-        same function, so a refactor that changes both paths at once still
-        fails here.
+        Pinned rather than compared against another call of the same function,
+        so a refactor that changes both paths at once still fails here.
         """
         html = _email_layout("Title", "<p>body</p>", footer_note="A note")
         assert (
-            '<hr style="margin: 28px 0; border: none; border-top: 1px solid #f0f0f0;" />\n'
-            '            <p style="margin: 0; font-size: 12px; color: rgba(0,0,0,0.2); '
-            'font-weight: 500; line-height: 1.6;">A note</p>'
+            '<hr style="margin: 0 0 20px 0; border: none; border-top: 1px solid #eae8f2;" />\n'
+            '            <p style="margin: 0; font-size: 12px; color: #6d6485; '
+            'font-weight: 400; line-height: 1.6; margin-bottom: 14px;">A note</p>'
         ) in html
         assert "unsubscribe" not in html.lower()
 
-    def test_no_footer_note_and_no_unsubscribe_renders_no_footer_block(self):
+    def test_no_footer_note_and_no_unsubscribe_renders_only_the_site_links(self):
         html = _email_layout("Title", "<p>body</p>")
-        assert "<hr" not in html
+        assert 'href="https://www.sanarycriarve.com"' in html
         assert "unsubscribe" not in html.lower()
+        assert "margin-bottom: 14px;" not in html
 
 
 class TestUnsubscribeFooter:
@@ -279,5 +281,7 @@ class TestNudgeRendering:
     def test_no_unrendered_placeholders(self):
         for lang in ("en", "fr", "ja", "ar"):
             captured = self._send(lang=lang)
-            assert "{" not in captured["body"], lang
+            # A placeholder looks like {name}; the layout's own CSS (the
+            # Outlook font fallback) has braces too, so match the shape.
+            assert not re.search(r"\{[a-z_]+\}", captured["body"]), lang
             assert "{" not in captured["subject"], lang

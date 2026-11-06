@@ -130,6 +130,7 @@ def send_magic_login_email(
             logo_html=_brand_logo_html(logo_url, org_name) if white_label else LOGO_SVG,
             powered_by=white_label and powered_by,
             lang=lang,
+            eyebrow="Tu cuenta",
         ),
         sender_name=sender_name,
     )
