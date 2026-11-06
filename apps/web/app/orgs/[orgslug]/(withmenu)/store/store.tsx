@@ -242,7 +242,8 @@ function OfferCard({ offer, orgslug, orgUuid, position, showCart = false }: { of
 function Store({ orgslug, offers }: StoreProps) {
   const org = useOrg() as any
   const { sc } = useScT()
-  // Sanar y Criar: the cart (Pago Móvil) exists only while the org accepts it.
+  // Sanar y Criar: the cart exists only while the org accepts a manual method
+  // (the "manual" provider is listed while any of them is on).
   const { providers } = useCheckoutProviders(org?.id)
   const cartEnabled = providers.some((p) => String(p.provider ?? '').toLowerCase() === 'manual')
 

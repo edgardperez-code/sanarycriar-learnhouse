@@ -1,10 +1,60 @@
 'use client'
-// Sanar y Criar: small pieces shared by the order list and the order detail
-// (status chip, "vence en 5 h", a clock that ticks, **bold** in a sentence).
+// Sanar y Criar: small pieces shared by the order list, the order detail and
+// the cards of "Pagos manuales" (status chip, the method's icon and chip,
+// "vence en 5 h", a clock that ticks, **bold** in a sentence).
 import React, { useEffect, useState } from 'react'
-import { Clock } from 'lucide-react'
+import { Clock, Landmark, Smartphone } from 'lucide-react'
+import { SiBinance, SiZelle } from '@icons-pack/react-simple-icons'
+import { useScT } from '@components/Payments/useScT'
+import { paymentLabel } from '@components/Payments/commerce'
 import { StatusTone, expiresLabel, statusTone } from './ordersForm'
 import { OrdersTranslate, ordersLabel, stateLabel } from './useOrdersT'
+
+/**
+ * The icon of a manual method (the same ones as the store): a phone for Pago
+ * Móvil, a bank for the transfer, the Zelle and Binance marks. Decorative: the
+ * method's name always goes next to it.
+ */
+export function MethodIcon({ method, size = 16, className = '' }: { method: string | null | undefined; size?: number; className?: string }) {
+  // The brand marks are filled: a little smaller looks the same size as the outlined icons.
+  const brandSize = Math.max(10, size - 2)
+  switch (method) {
+    case 'transferencia':
+      return <Landmark size={size} className={className} aria-hidden="true" />
+    case 'zelle':
+      return <SiZelle size={brandSize} className={className} aria-hidden="true" title="" />
+    case 'binance':
+      return <SiBinance size={brandSize} className={className} aria-hidden="true" title="" />
+    default:
+      return <Smartphone size={size} className={className} aria-hidden="true" />
+  }
+}
+
+/** "Pago Móvil", "Transferencia bancaria", "Zelle" or "Binance" with its icon (spans only: it sits inside buttons). */
+export function MethodChip({
+  method,
+  provider,
+  ot,
+  className = '',
+}: {
+  method: string | null | undefined
+  provider: string | null | undefined
+  ot: OrdersTranslate
+  className?: string
+}) {
+  const { sc } = useScT()
+  const label = paymentLabel(provider, method, sc)
+  if (!label) return null
+  return (
+    <span
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#EEEDFF] px-2 py-0.5 text-[11px] font-medium text-[#4F43A4] ${className}`}
+    >
+      <MethodIcon method={method} size={12} className="shrink-0" />
+      <span className="sr-only">{ot('detail.method')}: </span>
+      {label}
+    </span>
+  )
+}
 
 const TONE_CLASSES: Record<StatusTone, { chip: string; dot: string }> = {
   warning: { chip: 'bg-amber-100 text-amber-800', dot: 'bg-amber-500' },

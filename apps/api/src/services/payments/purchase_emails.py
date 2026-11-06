@@ -1,7 +1,10 @@
-"""Sanar y Criar: the four emails of a Pago Móvil purchase.
+"""Sanar y Criar: the four emails of a cart purchase paid by hand.
 
-1. Purchase created (buyer): how to pay, the WhatsApp button, the deadline.
-2. New purchase (admin, ``notify_email``): who bought what, link to Pedidos.
+1. Purchase created (buyer): how to pay with the method she chose (Pago
+   Móvil, bank transfer, Zelle or Binance), the amount in its currency, the
+   WhatsApp button, the deadline.
+2. New purchase (admin, ``notify_email``): who bought what, with which
+   method, link to Pedidos.
 3. Payment confirmed (buyer): every course/ebook of the purchase.
 4. Payment rejected (buyer, optional): the reason and a WhatsApp link.
 
@@ -20,6 +23,7 @@ from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Callable, Optional
 
+from src.services.payments import manual_methods as mm
 from src.services.payments.common import as_utc
 from src.services.payments.fx import CARACAS_TZ
 
@@ -64,6 +68,39 @@ def rate_line(rate, source: str, rate_date: Optional[date]) -> str:
         return f"Tasa fijada por Sanar y Criar: {format_rate(rate)} Bs. por US$"
     when = f" del {format_date(rate_date)}" if rate_date else ""
     return f"Tasa BCV{when}: {format_rate(rate)} Bs. por US$"
+
+
+def pay_text(method: str, amount, amount_ves) -> str:
+    """What the buyer pays, in the method's currency: ``Bs. 35.492,08``,
+    ``US$ 40,00`` (Zelle) or ``40,00 USDT`` (Binance)."""
+    currency = mm.CURRENCY.get(method, "VES")
+    if currency == "VES":
+        return f"Bs. {format_bs(amount_ves)}"
+    if currency == "USDT":
+        return f"{format_bs(amount)} USDT"
+    return f"US$ {format_bs(amount)}"
+
+
+def amount_text(method: str, amount, amount_ves) -> str:
+    """``pay_text`` plus the dollars when it is in bolívares:
+    ``Bs. 35.492,08 (US$ 40,00)``."""
+    text = pay_text(method, amount, amount_ves)
+    if mm.CURRENCY.get(method, "VES") == "VES":
+        text = f"{text} (US$ {format_bs(amount)})"
+    return text
+
+
+# "datos para pagar con ...", "hizo un pedido con ...".
+_WITH = {
+    mm.PAGO_MOVIL: "Pago Móvil",
+    mm.TRANSFERENCIA: "transferencia bancaria",
+    mm.ZELLE: "Zelle",
+    mm.BINANCE: "Binance",
+}
+
+
+def _with(method: str) -> str:
+    return _WITH.get(method, _WITH[mm.PAGO_MOVIL])
 
 
 # --------------------------------------------------------------- delivery
@@ -183,21 +220,79 @@ def _paragraphs(text: str) -> str:
     return "<br>".join(_e(line) for line in (text or "").split("\n"))
 
 
-def render_created(*, branding, first_name: str, code: str, items: list[ItemLine], amount, amount_ves,
-                   rate, rate_source: str, rate_date: Optional[date], expires_at: datetime,
-                   payment: dict, whatsapp_url: Optional[str], purchase_url: str) -> tuple[str, str]:
-    styles = _styles()
-    greeting = f"Hola, {first_name}" if first_name else "Hola"
+def _bank_text(payment: dict) -> str:
     bank = payment.get("bank_name") or ""
     if payment.get("bank_code"):
         bank = f"{bank} ({payment['bank_code']})" if bank else payment["bank_code"]
-    details = _details_table([
-        ("Banco", bank),
+    return bank
+
+
+def _detail_rows(method: str, payment: dict, pay: str) -> list[tuple[str, str]]:
+    """The method's details, as the buyer copies them."""
+    if method == mm.TRANSFERENCIA:
+        return [
+            ("Banco", _bank_text(payment)),
+            ("Número de cuenta", payment.get("account_number") or ""),
+            ("Tipo de cuenta", mm.ACCOUNT_TYPE_LABELS.get(payment.get("account_type") or "", "")),
+            ("Titular", payment.get("holder_name") or ""),
+            ("Cédula o RIF", payment.get("id_document") or ""),
+            ("Monto", pay),
+        ]
+    if method == mm.ZELLE:
+        return [
+            ("Correo de Zelle", payment.get("email") or ""),
+            ("Teléfono de Zelle", payment.get("phone") or ""),
+            ("Titular", payment.get("holder_name") or ""),
+            ("Monto", pay),
+        ]
+    if method == mm.BINANCE:
+        network = payment.get("usdt_network") or ""
+        return [
+            ("Binance Pay ID", payment.get("pay_id") or ""),
+            ("Dirección USDT", payment.get("usdt_address") or ""),
+            ("Red", mm.NETWORK_LABELS.get(network, network) if payment.get("usdt_address") else ""),
+            ("Monto", pay),
+        ]
+    return [
+        ("Banco", _bank_text(payment)),
         ("Teléfono", payment.get("phone") or ""),
         ("Cédula o RIF", payment.get("id_document") or ""),
         ("Titular", payment.get("holder_name") or ""),
-        ("Monto", f"Bs. {format_bs(amount_ves)}"),
-    ])
+        ("Monto", pay),
+    ]
+
+
+def _how_to_pay(method: str, amount, amount_ves) -> str:
+    """``haz un Pago Móvil por <strong>Bs. …</strong> (US$ …).``"""
+    pay = f"<strong>{_e(pay_text(method, amount, amount_ves))}</strong>"
+    if method == mm.ZELLE:
+        return f"envía {pay} por Zelle."
+    if method == mm.BINANCE:
+        return f"envía {pay} por Binance."
+    verb = "haz una transferencia bancaria" if method == mm.TRANSFERENCIA else "haz un Pago Móvil"
+    return f"{verb} por {pay}\n            (US$ {format_bs(amount)})."
+
+
+def render_created(*, branding, first_name: str, code: str, items: list[ItemLine], amount, amount_ves,
+                   rate, rate_source: Optional[str], rate_date: Optional[date], expires_at: datetime,
+                   payment: dict, whatsapp_url: Optional[str], purchase_url: str,
+                   method: str = mm.PAGO_MOVIL) -> tuple[str, str]:
+    styles = _styles()
+    greeting = f"Hola, {first_name}" if first_name else "Hola"
+    pay = pay_text(method, amount, amount_ves)
+    details = _details_table(_detail_rows(method, payment, pay))
+    rate_html = (
+        f'<p style="{styles["p"]}">{_e(rate_line(rate, rate_source, rate_date))}</p>'
+        if mm.CURRENCY.get(method) == "VES" else ""
+    )
+    network_html = ""
+    if method == mm.BINANCE and payment.get("usdt_address"):
+        network = payment.get("usdt_network") or ""
+        network_html = (
+            f'<p style="{styles["p"]}">Si pagas a la dirección USDT, usa solo la red '
+            f'<strong>{_e(mm.NETWORK_LABELS.get(network, network))}</strong>: un envío por otra red se puede '
+            "perder. La comisión del envío corre por tu cuenta: debe llegar el monto completo.</p>"
+        )
     instructions = payment.get("instructions") or ""
     instructions_html = (
         f'<p style="{styles["p"]} text-align: left;">{_paragraphs(instructions)}</p>' if instructions else ""
@@ -206,13 +301,13 @@ def render_created(*, branding, first_name: str, code: str, items: list[ItemLine
     body = f"""
         <h1 style="{styles['h1']}">{_e(greeting)}: tu pedido {_code(code)}</h1>
         <p style="{styles['p']}">
-            Para recibir tu acceso, haz un Pago Móvil por <strong>Bs. {format_bs(amount_ves)}</strong>
-            (US$ {format_bs(amount)}).<br>
+            Para recibir tu acceso, {_how_to_pay(method, amount, amount_ves)}<br>
             Plazo para pagar: <strong>{_e(format_caracas(expires_at))}</strong>
         </p>
         {_items_table(items)}
         {details}
-        <p style="{styles['p']}">{_e(rate_line(rate, rate_source, rate_date))}</p>
+        {rate_html}
+        {network_html}
         {instructions_html}
         <p style="{styles['p']}">
             Cuando hayas pagado, envíanos el comprobante por WhatsApp. Te damos acceso en cuanto
@@ -223,31 +318,42 @@ def render_created(*, branding, first_name: str, code: str, items: list[ItemLine
             <a href="{_e(purchase_url)}" style="color: inherit; font-weight: 700;">Ver mi pedido</a>
         </p>
     """
-    subject = f"Tu pedido {code}: datos para pagar con Pago Móvil"
+    subject = f"Tu pedido {code}: datos para pagar con {_with(method)}"
     document = _layout(
         branding,
         title=subject,
         body=body,
-        preheader=f"Paga Bs. {format_bs(amount_ves)} con Pago Móvil y envíanos el comprobante.",
+        preheader=f"Paga {pay} con {_with(method)} y envíanos el comprobante.",
         footer="Recibes este correo porque hiciste un pedido con esta cuenta.",
     )
     return subject, document
 
 
+# Where the admin sees the money arrive.
+_WHERE_TO_CHECK = {
+    mm.ZELLE: "en tu Zelle",
+    mm.BINANCE: "en tu Binance",
+}
+
+
 def render_admin_notice(*, branding, code: str, buyer_name: str, buyer_email: str, items: list[ItemLine],
-                        amount, amount_ves, rate, rate_source: str, rate_date: Optional[date],
-                        expires_at: datetime, dash_url: str) -> tuple[str, str]:
+                        amount, amount_ves, rate, rate_source: Optional[str], rate_date: Optional[date],
+                        expires_at: datetime, dash_url: str, method: str = mm.PAGO_MOVIL) -> tuple[str, str]:
     styles = _styles()
+    pay = pay_text(method, amount, amount_ves)
+    in_bolivares = mm.CURRENCY.get(method, "VES") == "VES"
+    dollars = f" (US$ {format_bs(amount)})" if in_bolivares else ""
+    rate_text = f"{_e(rate_line(rate, rate_source, rate_date))}.<br>\n            " if in_bolivares else ""
     body = f"""
         <h1 style="{styles['h1']}">Nuevo pedido {_code(code)}</h1>
         <p style="{styles['p']}">
-            <strong>{_e(buyer_name)}</strong> ({_e(buyer_email)}) hizo un pedido con Pago Móvil por
-            <strong>Bs. {format_bs(amount_ves)}</strong> (US$ {format_bs(amount)}).
+            <strong>{_e(buyer_name)}</strong> ({_e(buyer_email)}) hizo un pedido con {_e(_with(method))} por
+            <strong>{_e(pay)}</strong>{_e(dollars)}.
         </p>
         {_items_table(items)}
-        <p style="{styles['p']}">{_e(rate_line(rate, rate_source, rate_date))}.<br>
-            Plazo para pagar: {_e(format_caracas(expires_at))}</p>
-        <p style="{styles['p']}">Cuando veas el pago en tu banco, márcalo como pagado en Pedidos.</p>
+        <p style="{styles['p']}">{rate_text}Plazo para pagar: {_e(format_caracas(expires_at))}</p>
+        <p style="{styles['p']}">Cuando veas el pago {_WHERE_TO_CHECK.get(method, "en tu banco")}, márcalo como
+            pagado en Pedidos.</p>
         {_button(branding, dash_url, "Ver el pedido")}
         <p style="{styles['link_text']}">{_e(dash_url)}</p>
     """
@@ -256,8 +362,8 @@ def render_admin_notice(*, branding, code: str, buyer_name: str, buyer_email: st
         branding,
         title=subject,
         body=body,
-        preheader=f"{buyer_name}: Bs. {format_bs(amount_ves)} por confirmar.",
-        footer="Recibes este aviso porque tu correo está configurado para los pedidos de Pago Móvil.",
+        preheader=f"{buyer_name}: {pay} por confirmar.",
+        footer="Recibes este aviso porque tu correo está configurado para los avisos de pedidos nuevos.",
     )
     return subject, document
 

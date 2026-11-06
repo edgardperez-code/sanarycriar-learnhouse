@@ -8,7 +8,9 @@ manual order only becomes paid through ``purchases.confirm_purchase``.
 
 Its settings live in the ``provider_config`` of the org's
 ``PaymentsConfig(provider="manual")`` row, normalized here. They hold no
-secrets: they are the details shown to every buyer.
+secrets: they are the details shown to every buyer. The same provider (and
+row) also takes bank transfers, Zelle and Binance: see
+``services/payments/manual_methods.py``.
 """
 
 import math
@@ -352,7 +354,9 @@ class ManualProvider:
     label = "Pago Móvil"
     supports_subscriptions = False
     supported_currencies = {"USD"}
-    methods = [METHOD_ID]
+    # Every manual method (manual_methods.METHODS); the ones on are listed by
+    # configs.checkout_providers.
+    methods = [METHOD_ID, "transferencia", "zelle", "binance"]
 
     async def validate_config(self, cfg) -> tuple[bool, Optional[str], Optional[str]]:
         if missing_fields(settings_of(cfg)):

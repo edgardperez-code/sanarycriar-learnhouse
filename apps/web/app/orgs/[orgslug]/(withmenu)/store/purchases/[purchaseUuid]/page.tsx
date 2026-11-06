@@ -1,4 +1,4 @@
-// Sanar y Criar: one Pago Móvil order (contract §D.5). Only its buyer (or an
+// Sanar y Criar: one cart order (contract §D.5). Only its buyer (or an
 // admin) can read it, so a visitor without a session goes to the login first
 // and comes back here.
 import { Metadata } from 'next'

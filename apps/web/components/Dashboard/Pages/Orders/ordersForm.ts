@@ -1,11 +1,14 @@
-// Sanar y Criar: pure helpers for the "Pedidos" dashboard (Pago Móvil orders)
-// and the Pago Móvil settings card. No React and no path aliases, so
-// tests/sc-orders.test.mjs can import this file directly.
+// Sanar y Criar: pure helpers for the "Pedidos" dashboard (orders paid by
+// hand: Pago Móvil, bank transfer, Zelle, Binance) and the cards of "Pagos
+// manuales" in Pagos › Configuración. No React and no path aliases, so
+// tests/sc-orders.test.mjs can import this file directly (the one import is a
+// type, erased at run time).
 //
-// Shapes and limits follow the cart contract (§0.2, §B.2, §B.3, §B.7). The API
-// is the source of truth: these checks only save a round trip, and every
-// normalization here mirrors the API's, so a value that passes here is the
-// value the API stores.
+// Shapes and limits follow the cart contract (§0.2, §B.2, §B.3, §B.7) and the
+// manual methods contract (§0, §A). The API is the source of truth: these
+// checks only save a round trip, and every normalization here mirrors the
+// API's, so a value that passes here is the value the API stores.
+import type { PayCurrency } from '../../../Payments/commerce'
 
 // ---------------------------------------------------------------------------
 // Statuses, tabs and limits
@@ -24,6 +27,8 @@ export const ORDERS_PAGE_SIZE = 25
 export const ORDER_LIMITS = {
   reference_min: 4,
   reference_max: 30,
+  /** A Binance Pay order id or a USDT TxID (64 to 66 characters). */
+  reference_max_binance: 100,
   reason_min: 3,
   reason_max: 300,
   note: 500,
@@ -80,26 +85,50 @@ export type PurchaseItem = {
   duplicate_of?: { order_uuid: string; purchase_code: string | null } | null
 }
 
-export type PurchasePayment = {
-  bank_name: string
-  bank_code: string
-  phone: string
-  id_document: string
-  holder_name: string
-  instructions: string
-}
+/**
+ * What the buyer is shown to pay, while the order is pending or expired. The
+ * keys depend on the method (strings, "" when empty):
+ * - pago_movil: bank_name, bank_code, phone, id_document, holder_name, instructions
+ * - transferencia: bank_name, bank_code, account_number, account_type, holder_name, id_document, instructions
+ * - zelle: email, phone, holder_name, instructions
+ * - binance: pay_id, usdt_address, usdt_network, instructions
+ */
+export type PurchasePayment = Partial<
+  Record<
+    | 'bank_name'
+    | 'bank_code'
+    | 'phone'
+    | 'id_document'
+    | 'holder_name'
+    | 'instructions'
+    | 'account_number'
+    | 'account_type'
+    | 'email'
+    | 'pay_id'
+    | 'usdt_address'
+    | 'usdt_network',
+    string
+  >
+>
 
 export type Purchase = {
   purchase_uuid: string
   code: string
   status: OrderStatus | string
   provider: string
+  /** pago_movil, transferencia, zelle or binance (orders from before the others: pago_movil). */
   method: string
   currency: string
+  /** The total in US$ (the prices). */
   amount: number
-  amount_ves: number
-  fx_rate: number
-  fx_source: 'bcv' | 'manual' | string
+  /** What the buyer pays in: bolívares, dollars (Zelle) or USDT (Binance). */
+  pay_currency: PayCurrency | string
+  /** What the buyer pays, in pay_currency: amount_ves for VES, amount otherwise. */
+  pay_amount: number | null
+  /** The bolívares and the rate: null for Zelle and Binance. */
+  amount_ves: number | null
+  fx_rate: number | null
+  fx_source: 'bcv' | 'manual' | string | null
   fx_date: string | null
   created_at: string
   expires_at: string
@@ -240,10 +269,19 @@ export function normalizeReference(raw: string | null | undefined): string {
     .toUpperCase()
 }
 
-const REFERENCE_RE = /^[A-Z0-9]{4,30}$/
+/** Longest reference the API takes for the order's method: 30, or 100 for Binance (a TxID). */
+export function referenceMaxLength(method?: string | null): number {
+  return method === 'binance' ? ORDER_LIMITS.reference_max_binance : ORDER_LIMITS.reference_max
+}
 
-export function isValidReference(raw: string | null | undefined): boolean {
-  return REFERENCE_RE.test(normalizeReference(raw))
+/** 4 to 30 letters or digits once normalized (4 to 100 for Binance). */
+export function isValidReference(raw: string | null | undefined, method?: string | null): boolean {
+  const reference = normalizeReference(raw)
+  return (
+    /^[A-Z0-9]+$/.test(reference) &&
+    reference.length >= ORDER_LIMITS.reference_min &&
+    reference.length <= referenceMaxLength(method)
+  )
 }
 
 /** Length in characters (code points), like Python's len(). */
@@ -290,6 +328,72 @@ export function formatBs(value: unknown): string {
 export function formatUsd(value: unknown): string {
   const n = finite(value)
   return n === null ? '—' : `US$ ${AMOUNT.format(n)}`
+}
+
+/**
+ * What the buyer pays, in its currency, like the API's e-mails:
+ * "Bs. 35.492,08", "US$ 40,00" (Zelle) or "40,00 USDT" (Binance). Another
+ * currency: the amount and its code; not a number: "—".
+ */
+export function formatPayAmount(value: unknown, currency: string | null | undefined): string {
+  const n = finite(value)
+  if (n === null) return '—'
+  switch (currency) {
+    case 'VES':
+      return `Bs. ${AMOUNT.format(n)}`
+    case 'USD':
+      return `US$ ${AMOUNT.format(n)}`
+    case 'USDT':
+      return `${AMOUNT.format(n)} USDT`
+    default:
+      return currency ? `${AMOUNT.format(n)} ${currency}` : AMOUNT.format(n)
+  }
+}
+
+type PayFields = Partial<Pick<Purchase, 'pay_currency' | 'pay_amount' | 'amount' | 'amount_ves'>>
+
+/**
+ * What the buyer pays: `pay_currency` and `pay_amount`. An order without them
+ * (an API from before Zelle and Binance) is a Pago Móvil one, in bolívares.
+ */
+export function purchasePay(p: PayFields | null | undefined): { currency: string; amount: number | null } {
+  const currency = typeof p?.pay_currency === 'string' && p.pay_currency ? p.pay_currency : 'VES'
+  const amount = p?.pay_amount ?? (currency === 'VES' ? p?.amount_ves : p?.amount)
+  return { currency, amount: finite(amount) }
+}
+
+/** "Bs. 35.492,08", "US$ 40,00" or "40,00 USDT" for an order. */
+export function formatPurchasePay(p: PayFields | null | undefined): string {
+  const pay = purchasePay(p)
+  return formatPayAmount(pay.amount, pay.currency)
+}
+
+/**
+ * The US$ line under the amount, only when it adds something: the dollars of
+ * a payment in bolívares ("US$ 40,00") or what the USDT are worth
+ * ("= US$ 40,00"); nothing for a payment already in US$.
+ */
+export function usdLine(p: PayFields | null | undefined): string | null {
+  const { currency } = purchasePay(p)
+  if (currency === 'USD') return null
+  const usd = formatUsd(p?.amount)
+  return currency === 'USDT' ? `= ${usd}` : usd
+}
+
+/**
+ * What to refund for one product of the order: its US$ price and its share of
+ * the bolívares paid ("US$ 25,00 (Bs. 22.182,55)"); for Zelle its US$ price,
+ * for Binance its USDT ("25,00 USDT").
+ */
+export function refundText(
+  itemUsd: unknown,
+  p: (PayFields & Partial<Pick<Purchase, 'fx_rate'>>) | null | undefined
+): string {
+  const { currency } = purchasePay(p)
+  if (currency === 'USDT') return formatPayAmount(itemUsd, 'USDT')
+  if (currency !== 'VES') return formatUsd(itemUsd)
+  const ves = proportionalVes(itemUsd, p?.amount, p?.amount_ves, p?.fx_rate)
+  return ves === null ? formatUsd(itemUsd) : `${formatUsd(itemUsd)} (${formatBs(ves)})`
 }
 
 /** Bs. per US$, as the BCV publishes it: 887.302 -> "887,30". */
@@ -566,10 +670,11 @@ export function pageRange(offset: number, shown: number, total: number): { from:
 }
 
 // ---------------------------------------------------------------------------
-// Pago Móvil settings card
+// /manual/settings: Pago Móvil's data and the settings every method shares
+// (one form draft; each card sends its own part, see COMMON_FIELDS below)
 // ---------------------------------------------------------------------------
 
-/** Venezuelan banks that take Pago Móvil (code, name), contract §C.5. */
+/** Venezuelan banks that take Pago Móvil (code, name), contract §C.5. Also the bank-transfer picker. */
 export const VE_BANKS: ReadonlyArray<{ code: string; name: string }> = [
   { code: '0102', name: 'Banco de Venezuela' },
   { code: '0104', name: 'Venezolano de Crédito' },
@@ -770,4 +875,375 @@ export function validateManualDraft(draft: ManualDraft, options: { bcvRate?: num
 
 export function isManualDraftDirty(a: ManualDraft, b: ManualDraft): boolean {
   return JSON.stringify(manualSettingsPayload(a)) !== JSON.stringify(manualSettingsPayload(b))
+}
+
+// ---------------------------------------------------------------------------
+// The two cards of /manual/settings: the settings every manual method shares
+// ("Ajustes de los pagos manuales") and Pago Móvil's own data
+// ---------------------------------------------------------------------------
+
+/** Shared by every manual method: the receipts WhatsApp, the time to pay, the rate and the notice e-mail. */
+export const COMMON_FIELDS = ['whatsapp', 'payment_window_hours', 'fx_mode', 'fx_manual_rate', 'notify_email'] as const
+/** Pago Móvil's own data (its card sends only these, plus the switch). */
+export const PAGO_MOVIL_FIELDS = ['bank_name', 'bank_code', 'phone', 'id_document', 'holder_name', 'instructions'] as const
+
+type FieldList = readonly string[]
+
+function pickFields(body: ManualSettingsBody, fields: FieldList): ManualSettingsBody {
+  const picked: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(body)) if (fields.includes(key)) picked[key] = value
+  return picked as ManualSettingsBody
+}
+
+/** PUT body of the common card: only the shared settings (the manual rate only with the manual mode). */
+export function commonSettingsPayload(draft: ManualDraft): ManualSettingsBody {
+  return pickFields(manualSettingsPayload(draft), COMMON_FIELDS)
+}
+
+/** PUT body of the Pago Móvil card: only its own data (the switch sends `enabled`). */
+export function pagoMovilPayload(draft: ManualDraft): ManualSettingsBody {
+  return pickFields(manualSettingsPayload(draft), PAGO_MOVIL_FIELDS)
+}
+
+export function validateCommonDraft(draft: ManualDraft, options: { bcvRate?: number | null } = {}): ManualFieldError[] {
+  return validateManualDraft(draft, options).filter((e) => (COMMON_FIELDS as FieldList).includes(e.field))
+}
+
+export function validatePagoMovilDraft(draft: ManualDraft): ManualFieldError[] {
+  return validateManualDraft(draft).filter((e) => (PAGO_MOVIL_FIELDS as FieldList).includes(e.field))
+}
+
+export function isCommonDraftDirty(a: ManualDraft, b: ManualDraft): boolean {
+  return JSON.stringify(commonSettingsPayload(a)) !== JSON.stringify(commonSettingsPayload(b))
+}
+
+export function isPagoMovilDraftDirty(a: ManualDraft, b: ManualDraft): boolean {
+  return JSON.stringify(pagoMovilPayload(a)) !== JSON.stringify(pagoMovilPayload(b))
+}
+
+/** A shared setting no method can do without is missing: the WhatsApp, or the manual rate in manual mode. */
+export function commonSettingsIncomplete(settings: Partial<ManualSettingsValues> | null | undefined): boolean {
+  if (!String(settings?.whatsapp ?? '').trim()) return true
+  return settings?.fx_mode === 'manual' && finite(settings?.fx_manual_rate) === null
+}
+
+/** "Banesco (0134)"; "" without a bank. */
+export function bankText(name: string | null | undefined, code: string | null | undefined): string {
+  const cleanCode = String(code ?? '').trim()
+  return [String(name ?? '').trim(), cleanCode ? `(${cleanCode})` : ''].filter(Boolean).join(' ')
+}
+
+// ---------------------------------------------------------------------------
+// Bank transfer, Zelle and Binance (manual methods contract §A.2, §A.3)
+// ---------------------------------------------------------------------------
+
+/** The methods /manual/methods configures, in display order (Pago Móvil keeps /manual/settings). */
+export const EXTRA_METHODS = ['transferencia', 'zelle', 'binance'] as const
+export type ExtraMethod = (typeof EXTRA_METHODS)[number]
+
+export function isExtraMethod(value: unknown): value is ExtraMethod {
+  return typeof value === 'string' && (EXTRA_METHODS as readonly string[]).includes(value)
+}
+
+/** Each method's fields, in form order (the API's manual_methods.FIELDS). */
+export const METHOD_FIELDS = {
+  transferencia: ['bank_name', 'bank_code', 'account_number', 'account_type', 'holder_name', 'id_document', 'instructions'],
+  zelle: ['email', 'phone', 'holder_name', 'instructions'],
+  binance: ['pay_id', 'usdt_address', 'usdt_network', 'instructions'],
+} as const satisfies Record<ExtraMethod, readonly string[]>
+
+export type MethodField = (typeof METHOD_FIELDS)[ExtraMethod][number]
+
+/** One method in GET /manual/methods, and the answer of its PUT. */
+export type ManualMethodState = {
+  method: ExtraMethod | string
+  /** Its switch. */
+  enabled: boolean
+  /** Its data is complete (`missing` is empty). The cart offers it when both are true. */
+  active: boolean
+  /** Its own missing data in form order, then the shared one (whatsapp, fx_manual_rate). */
+  missing: string[]
+  settings: Partial<Record<MethodField, string>>
+}
+
+/** GET /payments/{org_id}/manual/methods */
+export type ManualMethods = Partial<Record<ExtraMethod, ManualMethodState>>
+
+/** PUT /manual/methods/{method}: any of its fields (omitted = unchanged, "" clears) and the switch. */
+export type ManualMethodBody = Partial<Record<MethodField, string>> & { enabled?: boolean }
+
+/** The form of one method: every field as typed (the other methods' fields stay ""). */
+export type MethodDraft = Record<MethodField, string>
+
+const EMPTY_METHOD_DRAFT: MethodDraft = {
+  bank_name: '',
+  bank_code: '',
+  account_number: '',
+  account_type: '',
+  holder_name: '',
+  id_document: '',
+  instructions: '',
+  email: '',
+  phone: '',
+  pay_id: '',
+  usdt_address: '',
+  usdt_network: '',
+}
+
+export const ACCOUNT_TYPES = ['corriente', 'ahorro'] as const
+export type AccountType = (typeof ACCOUNT_TYPES)[number]
+
+export const USDT_NETWORKS = ['TRC20', 'BEP20', 'ERC20', 'SOL', 'POLYGON', 'ARBITRUM'] as const
+export type UsdtNetwork = (typeof USDT_NETWORKS)[number]
+
+/** Proper names: the same in every language. */
+export const NETWORK_LABELS: Record<UsdtNetwork, string> = {
+  TRC20: 'TRC20 (Tron)',
+  BEP20: 'BEP20 (BNB Smart Chain)',
+  ERC20: 'ERC20 (Ethereum)',
+  SOL: 'Solana',
+  POLYGON: 'Polygon',
+  ARBITRUM: 'Arbitrum One',
+}
+
+/** "TRC20" -> "TRC20 (Tron)"; an unknown code as it came. */
+export function networkLabel(code: string | null | undefined): string {
+  const clean = String(code ?? '').trim()
+  return (NETWORK_LABELS as Record<string, string>)[clean] ?? clean
+}
+
+export function methodDraftFromState(method: ExtraMethod, state: Partial<ManualMethodState> | null | undefined): MethodDraft {
+  const settings: Partial<Record<MethodField, unknown>> = state?.settings ?? {}
+  const draft = { ...EMPTY_METHOD_DRAFT }
+  for (const field of METHOD_FIELDS[method]) draft[field] = str(settings[field])
+  return draft
+}
+
+/** Whether the method has any data saved: a card she never filled starts closed. */
+export function methodHasData(state: Partial<ManualMethodState> | null | undefined): boolean {
+  return Object.values(state?.settings ?? {}).some((value) => typeof value === 'string' && value.trim() !== '')
+}
+
+export const ACCOUNT_DIGITS = 20
+
+/** Like the API: spaces, dots and dashes removed. */
+export function normalizeAccountNumber(raw: string | null | undefined): string {
+  return String(raw ?? '').replace(/[\s.-]/g, '')
+}
+
+/**
+ * "01340000000000000000" -> "0134 0000 00 0000000000" (bank, office, check
+ * digits, account); anything that is not 20 digits as it came.
+ */
+export function formatAccountNumber(raw: string | null | undefined): string {
+  const digits = normalizeAccountNumber(raw)
+  if (!/^\d{20}$/.test(digits)) return String(raw ?? '').trim()
+  return `${digits.slice(0, 4)} ${digits.slice(4, 8)} ${digits.slice(8, 10)} ${digits.slice(10)}`
+}
+
+export type AccountInfo = {
+  /** Without spaces, dots and dashes. */
+  digits: string
+  /** Only digits so far. */
+  numeric: boolean
+  /** The 20 digits. */
+  valid: boolean
+  /** "0134 0000 00 0000000000" once valid. */
+  grouped: string | null
+  /** Valid, but it does not start with the bank's code (the API refuses it). */
+  bankMismatch: boolean
+}
+
+/** The live line under the account number. */
+export function accountInfo(raw: string | null | undefined, bankCode: string | null | undefined): AccountInfo {
+  const digits = normalizeAccountNumber(raw)
+  const valid = /^\d{20}$/.test(digits)
+  const code = String(bankCode ?? '').trim()
+  return {
+    digits,
+    numeric: /^\d*$/.test(digits),
+    valid,
+    grouped: valid ? formatAccountNumber(digits) : null,
+    bankMismatch: valid && /^\d{4}$/.test(code) && !digits.startsWith(code),
+  }
+}
+
+/** Like the API: a US number, 10 digits or 11 starting with 1 -> "+1 305-555-1234"; null when it is not one. */
+export function formatZellePhone(raw: string | null | undefined): string | null {
+  let digits = String(raw ?? '').replace(/\D/g, '')
+  if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1)
+  // Neither the area code nor the exchange starts with 0 or 1.
+  if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(digits)) return null
+  return `+1 ${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`
+}
+
+const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]+$/
+
+/** Whether a USDT address has the shape of that network's addresses (the API's address_matches_network). */
+export function addressMatchesNetwork(address: string | null | undefined, network: string | null | undefined): boolean {
+  const text = String(address ?? '').replace(/\s/g, '')
+  switch (network) {
+    case 'TRC20':
+      return text.length === 34 && text.startsWith('T') && BASE58_RE.test(text)
+    case 'BEP20':
+    case 'ERC20':
+    case 'POLYGON':
+    case 'ARBITRUM':
+      return /^0x[0-9a-fA-F]{40}$/.test(text)
+    case 'SOL':
+      return text.length >= 32 && text.length <= 44 && BASE58_RE.test(text)
+    default:
+      return true
+  }
+}
+
+/**
+ * PUT body of one method's form: its own fields only, trimmed; the account
+ * number without spaces, dots and dashes and the Pay ID and address without
+ * spaces, as the API stores them. Without `enabled`, which the switch sends.
+ */
+export function methodPayload(method: ExtraMethod, draft: MethodDraft): ManualMethodBody {
+  const body: ManualMethodBody = {}
+  for (const field of METHOD_FIELDS[method]) {
+    const value = String(draft[field] ?? '')
+    if (field === 'account_number') body[field] = normalizeAccountNumber(value)
+    else if (field === 'pay_id' || field === 'usdt_address') body[field] = value.replace(/\s/g, '')
+    else body[field] = value.trim()
+  }
+  return body
+}
+
+export function isMethodDraftDirty(method: ExtraMethod, a: MethodDraft, b: MethodDraft): boolean {
+  return JSON.stringify(methodPayload(method, a)) !== JSON.stringify(methodPayload(method, b))
+}
+
+export type MethodErrorCode =
+  | 'bank_name'
+  | 'bank_code'
+  | 'account_number'
+  | 'account_bank'
+  | 'id_document'
+  | 'email'
+  | 'zelle_phone'
+  | 'pay_id'
+  | 'usdt_address'
+  | 'address_network'
+  | 'network_required'
+  | 'too_long'
+
+export type MethodFieldError = {
+  field: MethodField
+  code: MethodErrorCode
+  /** too_long: the limit. */
+  max?: number
+  /** account_bank: the bank's code. */
+  bankCode?: string
+  /** address_network: the network's code. */
+  network?: string
+}
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
+/**
+ * What the form of a method checks by itself, with the API's rules (it
+ * refuses the same values with INVALID_FIELD): every error at once, in form
+ * order. Empty fields are fine here; switching on asks for the required ones.
+ */
+export function validateMethodDraft(method: ExtraMethod, draft: MethodDraft): MethodFieldError[] {
+  const errors: MethodFieldError[] = []
+  const text = (field: MethodField) => String(draft[field] ?? '').trim()
+  const tooLong = (field: MethodField, max: number) => {
+    if (textLength(text(field)) > max) errors.push({ field, code: 'too_long', max })
+  }
+
+  if (method === 'transferencia') {
+    const bankName = text('bank_name')
+    if (bankName && (textLength(bankName) < ORDER_LIMITS.bank_name_min || textLength(bankName) > ORDER_LIMITS.bank_name)) {
+      errors.push({ field: 'bank_name', code: 'bank_name' })
+    }
+    const bankCode = text('bank_code')
+    if (bankCode && !/^\d{4}$/.test(bankCode)) errors.push({ field: 'bank_code', code: 'bank_code' })
+    const account = accountInfo(draft.account_number, bankCode)
+    if (account.digits && !account.valid) errors.push({ field: 'account_number', code: 'account_number' })
+    else if (account.bankMismatch) errors.push({ field: 'account_number', code: 'account_bank', bankCode })
+    tooLong('holder_name', ORDER_LIMITS.holder_name)
+    const idDocument = text('id_document').replace(/[\s.-]/g, '').toUpperCase()
+    if (idDocument && !/^[VEJGP]\d{5,10}$/.test(idDocument)) errors.push({ field: 'id_document', code: 'id_document' })
+  } else if (method === 'zelle') {
+    const email = text('email').toLowerCase()
+    if (email && (email.length > 254 || !EMAIL_RE.test(email))) errors.push({ field: 'email', code: 'email' })
+    if (text('phone') && formatZellePhone(text('phone')) === null) errors.push({ field: 'phone', code: 'zelle_phone' })
+    tooLong('holder_name', ORDER_LIMITS.holder_name)
+  } else {
+    const payId = String(draft.pay_id ?? '').replace(/\s/g, '')
+    if (payId && !/^\d{5,20}$/.test(payId)) errors.push({ field: 'pay_id', code: 'pay_id' })
+    const address = String(draft.usdt_address ?? '').replace(/\s/g, '')
+    const network = text('usdt_network')
+    if (address && (address.length > 100 || !/^[A-Za-z0-9]+$/.test(address))) {
+      errors.push({ field: 'usdt_address', code: 'usdt_address' })
+    } else if (address && network && !addressMatchesNetwork(address, network)) {
+      errors.push({ field: 'usdt_address', code: 'address_network', network })
+    }
+    if (address && !network) errors.push({ field: 'usdt_network', code: 'network_required' })
+  }
+  tooLong('instructions', ORDER_LIMITS.instructions)
+  return errors
+}
+
+// ---------------------------------------------------------------------------
+// Missing data ("Falta: …") of the four methods
+// ---------------------------------------------------------------------------
+
+/**
+ * Every token `missing` can hold: field names, plus email_or_phone (Zelle:
+ * neither), pay_id_or_address (Binance: neither) and the shared settings
+ * whatsapp and fx_manual_rate.
+ */
+export const MISSING_TOKENS = [
+  'bank_name',
+  'bank_code',
+  'phone',
+  'id_document',
+  'account_number',
+  'account_type',
+  'holder_name',
+  'email_or_phone',
+  'pay_id_or_address',
+  'usdt_network',
+  'whatsapp',
+  'fx_manual_rate',
+] as const
+
+/** Set in "Ajustes de los pagos manuales", not in the method's own card. */
+export const COMMON_MISSING = ['whatsapp', 'fx_manual_rate'] as const
+
+export function isCommonMissing(token: string): boolean {
+  return (COMMON_MISSING as readonly string[]).includes(token)
+}
+
+/** The method's own missing data, then the shared one, each in the API's order. */
+export function splitMissing(missing: readonly string[] | null | undefined): { own: string[]; common: string[] } {
+  const list = (missing ?? []).filter((token): token is string => typeof token === 'string' && token.length > 0)
+  return { own: list.filter((token) => !isCommonMissing(token)), common: list.filter(isCommonMissing) }
+}
+
+/** The fields of a card a missing token points at ("email_or_phone" -> email and phone; a shared one -> none). */
+export function fieldsOfMissing(token: string): string[] {
+  if (token === 'email_or_phone') return ['email', 'phone']
+  if (token === 'pay_id_or_address') return ['pay_id', 'usdt_address']
+  return isCommonMissing(token) ? [] : [token]
+}
+
+/** The token of `missing` that asks for `field`, or null. */
+export function missingTokenFor(field: string, missing: readonly string[] | null | undefined): string | null {
+  return (missing ?? []).find((token) => fieldsOfMissing(token).includes(field)) ?? null
+}
+
+/** The cart offers at least one manual method: on and complete (Pago Móvil from /manual/settings, the rest from /manual/methods). */
+export function anyManualMethodReady(
+  pagoMovil: Partial<Pick<ManualSettings, 'enabled' | 'active'>> | null | undefined,
+  methods: ManualMethods | null | undefined
+): boolean {
+  if (pagoMovil?.enabled && pagoMovil?.active) return true
+  return EXTRA_METHODS.some((method) => !!(methods?.[method]?.enabled && methods?.[method]?.active))
 }

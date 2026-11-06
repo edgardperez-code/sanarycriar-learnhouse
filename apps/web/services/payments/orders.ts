@@ -1,14 +1,17 @@
 'use server';
-// Sanar y Criar: Pago Móvil orders (cart purchases) and the Pago Móvil
-// settings, for the dashboard. Contract: cart contract §B.2. Every call
-// returns {success, data, status} and never throws, so the page can read the
-// API's `detail` ({code, message, ...}) for REFERENCE_USED, INVALID_FIELD, ….
+// Sanar y Criar: orders paid by hand (cart purchases: Pago Móvil, bank
+// transfer, Zelle, Binance) and the settings of those methods, for the
+// dashboard. Contracts: cart contract §B.2, manual methods contract §A. Every
+// call returns {success, data, status} and never throws, so the page can read
+// the API's `detail` ({code, message, ...}) for REFERENCE_USED, INVALID_FIELD, ….
 import { getAPIUrl } from '@services/config/config';
 import { RequestBodyWithAuthHeader, getResponseMetadata, secureFetch } from '@services/utils/ts/requests';
 import {
   buildListParams,
   normalizeReference,
   type ConfirmBody,
+  type ExtraMethod,
+  type ManualMethodBody,
   type ManualSettingsBody,
   type RejectBody,
   type VoidBody,
@@ -40,6 +43,16 @@ export async function getManualSettings(orgId: number, access_token: string) {
 
 export async function updateManualSettings(orgId: number, body: ManualSettingsBody, access_token: string) {
   return call(orgId, 'manual/settings', 'PUT', body ?? {}, access_token);
+}
+
+/** Bank transfer, Zelle and Binance: switch, completeness and details of each. */
+export async function getManualMethods(orgId: number, access_token: string) {
+  return call(orgId, 'manual/methods', 'GET', null, access_token);
+}
+
+/** One of them: any of its fields ("" clears one) and `enabled`. 200 answers that method's state. */
+export async function updateManualMethod(orgId: number, method: ExtraMethod, body: ManualMethodBody, access_token: string) {
+  return call(orgId, `manual/methods/${encodeURIComponent(String(method))}`, 'PUT', body ?? {}, access_token);
 }
 
 export async function getPurchasesAdmin(

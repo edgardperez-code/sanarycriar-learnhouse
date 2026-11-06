@@ -1,10 +1,12 @@
 'use client'
-// Sanar y Criar: one Pago Móvil order in full (contract §C.4): who bought,
-// what, how much in US$ and Bs. and at which rate, the Pago Móvil details the
-// buyer sees, the confirmation, the reasons, and the actions its state allows.
-// A dialog on a computer, the whole screen wherever the dashboard shows its
-// floating mobile dock (up to 1024 px, see ClientAdminLayout); the dock sits
-// above dialogs, so the bottom of the screen is left free for it.
+// Sanar y Criar: one order paid by hand in full (cart contract §C.4, manual
+// methods contract §A.6): who bought, what, how much and with which method
+// (in bolívares with the rate, in US$ by Zelle or in USDT by Binance), the
+// payment details the buyer sees, the confirmation, the reasons, and the
+// actions its state allows. A dialog on a computer, the whole screen wherever
+// the dashboard shows its floating mobile dock (up to 1024 px, see
+// ClientAdminLayout); the dock sits above dialogs, so the bottom of the screen
+// is left free for it.
 //
 // While open, the order refreshes every 15 s and when the window gets the
 // focus back. Opening moves the focus to the title; closing gives it back to
@@ -12,27 +14,33 @@
 import React, { useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { AlertTriangle, BookOpen, ExternalLink, FileText, Info, Loader2, Mail, Smartphone, UserRound } from 'lucide-react'
+import { AlertTriangle, BookOpen, ExternalLink, FileText, Info, Loader2, Mail, UserRound } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog'
 import { useScT } from '@components/Payments/useScT'
-import { providerLabel, stripCoursePrefix } from '@components/Payments/commerce'
+import { paymentLabel, stripCoursePrefix } from '@components/Payments/commerce'
 import { safeExternalUrl } from '@services/security/url'
 import { formatRelative } from '@/lib/format'
 import { queryKeys } from '@/lib/query/keys'
 import {
   PurchaseAdmin,
   PurchaseItem,
+  PurchasePayment,
   PurchaseResource,
+  bankText,
   customerName,
-  formatBs,
+  formatAccountNumber,
   formatDateTime,
   formatIsoDate,
+  formatPurchasePay,
   formatRate,
   formatUsd,
   isOrderStatus,
-  proportionalVes,
+  networkLabel,
+  purchasePay,
+  refundText,
+  usdLine,
 } from './ordersForm'
-import { ExpiresBadge, StatusChip, useNow } from './OrderBits'
+import { ExpiresBadge, MethodIcon, StatusChip, useNow } from './OrderBits'
 import {
   FulfillmentRetry,
   OrderAction,
@@ -43,7 +51,7 @@ import {
   actionAllowed,
 } from './OrderActions'
 import { isNotFound, useOrdersAuth, usePurchaseDetail } from './useOrdersApi'
-import { OrdersTranslate, ordersLabel, useOrdersT } from './useOrdersT'
+import { OrdersTranslate, accountTypeLabel, ordersLabel, useOrdersT } from './useOrdersT'
 
 type Props = {
   /** The order to show; null closes the dialog. */
@@ -262,7 +270,9 @@ function InfoList({ rows }: { rows: Array<{ label: string; value: React.ReactNod
   )
 }
 
-function rateText(purchase: PurchaseAdmin, ot: OrdersTranslate): string {
+/** "Tasa: 887,30 Bs/US$ · BCV 27/10/2026"; null when the order has no rate (Zelle, Binance). */
+function rateText(purchase: PurchaseAdmin, ot: OrdersTranslate): string | null {
+  if (purchasePay(purchase).currency !== 'VES' || purchase.fx_rate === null || purchase.fx_rate === undefined) return null
   const rate = formatRate(purchase.fx_rate)
   if (purchase.fx_source === 'manual') return ot('detail.rate_manual', { rate })
   return purchase.fx_date
@@ -273,6 +283,7 @@ function rateText(purchase: PurchaseAdmin, ot: OrdersTranslate): string {
 /** Code, buyer and amount on top of an action form. */
 function ActionSummary({ purchase, ot }: { purchase: PurchaseAdmin; ot: OrdersTranslate }) {
   const name = customerName(purchase.customer) || ot('list.no_customer')
+  const usd = usdLine(purchase)
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-[#EAE8F2] bg-[#FFFCF9] px-4 py-3">
       <div className="min-w-0">
@@ -280,8 +291,8 @@ function ActionSummary({ purchase, ot }: { purchase: PurchaseAdmin; ot: OrdersTr
         <p className="truncate text-sm text-gray-600">{name}</p>
       </div>
       <div className="text-end">
-        <p className="text-xl font-bold tracking-tight text-[#190933]">{formatBs(purchase.amount_ves)}</p>
-        <p className="text-xs text-gray-500">{formatUsd(purchase.amount)}</p>
+        <p className="text-xl font-bold tracking-tight text-[#190933]">{formatPurchasePay(purchase)}</p>
+        {usd && <p className="text-xs text-gray-500">{usd}</p>}
       </div>
     </div>
   )
@@ -307,22 +318,24 @@ function Timing({ purchase, ot, now }: { purchase: PurchaseAdmin; ot: OrdersTran
 
 function AmountCard({ purchase, ot }: { purchase: PurchaseAdmin; ot: OrdersTranslate }) {
   const { sc } = useScT()
-  const method = providerLabel(purchase.provider, sc)
+  const method = paymentLabel(purchase.provider, purchase.method, sc)
+  const usd = usdLine(purchase)
+  const rate = rateText(purchase, ot)
   return (
     <div className="rounded-2xl bg-[#190933] px-5 py-4 text-white">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-white/60">{ot('detail.section_amount')}</p>
         {method && (
           <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/90">
-            <Smartphone size={12} aria-hidden />
+            <MethodIcon method={purchase.method} size={12} className="shrink-0" />
             <span className="sr-only">{ot('detail.method')}: </span>
             {method}
           </span>
         )}
       </div>
-      <p className="mt-1 text-3xl font-bold tracking-tight">{formatBs(purchase.amount_ves)}</p>
-      <p className="text-sm text-white/80">{formatUsd(purchase.amount)}</p>
-      <p className="mt-2 text-xs text-[#C9C5F5]">{rateText(purchase, ot)}</p>
+      <p className="mt-1 text-3xl font-bold tracking-tight">{formatPurchasePay(purchase)}</p>
+      {usd && <p className="text-sm text-white/80">{usd}</p>}
+      {rate && <p className="mt-2 text-xs text-[#C9C5F5]">{rate}</p>}
     </div>
   )
 }
@@ -361,12 +374,15 @@ function resourceHref(resource: PurchaseResource): string {
   return safeExternalUrl(resource.course_url) ?? `/course/${stripCoursePrefix(resource.course_uuid || resource.resource_uuid)}`
 }
 
-/** "Esta persona ya tenía este producto (pedido SYC-…): devuélvele US$ 25,00 (Bs. 22.182,55)." */
+/**
+ * "Esta persona ya tenía este producto (pedido SYC-…): devuélvele US$ 25,00
+ * (Bs. 22.182,55)." In bolívares, its share of what was paid; by Zelle its
+ * US$, by Binance its USDT.
+ */
 function DuplicateNotice({ item, purchase, ot }: { item: PurchaseItem; purchase: PurchaseAdmin; ot: OrdersTranslate }) {
   const duplicate = item.duplicate_of
   if (!duplicate) return null
-  const ves = proportionalVes(item.amount, purchase.amount, purchase.amount_ves, purchase.fx_rate)
-  const amount = ves === null ? formatUsd(item.amount) : `${formatUsd(item.amount)} (${formatBs(ves)})`
+  const amount = refundText(item.amount, purchase)
   return (
     <p className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">
       <AlertTriangle size={14} className="mt-px shrink-0" aria-hidden />
@@ -425,21 +441,67 @@ function ProductsSection({ purchase, ot }: { purchase: PurchaseAdmin; ot: Orders
   )
 }
 
+function paymentTitle(method: string, ot: OrdersTranslate): string {
+  switch (method) {
+    case 'transferencia':
+      return ot('detail.section_payment_transferencia')
+    case 'zelle':
+      return ot('detail.section_payment_zelle')
+    case 'binance':
+      return ot('detail.section_payment_binance')
+    default:
+      return ot('detail.section_payment')
+  }
+}
+
+type InfoRow = { label: string; value: React.ReactNode; mono?: boolean } | null
+
+/** The details the buyer is shown to pay with the order's method (empty ones are left out). */
+function paymentRows(method: string, payment: PurchasePayment, ot: OrdersTranslate): InfoRow[] {
+  const row = (label: string, value: string | undefined, mono = false): InfoRow => (value ? { label, value, mono } : null)
+  const bank = bankText(payment.bank_name, payment.bank_code)
+  const instructions = row(ot('detail.instructions'), payment.instructions)
+  switch (method) {
+    case 'transferencia':
+      return [
+        row(ot('detail.bank'), bank),
+        row(ot('detail.account_number'), payment.account_number ? formatAccountNumber(payment.account_number) : '', true),
+        row(ot('detail.account_type'), payment.account_type ? accountTypeLabel(ot, payment.account_type) : ''),
+        row(ot('detail.holder'), payment.holder_name),
+        row(ot('detail.id_document'), payment.id_document, true),
+        instructions,
+      ]
+    case 'zelle':
+      return [
+        row(ot('detail.zelle_email'), payment.email),
+        row(ot('detail.zelle_phone'), payment.phone, true),
+        row(ot('detail.holder'), payment.holder_name),
+        instructions,
+      ]
+    case 'binance':
+      return [
+        row(ot('detail.pay_id'), payment.pay_id, true),
+        row(ot('detail.usdt_address'), payment.usdt_address, true),
+        row(ot('detail.usdt_network'), payment.usdt_network ? networkLabel(payment.usdt_network) : ''),
+        instructions,
+      ]
+    default:
+      return [
+        row(ot('detail.bank'), bank),
+        row(ot('detail.phone'), payment.phone, true),
+        row(ot('detail.id_document'), payment.id_document, true),
+        row(ot('detail.holder'), payment.holder_name),
+        instructions,
+      ]
+  }
+}
+
 function PaymentSection({ purchase, ot }: { purchase: PurchaseAdmin; ot: OrdersTranslate }) {
   const payment = purchase.payment
   if (!payment) return null
-  const bank = [payment.bank_name, payment.bank_code ? `(${payment.bank_code})` : ''].filter(Boolean).join(' ')
   return (
-    <Section title={ot('detail.section_payment')} icon={<Smartphone size={13} aria-hidden />}>
-      <InfoList
-        rows={[
-          bank ? { label: ot('detail.bank'), value: bank } : null,
-          payment.phone ? { label: ot('detail.phone'), value: payment.phone, mono: true } : null,
-          payment.id_document ? { label: ot('detail.id_document'), value: payment.id_document, mono: true } : null,
-          payment.holder_name ? { label: ot('detail.holder'), value: payment.holder_name } : null,
-          payment.instructions ? { label: ot('detail.instructions'), value: payment.instructions } : null,
-        ]}
-      />
+    <Section title={paymentTitle(purchase.method, ot)} icon={<MethodIcon method={purchase.method} size={13} />}>
+      <InfoList rows={paymentRows(purchase.method, payment, ot)} />
     </Section>
   )
 }

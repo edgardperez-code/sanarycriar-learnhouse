@@ -69,6 +69,38 @@ export function providerLabel(provider: string | null | undefined, sc: ScTransla
   }
 }
 
+// Sanar y Criar: the manual methods of the cart, in display order (the API's
+// manual_methods.METHODS). Every one is paid by the buyer on her own and
+// confirmed by an admin in Pedidos.
+export const MANUAL_METHODS = ['pago_movil', 'transferencia', 'zelle', 'binance'] as const
+export type ManualMethod = (typeof MANUAL_METHODS)[number]
+/** What each one is paid in: bolívares at the day's rate, dollars, or USDT (1 USDT = 1 US$). */
+export type PayCurrency = 'VES' | 'USD' | 'USDT'
+
+export function isManualMethod(value: unknown): value is ManualMethod {
+  return typeof value === 'string' && (MANUAL_METHODS as readonly string[]).includes(value)
+}
+
+export function methodCurrency(method: string | null | undefined): PayCurrency {
+  if (method === 'zelle') return 'USD'
+  if (method === 'binance') return 'USDT'
+  return 'VES'
+}
+
+/** "Pago Móvil", "Transferencia bancaria", "Zelle", "Binance"; '' for anything else. */
+export function methodLabel(method: string | null | undefined, sc: ScTranslate): string {
+  return isManualMethod(method) ? sc(`methods.${method}`) : ''
+}
+
+/**
+ * How a charge was paid: the manual method when there is one (a cart order),
+ * else the provider (PayPal…).
+ */
+export function paymentLabel(provider: string | null | undefined, method: string | null | undefined, sc: ScTranslate): string {
+  if ((provider ?? '').toLowerCase() === 'manual') return methodLabel(method, sc) || providerLabel(provider, sc)
+  return providerLabel(provider, sc)
+}
+
 /** Link to the provider's merchant dashboard, or null when there is none. */
 export function providerDashboardUrl(provider: string | null | undefined, environment?: string | null): string | null {
   if ((provider ?? '').toLowerCase() !== 'paypal') return null

@@ -1,9 +1,12 @@
 'use client';
 // Sanar y Criar: payment provider configuration. PayPal is configured with a
 // credentials form (Client ID + Secret + environment + webhook id) instead of
-// the upstream Stripe Connect OAuth popup; Pago Móvil (manual, confirmed in
-// Pedidos) has its own card, PagoMovilCard. The stored secret is never shown
-// or sent back to the browser.
+// the upstream Stripe Connect OAuth popup. Below it, "Pagos manuales": the
+// methods the buyer pays on her own and an admin confirms in Pedidos. First
+// the settings they all share (ManualSettingsCard), then one card per method
+// in display order: Pago Móvil (PagoMovilCard), bank transfer, Zelle and
+// Binance (ManualMethodCard). The stored PayPal secret is never shown or sent
+// back to the browser.
 import React, { useMemo, useState } from 'react';
 import { useOrg } from '@components/Contexts/OrgContext';
 import { useLHSession } from '@components/Contexts/LHSessionContext';
@@ -34,6 +37,10 @@ import { useLHAnalytics, AnalyticsEvent } from '@services/analytics';
 import { SiPaypal } from '@icons-pack/react-simple-icons';
 import { useScT, ScTranslate } from '@components/Payments/useScT';
 import { describePaymentError } from '@components/Payments/commerce';
+import { EXTRA_METHODS } from '../Orders/ordersForm';
+import { useOrdersT } from '../Orders/useOrdersT';
+import ManualMethodCard from './ManualMethodCard';
+import ManualSettingsCard from './ManualSettingsCard';
 import PagoMovilCard from './PagoMovilCard';
 
 const PAYPAL_DEVELOPER_URL = 'https://developer.paypal.com/dashboard/applications';
@@ -56,6 +63,7 @@ const PaymentsConfigurationPage: React.FC = () => {
   const session = useLHSession() as any;
   const access_token = session?.data?.tokens?.access_token;
   const { sc } = useScT();
+  const { ot } = useOrdersT();
 
   const { data: paymentConfigs, error, isLoading } = useQuery({
     queryKey: queryKeys.payments.configs(org?.id),
@@ -97,8 +105,21 @@ const PaymentsConfigurationPage: React.FC = () => {
 
       <div className="space-y-3">
         <PaypalCard config={paypalConfig} orgId={org.id} accessToken={access_token} sc={sc} />
-        <PagoMovilCard />
       </div>
+
+      <section aria-labelledby="manual-payments-title" className="mt-8 space-y-3">
+        <div className="px-1">
+          <h2 id="manual-payments-title" className="font-bold text-lg text-[#190933]">
+            {ot('manual_area.title')}
+          </h2>
+          <p className="text-sm text-[#584F72]">{ot('manual_area.intro')}</p>
+        </div>
+        <ManualSettingsCard />
+        <PagoMovilCard />
+        {EXTRA_METHODS.map((method) => (
+          <ManualMethodCard key={method} method={method} />
+        ))}
+      </section>
     </div>
   );
 };

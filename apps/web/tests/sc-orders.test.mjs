@@ -1,6 +1,7 @@
 // Sanar y Criar: "Pedidos" dashboard helpers (bank reference, reasons, money
-// in es-VE, time left to pay, list query, Pago Móvil settings form) and the
-// sc_orders i18n bundle. All fixtures are synthetic.
+// in es-VE and in each method's currency, time left to pay, list query, the
+// manual payment settings: shared ones, Pago Móvil, bank transfer, Zelle and
+// Binance) and the sc_orders i18n bundle. All fixtures are synthetic.
 
 import { describe, expect, test } from 'bun:test'
 import fs from 'node:fs'
@@ -15,8 +16,48 @@ const {
   MANUAL_REQUIRED_FIELDS,
   VE_BANKS,
   OTHER_BANK,
+  COMMON_FIELDS,
+  PAGO_MOVIL_FIELDS,
+  EXTRA_METHODS,
+  METHOD_FIELDS,
+  ACCOUNT_TYPES,
+  USDT_NETWORKS,
+  NETWORK_LABELS,
+  MISSING_TOKENS,
+  COMMON_MISSING,
   normalizeReference,
   isValidReference,
+  referenceMaxLength,
+  formatPayAmount,
+  purchasePay,
+  formatPurchasePay,
+  usdLine,
+  refundText,
+  commonSettingsPayload,
+  pagoMovilPayload,
+  validateCommonDraft,
+  validatePagoMovilDraft,
+  isCommonDraftDirty,
+  isPagoMovilDraftDirty,
+  commonSettingsIncomplete,
+  bankText,
+  isExtraMethod,
+  networkLabel,
+  methodDraftFromState,
+  methodHasData,
+  normalizeAccountNumber,
+  formatAccountNumber,
+  accountInfo,
+  formatZellePhone,
+  addressMatchesNetwork,
+  methodPayload,
+  isMethodDraftDirty,
+  validateMethodDraft,
+  isCommonMissing,
+  splitMissing,
+  fieldsOfMissing,
+  missingTokenFor,
+  anyManualMethodReady,
   isValidReason,
   isValidNote,
   formatAmount,
@@ -74,6 +115,20 @@ describe('bank reference (contract §0.2)', () => {
       expect({ bad, valid: isValidReference(bad) }).toEqual({ bad, valid: false })
     }
   })
+
+  test('Binance takes up to 100 (a Binance Pay order id or a TxID); the other methods 30', () => {
+    const txid = 'a1'.repeat(32) // 64 hex characters
+    expect(referenceMaxLength('binance')).toBe(100)
+    for (const method of ['pago_movil', 'transferencia', 'zelle', undefined, null, 'otro']) expect(referenceMaxLength(method)).toBe(30)
+    expect(isValidReference(txid, 'binance')).toBe(true)
+    expect(isValidReference(`0x${txid}`, 'binance')).toBe(true)
+    expect(isValidReference('A'.repeat(100), 'binance')).toBe(true)
+    expect(isValidReference('A'.repeat(101), 'binance')).toBe(false)
+    expect(isValidReference('123', 'binance')).toBe(false)
+    expect(isValidReference(txid, 'zelle')).toBe(false)
+    expect(isValidReference(txid, 'transferencia')).toBe(false)
+    expect(isValidReference('BAC0A1B2C3D', 'zelle')).toBe(true)
+  })
 })
 
 describe('reasons and notes', () => {
@@ -120,6 +175,50 @@ describe('money, rates and dates (es-VE, America/Caracas)', () => {
     expect(formatDateTime('not a date')).toBe('—')
     expect(formatIsoDate('2026-10-27')).toBe('27/10/2026')
     expect(formatIsoDate(null)).toBe('—')
+  })
+})
+
+describe('what the buyer pays, in the method currency (manual methods §0, §A.6)', () => {
+  const pagoMovil = { method: 'pago_movil', amount: 40, pay_currency: 'VES', pay_amount: 35492.08, amount_ves: 35492.08, fx_rate: 887.302 }
+  const transferencia = { ...pagoMovil, method: 'transferencia' }
+  const zelle = { method: 'zelle', amount: 40, pay_currency: 'USD', pay_amount: 40, amount_ves: null, fx_rate: null }
+  const binance = { method: 'binance', amount: 40, pay_currency: 'USDT', pay_amount: 40, amount_ves: null, fx_rate: null }
+
+  test('formats of the contract: Bs. 35.492,08, US$ 40,00, 40,00 USDT', () => {
+    expect(formatPayAmount(35492.08, 'VES')).toBe('Bs. 35.492,08')
+    expect(formatPayAmount(40, 'USD')).toBe('US$ 40,00')
+    expect(formatPayAmount(40, 'USDT')).toBe('40,00 USDT')
+    expect(formatPayAmount(1234.5, 'USDT')).toBe('1.234,50 USDT')
+    expect(formatPayAmount(10, 'EUR')).toBe('10,00 EUR')
+    expect(formatPayAmount(10, '')).toBe('10,00')
+    expect(formatPayAmount(null, 'VES')).toBe('—')
+    expect(formatPayAmount('abc', 'USD')).toBe('—')
+  })
+
+  test('the big amount of an order: pay_amount in pay_currency', () => {
+    expect(formatPurchasePay(pagoMovil)).toBe('Bs. 35.492,08')
+    expect(formatPurchasePay(transferencia)).toBe('Bs. 35.492,08')
+    expect(formatPurchasePay(zelle)).toBe('US$ 40,00')
+    expect(formatPurchasePay(binance)).toBe('40,00 USDT')
+    // Without the new fields (an older API): a Pago Móvil order, in bolívares.
+    expect(purchasePay({ amount: 40, amount_ves: 35492.08 })).toEqual({ currency: 'VES', amount: 35492.08 })
+    expect(purchasePay({ pay_currency: 'USD', amount: 40 })).toEqual({ currency: 'USD', amount: 40 })
+    expect(purchasePay(null)).toEqual({ currency: 'VES', amount: null })
+  })
+
+  test('the US$ line only when it adds something', () => {
+    expect(usdLine(pagoMovil)).toBe('US$ 40,00')
+    expect(usdLine(transferencia)).toBe('US$ 40,00')
+    expect(usdLine(binance)).toBe('= US$ 40,00')
+    expect(usdLine(zelle)).toBeNull()
+  })
+
+  test('refund of a product bought twice, in what was paid', () => {
+    const order = { ...pagoMovil, amount: 34, amount_ves: 30168.27, pay_amount: 30168.27 }
+    expect(refundText(25, order)).toBe('US$ 25,00 (Bs. 22.182,55)')
+    expect(refundText(25, { ...order, amount_ves: null, amount: 0, fx_rate: null })).toBe('US$ 25,00')
+    expect(refundText(25, zelle)).toBe('US$ 25,00')
+    expect(refundText(25, binance)).toBe('25,00 USDT')
   })
 })
 
@@ -408,10 +507,269 @@ describe('Pago Móvil settings form', () => {
 
   test('limits and fields match the contract', () => {
     expect(ORDER_LIMITS).toMatchObject({
-      reference_min: 4, reference_max: 30, reason_min: 3, reason_max: 300, note: 500,
+      reference_min: 4, reference_max: 30, reference_max_binance: 100, reason_min: 3, reason_max: 300, note: 500,
       search: 100, instructions: 500, window_min: 1, window_max: 168,
     })
     expect([...MANUAL_REQUIRED_FIELDS]).toEqual(['bank_name', 'bank_code', 'phone', 'id_document', 'whatsapp'])
+  })
+})
+
+describe('the two cards of /manual/settings: shared settings and Pago Móvil (§A.1)', () => {
+  const data = {
+    enabled: true,
+    active: true,
+    missing: [],
+    settings: {
+      bank_name: 'Banesco', bank_code: '0134', phone: '0424-1234567', id_document: 'V-12345678', holder_name: 'Hilda',
+      whatsapp: '584248824634', instructions: '', payment_window_hours: 24,
+      fx_mode: 'auto', fx_manual_rate: 887.3, notify_email: 'hilda@example.com',
+    },
+    fx: null,
+  }
+
+  test('every /manual/settings field belongs to exactly one card', () => {
+    expect([...COMMON_FIELDS, ...PAGO_MOVIL_FIELDS].sort()).toEqual([...MANUAL_FIELDS].sort())
+    expect(COMMON_FIELDS.filter((f) => PAGO_MOVIL_FIELDS.includes(f))).toEqual([])
+  })
+
+  test('each card sends only its own fields (and never the switch)', () => {
+    const draft = draftFromManualSettings(data)
+    expect(commonSettingsPayload(draft)).toEqual({
+      whatsapp: '584248824634', payment_window_hours: 24, fx_mode: 'auto', notify_email: 'hilda@example.com',
+    })
+    expect(commonSettingsPayload({ ...draft, fx_mode: 'manual', fx_manual_rate: ' 900,50 ' })).toMatchObject({
+      fx_mode: 'manual', fx_manual_rate: '900,50',
+    })
+    expect(pagoMovilPayload({ ...draft, phone: ' 0414-7654321 ' })).toEqual({
+      bank_name: 'Banesco', bank_code: '0134', phone: '0414-7654321', id_document: 'V-12345678', holder_name: 'Hilda', instructions: '',
+    })
+    expect('enabled' in pagoMovilPayload(draft)).toBe(false)
+  })
+
+  test('dirty and checks per card: a change in one card is not the other one’s', () => {
+    const draft = draftFromManualSettings(data)
+    const whatsappChanged = { ...draft, whatsapp: '584141234567' }
+    expect(isCommonDraftDirty(whatsappChanged, draft)).toBe(true)
+    expect(isPagoMovilDraftDirty(whatsappChanged, draft)).toBe(false)
+    const phoneChanged = { ...draft, phone: '0414-7654321' }
+    expect(isPagoMovilDraftDirty(phoneChanged, draft)).toBe(true)
+    expect(isCommonDraftDirty(phoneChanged, draft)).toBe(false)
+    const broken = { ...draft, whatsapp: '12345', payment_window_hours: '0', holder_name: 'x'.repeat(81), bank_name: 'B' }
+    expect(validateCommonDraft(broken).map((e) => e.field).sort()).toEqual(['payment_window_hours', 'whatsapp'])
+    expect(validatePagoMovilDraft(broken).map((e) => e.field).sort()).toEqual(['bank_name', 'holder_name'])
+    expect(validateCommonDraft({ ...draft, fx_mode: 'manual', fx_manual_rate: '1.050' }).map((e) => e.code)).toEqual(['rate_ambiguous'])
+    expect(validateCommonDraft({ ...draft, fx_mode: 'manual', fx_manual_rate: '887.302,00' }, { bcvRate: 887.302 }).map((e) => e.code)).toEqual(['rate_far'])
+  })
+
+  test('shared settings no method can do without', () => {
+    expect(commonSettingsIncomplete(data.settings)).toBe(false)
+    expect(commonSettingsIncomplete({ ...data.settings, whatsapp: '' })).toBe(true)
+    expect(commonSettingsIncomplete({ ...data.settings, whatsapp: '  ' })).toBe(true)
+    expect(commonSettingsIncomplete({ ...data.settings, fx_mode: 'manual', fx_manual_rate: null })).toBe(true)
+    expect(commonSettingsIncomplete({ ...data.settings, fx_mode: 'manual' })).toBe(false)
+    expect(commonSettingsIncomplete(null)).toBe(true)
+  })
+
+  test('bank text', () => {
+    expect(bankText('Banesco', '0134')).toBe('Banesco (0134)')
+    expect(bankText('Mi banco', '')).toBe('Mi banco')
+    expect(bankText('', '0134')).toBe('(0134)')
+    expect(bankText(undefined, null)).toBe('')
+  })
+})
+
+describe('bank transfer, Zelle and Binance settings (§A.2, §A.3)', () => {
+  const methods = {
+    transferencia: {
+      method: 'transferencia', enabled: false, active: false,
+      missing: ['bank_name', 'account_number', 'account_type', 'holder_name', 'id_document', 'whatsapp'],
+      settings: { bank_name: '', bank_code: '', account_number: '', account_type: '', holder_name: '', id_document: '', instructions: '' },
+    },
+    zelle: {
+      method: 'zelle', enabled: true, active: true, missing: [],
+      settings: { email: 'pagos@example.com', phone: '+1 305-555-1234', holder_name: 'Hilda Pérez', instructions: '' },
+    },
+    binance: {
+      method: 'binance', enabled: false, active: false, missing: ['pay_id_or_address', 'whatsapp'],
+      settings: { pay_id: '', usdt_address: '', usdt_network: '', instructions: '' },
+    },
+  }
+  const codes = (method, draft) => validateMethodDraft(method, draft).map((e) => `${e.field}:${e.code}`)
+
+  test('methods and fields of the contract, in display and form order', () => {
+    expect([...EXTRA_METHODS]).toEqual(['transferencia', 'zelle', 'binance'])
+    expect(METHOD_FIELDS).toEqual({
+      transferencia: ['bank_name', 'bank_code', 'account_number', 'account_type', 'holder_name', 'id_document', 'instructions'],
+      zelle: ['email', 'phone', 'holder_name', 'instructions'],
+      binance: ['pay_id', 'usdt_address', 'usdt_network', 'instructions'],
+    })
+    expect(isExtraMethod('zelle')).toBe(true)
+    expect(isExtraMethod('pago_movil')).toBe(false)
+    expect([...ACCOUNT_TYPES]).toEqual(['corriente', 'ahorro'])
+    expect([...USDT_NETWORKS]).toEqual(['TRC20', 'BEP20', 'ERC20', 'SOL', 'POLYGON', 'ARBITRUM'])
+    expect(USDT_NETWORKS.map((n) => NETWORK_LABELS[n])).toEqual([
+      'TRC20 (Tron)', 'BEP20 (BNB Smart Chain)', 'ERC20 (Ethereum)', 'Solana', 'Polygon', 'Arbitrum One',
+    ])
+    expect(networkLabel('SOL')).toBe('Solana')
+    expect(networkLabel('XYZ')).toBe('XYZ')
+    expect(networkLabel(null)).toBe('')
+  })
+
+  test('draft from the API, untouched cards, payload with only that method', () => {
+    const zelle = methodDraftFromState('zelle', methods.zelle)
+    expect(zelle).toMatchObject({ email: 'pagos@example.com', phone: '+1 305-555-1234', holder_name: 'Hilda Pérez', instructions: '' })
+    // The other methods' fields stay empty and never travel.
+    expect(zelle.account_number).toBe('')
+    expect(methodPayload('zelle', { ...zelle, account_number: '123', email: ' pagos@example.com ' })).toEqual({
+      email: 'pagos@example.com', phone: '+1 305-555-1234', holder_name: 'Hilda Pérez', instructions: '',
+    })
+    expect(methodHasData(methods.zelle)).toBe(true)
+    expect(methodHasData(methods.transferencia)).toBe(false)
+    expect(methodHasData({ settings: { instructions: '   ' } })).toBe(false)
+    expect(methodHasData(null)).toBe(false)
+    expect(methodDraftFromState('binance', null).pay_id).toBe('')
+  })
+
+  test('payload: the account, Pay ID and address as the API stores them', () => {
+    const draft = {
+      ...methodDraftFromState('transferencia', methods.transferencia),
+      bank_name: ' Banesco ', bank_code: '0134', account_number: '0134-0000.00 0000000000', account_type: 'ahorro',
+    }
+    expect(methodPayload('transferencia', draft)).toEqual({
+      bank_name: 'Banesco', bank_code: '0134', account_number: '01340000000000000000', account_type: 'ahorro',
+      holder_name: '', id_document: '', instructions: '',
+    })
+    const binance = { ...methodDraftFromState('binance', methods.binance), pay_id: ' 123 456 789 ', usdt_address: 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb ' }
+    expect(methodPayload('binance', binance)).toMatchObject({ pay_id: '123456789', usdt_address: 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb' })
+    // Typing the same account with spaces is not a change.
+    const saved = { ...draft, account_number: '01340000000000000000' }
+    expect(isMethodDraftDirty('transferencia', draft, saved)).toBe(false)
+    expect(isMethodDraftDirty('transferencia', { ...draft, account_type: 'corriente' }, saved)).toBe(true)
+  })
+
+  test('account number: 20 digits, grouped, and it starts with the bank code', () => {
+    expect(normalizeAccountNumber(' 0134-0000.00 0000000001 ')).toBe('01340000000000000001')
+    expect(formatAccountNumber('01340000000000000001')).toBe('0134 0000 00 0000000001')
+    expect(formatAccountNumber('0134 0000 00 0000000001')).toBe('0134 0000 00 0000000001')
+    expect(formatAccountNumber('12345')).toBe('12345')
+    expect(formatAccountNumber(null)).toBe('')
+    expect(accountInfo('0134 0000', '0134')).toEqual({ digits: '01340000', numeric: true, valid: false, grouped: null, bankMismatch: false })
+    expect(accountInfo('01340000000000000001', '0134')).toMatchObject({ valid: true, grouped: '0134 0000 00 0000000001', bankMismatch: false })
+    expect(accountInfo('01050000000000000001', '0134')).toMatchObject({ valid: true, bankMismatch: true })
+    // Without a bank code the API takes it from the account.
+    expect(accountInfo('01050000000000000001', '')).toMatchObject({ valid: true, bankMismatch: false })
+    expect(accountInfo('0134abc', '0134').numeric).toBe(false)
+  })
+
+  test('Zelle phone: a US number, like the API stores it', () => {
+    expect(formatZellePhone('+1 305 555 1234')).toBe('+1 305-555-1234')
+    expect(formatZellePhone('(305) 555-1234')).toBe('+1 305-555-1234')
+    expect(formatZellePhone('13055551234')).toBe('+1 305-555-1234')
+    expect(formatZellePhone('305 555 123')).toBeNull()
+    expect(formatZellePhone('105 555 1234')).toBeNull()
+    expect(formatZellePhone('305 155 1234')).toBeNull()
+    expect(formatZellePhone('0424 123 4567')).toBeNull()
+    expect(formatZellePhone('')).toBeNull()
+  })
+
+  test('USDT address against its network', () => {
+    const tron = 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb'
+    const evm = `0x${'a1B2'.repeat(10)}`
+    const sol = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV'
+    expect(addressMatchesNetwork(tron, 'TRC20')).toBe(true)
+    expect(addressMatchesNetwork(` ${tron} `, 'TRC20')).toBe(true)
+    expect(addressMatchesNetwork(evm, 'TRC20')).toBe(false)
+    expect(addressMatchesNetwork(tron.replace('9', '0'), 'TRC20')).toBe(false) // 0 is not base58
+    for (const network of ['BEP20', 'ERC20', 'POLYGON', 'ARBITRUM']) {
+      expect(addressMatchesNetwork(evm, network)).toBe(true)
+      expect(addressMatchesNetwork(tron, network)).toBe(false)
+      expect(addressMatchesNetwork(`${evm}0`, network)).toBe(false)
+    }
+    expect(addressMatchesNetwork(sol, 'SOL')).toBe(true)
+    expect(addressMatchesNetwork(evm, 'SOL')).toBe(false)
+    expect(addressMatchesNetwork('abc', '')).toBe(true)
+  })
+
+  test('what the bank transfer form checks by itself (the API rules)', () => {
+    const empty = methodDraftFromState('transferencia', methods.transferencia)
+    expect(codes('transferencia', empty)).toEqual([])
+    const good = {
+      ...empty, bank_name: 'Banesco', bank_code: '0134', account_number: '0134 0000 00 0000000001', account_type: 'corriente',
+      holder_name: 'Hilda Pérez', id_document: 'v-12.345.678',
+    }
+    expect(codes('transferencia', good)).toEqual([])
+    expect(codes('transferencia', { ...good, bank_name: 'B' })).toEqual(['bank_name:bank_name'])
+    expect(codes('transferencia', { ...good, bank_code: '013' })).toEqual(['bank_code:bank_code'])
+    expect(codes('transferencia', { ...good, account_number: '0134 0000' })).toEqual(['account_number:account_number'])
+    expect(codes('transferencia', { ...good, account_number: '0134abc' })).toEqual(['account_number:account_number'])
+    const mismatch = validateMethodDraft('transferencia', { ...good, account_number: '01050000000000000001' })
+    expect(mismatch).toEqual([{ field: 'account_number', code: 'account_bank', bankCode: '0134' }])
+    expect(codes('transferencia', { ...good, bank_code: '', account_number: '01050000000000000001' })).toEqual([])
+    expect(codes('transferencia', { ...good, id_document: '12345678' })).toEqual(['id_document:id_document'])
+    expect(codes('transferencia', { ...good, id_document: 'J-412345678' })).toEqual([])
+    expect(codes('transferencia', { ...good, holder_name: 'x'.repeat(81) })).toEqual(['holder_name:too_long'])
+    expect(validateMethodDraft('transferencia', { ...good, instructions: 'x'.repeat(501) })).toEqual([
+      { field: 'instructions', code: 'too_long', max: 500 },
+    ])
+  })
+
+  test('what the Zelle form checks by itself', () => {
+    const zelle = methodDraftFromState('zelle', methods.zelle)
+    expect(codes('zelle', zelle)).toEqual([])
+    expect(codes('zelle', { ...zelle, email: 'pagos@example' })).toEqual(['email:email'])
+    expect(codes('zelle', { ...zelle, email: 'Pagos@Example.com' })).toEqual([])
+    expect(codes('zelle', { ...zelle, email: '' })).toEqual([])
+    expect(codes('zelle', { ...zelle, phone: '0424-1234567' })).toEqual(['phone:zelle_phone'])
+    expect(codes('zelle', { ...zelle, holder_name: 'x'.repeat(81) })).toEqual(['holder_name:too_long'])
+  })
+
+  test('what the Binance form checks by itself', () => {
+    const empty = methodDraftFromState('binance', methods.binance)
+    const tron = 'T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb'
+    expect(codes('binance', empty)).toEqual([])
+    expect(codes('binance', { ...empty, pay_id: '123 456 789' })).toEqual([])
+    expect(codes('binance', { ...empty, pay_id: '1234' })).toEqual(['pay_id:pay_id'])
+    expect(codes('binance', { ...empty, pay_id: '12345a' })).toEqual(['pay_id:pay_id'])
+    expect(codes('binance', { ...empty, usdt_address: tron, usdt_network: 'TRC20' })).toEqual([])
+    // An address needs its network.
+    expect(codes('binance', { ...empty, usdt_address: tron })).toEqual(['usdt_network:network_required'])
+    expect(validateMethodDraft('binance', { ...empty, usdt_address: tron, usdt_network: 'BEP20' })).toEqual([
+      { field: 'usdt_address', code: 'address_network', network: 'BEP20' },
+    ])
+    expect(codes('binance', { ...empty, usdt_address: 'T9y-D14', usdt_network: 'TRC20' })).toEqual(['usdt_address:usdt_address'])
+    expect(codes('binance', { ...empty, usdt_address: 'A'.repeat(101), usdt_network: 'TRC20' })).toEqual(['usdt_address:usdt_address'])
+  })
+
+  test('the cart offers some manual method (the "none on" notice in Pedidos)', () => {
+    const off = { enabled: false, active: true }
+    expect(anyManualMethodReady(off, methods)).toBe(true) // Zelle is on and complete
+    expect(anyManualMethodReady({ enabled: true, active: true }, {})).toBe(true)
+    expect(anyManualMethodReady(off, { ...methods, zelle: { ...methods.zelle, enabled: false } })).toBe(false)
+    expect(anyManualMethodReady(off, { zelle: { ...methods.zelle, active: false } })).toBe(false)
+    expect(anyManualMethodReady({ enabled: true, active: false }, undefined)).toBe(false)
+    expect(anyManualMethodReady(null, null)).toBe(false)
+  })
+})
+
+describe('missing data ("Falta: …")', () => {
+  test('the tokens of the contract; the shared ones are set in the common card', () => {
+    expect([...COMMON_MISSING]).toEqual(['whatsapp', 'fx_manual_rate'])
+    expect(MISSING_TOKENS.filter(isCommonMissing)).toEqual(['whatsapp', 'fx_manual_rate'])
+    expect(splitMissing(['bank_name', 'whatsapp', 'account_type', 'fx_manual_rate'])).toEqual({
+      own: ['bank_name', 'account_type'], common: ['whatsapp', 'fx_manual_rate'],
+    })
+    expect(splitMissing(null)).toEqual({ own: [], common: [] })
+  })
+
+  test('which fields a token marks', () => {
+    expect(fieldsOfMissing('email_or_phone')).toEqual(['email', 'phone'])
+    expect(fieldsOfMissing('pay_id_or_address')).toEqual(['pay_id', 'usdt_address'])
+    expect(fieldsOfMissing('usdt_network')).toEqual(['usdt_network'])
+    expect(fieldsOfMissing('whatsapp')).toEqual([])
+    expect(missingTokenFor('phone', ['email_or_phone', 'holder_name', 'whatsapp'])).toBe('email_or_phone')
+    expect(missingTokenFor('holder_name', ['email_or_phone', 'holder_name'])).toBe('holder_name')
+    expect(missingTokenFor('instructions', ['email_or_phone'])).toBeNull()
+    expect(missingTokenFor('whatsapp', ['whatsapp'])).toBeNull()
   })
 })
 
@@ -459,7 +817,8 @@ describe('sc_orders strings', () => {
       ['empty', ORDER_TABS],
       ['late_warning', ['expired', 'rejected', 'cancelled']],
       ['expires', ['minutes', 'hours', 'days', 'expired']],
-      ['fields', MANUAL_FIELDS],
+      ['missing', MISSING_TOKENS],
+      ['account_types', ACCOUNT_TYPES],
     ]
     const missing = []
     for (const [group, values] of groups) {
@@ -477,9 +836,21 @@ describe('sc_orders strings', () => {
       ...fs.readdirSync(path.join(webRoot, 'components/Dashboard/Pages/Orders'))
         .filter((f) => f.endsWith('.tsx'))
         .map((f) => `components/Dashboard/Pages/Orders/${f}`),
-      'components/Dashboard/Pages/Payments/PagoMovilCard.tsx',
-      'components/Dashboard/Pages/Payments/PaymentsCustomersPage.tsx',
+      // Every card of "Pagos manuales" and the pages that read sc_orders.
+      ...fs.readdirSync(path.join(webRoot, 'components/Dashboard/Pages/Payments'))
+        .filter((f) => f.endsWith('.tsx') && /useOrdersT|OrdersTranslate/.test(read(`components/Dashboard/Pages/Payments/${f}`)))
+        .map((f) => `components/Dashboard/Pages/Payments/${f}`),
     ]
+    for (const file of [
+      'components/Dashboard/Pages/Payments/ManualSettingsCard.tsx',
+      'components/Dashboard/Pages/Payments/PagoMovilCard.tsx',
+      'components/Dashboard/Pages/Payments/ManualMethodCard.tsx',
+      'components/Dashboard/Pages/Payments/ManualCardParts.tsx',
+      'components/Dashboard/Pages/Payments/PaymentsConfigurationPage.tsx',
+      'components/Dashboard/Pages/Payments/PaymentsCustomersPage.tsx',
+    ]) {
+      expect(files).toContain(file)
+    }
     const missing = []
     let checked = 0
     for (const file of files) {
@@ -497,28 +868,49 @@ describe('sc_orders strings', () => {
   })
 
   test('plural forms: 1 hora, 24 horas', () => {
-    expect(es['sc_orders.pago_movil.summary_window_one']).toBe('{{count}} hora')
-    expect(es['sc_orders.pago_movil.summary_window_other']).toBe('{{count}} horas')
-    expect(en['sc_orders.pago_movil.summary_window_one']).toBe('{{count}} hour')
-    expect(es['sc_orders.pago_movil.window_unit_one']).toBe('hora')
-    expect(en['sc_orders.pago_movil.window_unit_other']).toBe('hours')
+    expect(es['sc_orders.manual_settings.summary_window_one']).toBe('{{count}} hora')
+    expect(es['sc_orders.manual_settings.summary_window_other']).toBe('{{count}} horas')
+    expect(en['sc_orders.manual_settings.summary_window_one']).toBe('{{count}} hour')
+    expect(es['sc_orders.manual_settings.window_unit_one']).toBe('hora')
+    expect(en['sc_orders.manual_settings.window_unit_other']).toBe('hours')
     // Never a bare "horas" key that would read "1 horas".
-    expect(es['sc_orders.pago_movil.summary_window']).toBeUndefined()
-    expect(es['sc_orders.pago_movil.window_unit']).toBeUndefined()
+    expect(es['sc_orders.manual_settings.summary_window']).toBeUndefined()
+    expect(es['sc_orders.manual_settings.window_unit']).toBeUndefined()
   })
 
   test('no value-like placeholders in the forms: the examples live in the hints', () => {
     const files = [
       'components/Dashboard/Pages/Orders/OrderActions.tsx',
+      'components/Dashboard/Pages/Payments/ManualCardParts.tsx',
+      'components/Dashboard/Pages/Payments/ManualSettingsCard.tsx',
       'components/Dashboard/Pages/Payments/PagoMovilCard.tsx',
+      'components/Dashboard/Pages/Payments/ManualMethodCard.tsx',
     ]
     for (const file of files) expect({ file, placeholder: /\bplaceholder=/.test(read(file)) }).toEqual({ file, placeholder: false })
   })
 
+  test('copy rules: no em dashes, and the method names are the shared ones', () => {
+    const dashes = Object.entries({ ...es, ...Object.fromEntries(Object.entries(en).map(([k, v]) => [`en:${k}`, v])) })
+      .filter(([, value]) => typeof value === 'string' && value.includes('—'))
+      .map(([key]) => key)
+    expect(dashes).toEqual([])
+    // Card titles come from sc_commerce.methods (methodLabel), not from here.
+    for (const method of ['pago_movil', 'transferencia', 'zelle', 'binance']) {
+      expect(es[`sc_orders.${method}.title`]).toBeUndefined()
+    }
+  })
+
   test('the contract texts are kept word for word', () => {
-    expect(es['sc_orders.disabled_notice']).toBe('Pago Móvil está desactivado: quien compra no puede elegirlo.')
+    // Shown only when no manual method at all is on (manual methods contract).
+    expect(es['sc_orders.disabled_notice']).toBe(
+      'No tienes ningún pago manual activo: quien compra no puede pagar por Pago Móvil, transferencia, Zelle ni Binance.'
+    )
     expect(es['sc_orders.empty.pending']).toBe('No hay pedidos por confirmar.')
     expect(es['sc_orders.confirm_form.check_bank']).toBe('Antes de confirmar, revisa en tu banco que recibiste **Bs. {{amount}}**.')
+    expect(es['sc_orders.confirm_form.check_zelle']).toBe('Antes de confirmar, revisa en tu Zelle que recibiste **US$ {{amount}}**.')
+    expect(es['sc_orders.confirm_form.check_binance']).toBe('Antes de confirmar, revisa en Binance que recibiste **{{amount}} USDT**.')
+    expect(es['sc_orders.confirm_form.reference_label_zelle']).toBe('Número de confirmación de Zelle')
+    expect(es['sc_orders.confirm_form.reference_label_binance']).toBe('ID de la orden de Binance Pay o TxID')
     expect(es['sc_orders.confirm_form.success']).toBe('Pago confirmado. {{name}} ya tiene acceso.')
     expect(es['sc_orders.confirm_form.force']).toBe('Confirmar de todos modos')
     expect(es['sc_orders.late_warning.expired']).toBe('Este pedido está vencido. Confírmalo solo si el dinero llegó.')
@@ -526,17 +918,16 @@ describe('sc_orders strings', () => {
     expect(es['sc_orders.reject_form.notify_label']).toBe('Avisar por correo')
     expect(es['sc_orders.pago_movil.toggle_label']).toBe('Aceptar Pago Móvil')
     expect(es['sc_orders.pago_movil.saved']).toBe('Pago Móvil guardado.')
-    expect(es['sc_orders.pago_movil.help']).toBe(
-      'Quien compra verá estos datos, el monto en bolívares y un botón para enviarte el comprobante por WhatsApp. Tú confirmas cada pago en Pedidos.'
-    )
-    expect(es['sc_orders.pago_movil.fx_today_bcv']).toBe('Tasa de hoy: {{rate}} Bs. por US$ (BCV, {{date}})')
-    expect(es['sc_orders.pago_movil.fx_stale']).toBe('(última disponible)')
+    expect(es['sc_orders.manual_settings.title']).toBe('Ajustes de los pagos manuales')
+    expect(es['sc_orders.manual_card.missing_common']).toBe('{{fields}} (en Ajustes de los pagos manuales)')
+    expect(es['sc_orders.manual_settings.fx_today_bcv']).toBe('Tasa de hoy: {{rate}} Bs. por US$ (BCV, {{date}})')
+    expect(es['sc_orders.manual_settings.fx_stale']).toBe('(última disponible)')
     // Corrections round after the review.
-    expect(es['sc_orders.pago_movil.rate_ambiguous']).toBe(
+    expect(es['sc_orders.manual_settings.rate_ambiguous']).toBe(
       'Escribe la tasa con 2 decimales (por ejemplo 887,30) para que no se confunda con miles.'
     )
-    expect(es['sc_orders.pago_movil.rate_preview']).toBe('Se guardará como {{rate}} Bs. por US$')
-    expect(es['sc_orders.pago_movil.whatsapp_country']).toBe('Falta el código de país (58 para Venezuela)')
+    expect(es['sc_orders.manual_settings.rate_preview']).toBe('Se guardará como {{rate}} Bs. por US$')
+    expect(es['sc_orders.manual_settings.whatsapp_country']).toBe('Falta el código de país (58 para Venezuela)')
     expect(es['sc_orders.changed.paid']).toBe('Este pedido cambió: ahora está pagado.')
     expect(es['sc_orders.detail.already_confirmed']).toBe('Este pedido ya estaba confirmado con la referencia {{reference}}.')
     expect(es['sc_orders.fulfillment.warning']).toBe('El pago está confirmado pero falta dar acceso a algún producto.')

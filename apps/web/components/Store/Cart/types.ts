@@ -1,5 +1,7 @@
-// Sanar y Criar: shapes of the cart and order API (contract §B.5 and §B.7).
+// Sanar y Criar: shapes of the cart and order API (contract §B.5 and §B.7;
+// the manual methods: contrato-pagos-manuales.md §A.4 to §A.6).
 // Amounts arrive as JSON numbers; format them with lib/sc-cart.ts.
+import type { ManualMethod, PayCurrency } from '@components/Payments/commerce'
 
 export type QuoteItemStatus = 'available' | 'unavailable' | 'owned' | 'pending'
 
@@ -27,11 +29,25 @@ export interface QuoteItem {
   pending_purchase?: PendingPurchaseRef | null
 }
 
+/** One manual method of a quote: on, complete, and what this cart costs with it. */
+export interface QuoteMethod {
+  method: ManualMethod | string
+  currency: PayCurrency | string
+  /** null for a method in bolívares whose rate failed (error "FX_UNAVAILABLE"). */
+  amount: number | null
+  /** Bolívares per US$ (methods in VES only). */
+  rate: number | null
+  rate_date: string | null
+  rate_source: 'bcv' | 'manual' | string | null
+  error: 'FX_UNAVAILABLE' | string | null
+}
+
 export interface CartQuote {
   items: QuoteItem[]
   count: number
   total: number
   currency: string
+  /** Kept by the API as before the other methods; read `methods` instead. */
   pago_movil: {
     enabled: boolean
     rate?: number | null
@@ -40,6 +56,8 @@ export interface CartQuote {
     amount_ves?: number | null
     error?: string | null
   }
+  /** The manual methods on and complete, in display order (may be empty). */
+  methods?: QuoteMethod[]
   paypal: { enabled: boolean }
 }
 
@@ -61,13 +79,30 @@ export interface PurchaseItem {
   resources: PurchaseResource[]
 }
 
+/**
+ * How to pay a pending (or expired) order. The keys depend on its method
+ * ("" when empty):
+ * - pago_movil: bank_name, bank_code, phone, id_document, holder_name, instructions
+ * - transferencia: bank_name, bank_code, account_number, account_type, holder_name, id_document, instructions
+ * - zelle: email, phone, holder_name, instructions
+ * - binance: pay_id, usdt_address, usdt_network, instructions
+ */
 export interface PurchasePayment {
-  bank_name: string
-  bank_code: string
-  phone: string
-  id_document: string
+  bank_name?: string
+  bank_code?: string
+  /** Pago Móvil's phone, or Zelle's ("+1 305-555-1234"). */
+  phone?: string
+  id_document?: string
   holder_name?: string | null
   instructions?: string | null
+  /** 20 digits. */
+  account_number?: string
+  account_type?: 'corriente' | 'ahorro' | '' | string
+  email?: string
+  pay_id?: string
+  usdt_address?: string
+  /** "TRC20" | "BEP20" | "ERC20" | "SOL" | "POLYGON" | "ARBITRUM" (lib/sc-cart usdtNetworkLabel). */
+  usdt_network?: string
 }
 
 export interface Purchase {
@@ -75,12 +110,18 @@ export interface Purchase {
   code: string
   status: 'pending' | 'paid' | 'rejected' | 'cancelled' | 'expired' | 'voided' | string
   provider: string
-  method: string
+  /** The manual method (every order before the other methods is "pago_movil"). */
+  method: ManualMethod | string
   currency: string
+  /** The total in US$. */
   amount: number
-  amount_ves: number
-  fx_rate: number
-  fx_source: 'bcv' | 'manual' | string
+  /** What the buyer pays, in pay_currency (absent from an API older than the methods). */
+  pay_currency?: PayCurrency | string
+  pay_amount?: number | null
+  /** Bolívares, rate and its source: null for Zelle and Binance. */
+  amount_ves: number | null
+  fx_rate: number | null
+  fx_source: 'bcv' | 'manual' | string | null
   fx_date: string | null
   created_at: string
   expires_at: string

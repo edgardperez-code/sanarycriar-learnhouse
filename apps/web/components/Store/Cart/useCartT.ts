@@ -1,5 +1,5 @@
 'use client'
-// Sanar y Criar: translation helper for the cart and Pago Móvil order pages.
+// Sanar y Criar: translation helper for the cart and its order pages.
 //
 // Strings live in locales-sc/cart.<lng>.json under the "sc_cart" prefix and
 // get merged into locales/*.json by tools/i18n/apply.cjs. The bundled copy is

@@ -21,7 +21,8 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import { Label } from '@components/ui/label';
 import { Badge } from '@components/ui/badge';
-import { usePaymentsEnabled } from '@hooks/usePaymentsEnabled';
+// Sanar y Criar: also counts a complete bank transfer, Zelle or Binance.
+import { usePaymentsConfigured } from './usePaymentsConfigured';
 import UnconfiguredPaymentsDisclaimer from '@components/Pages/Payments/UnconfiguredPaymentsDisclaimer';
 import CreateOfferForm from './SubComponents/CreateOfferForm';
 import OfferResourcesPanel from './SubComponents/OfferResourcesPanel';
@@ -52,7 +53,7 @@ function PaymentsOffersPage() {
   const [resourcesPanelOffer, setResourcesPanelOffer] = useState<any>(null);
   // Sanar y Criar: kept after closing so the dialog can animate out.
   const [archiveTarget, setArchiveTarget] = useState<{ offer: any; key: number; open: boolean } | null>(null);
-  const { isEnabled, isLoading } = usePaymentsEnabled();
+  const { isEnabled, isLoading } = usePaymentsConfigured();
 
   const { data: offers, error } = useQuery({
     queryKey: queryKeys.payments.offers(org?.id),

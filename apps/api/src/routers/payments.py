@@ -32,6 +32,7 @@ from src.services.payments.purchases import (
     CartBody,
     CartCheckoutBody,
     ConfirmBody,
+    ManualMethodBody,
     ManualSettingsBody,
     RejectBody,
     VoidBody,
@@ -578,10 +579,11 @@ async def api_course_access(
     return await checkout_service.course_access(db_session, org_id, resource_uuid, user)
 
 
-# ------------------------------------------- Pago Móvil: settings and cart
-# Sanar y Criar: cart purchases paid by Pago Móvil and confirmed by an admin
-# (src/services/payments/purchases.py). Literal /purchases routes (mine,
-# summary) are declared before /purchases/{purchase_uuid}.
+# ------------------------------------------- manual payments: settings and cart
+# Sanar y Criar: cart purchases paid by hand (Pago Móvil, bank transfer,
+# Zelle, Binance) and confirmed by an admin (src/services/payments/purchases.py).
+# Literal /purchases routes (mine, summary) are declared before
+# /purchases/{purchase_uuid}.
 
 
 @router.get("/{org_id}/manual/settings", summary="Pago Móvil settings (admin)")
@@ -601,6 +603,26 @@ async def api_update_manual_settings(
     db_session: AsyncSession = Depends(get_db_session),
 ):
     return await purchases_service.update_manual_settings(db_session, org_id, body)
+
+
+@router.get("/{org_id}/manual/methods", summary="Bank transfer, Zelle and Binance settings (admin)")
+async def api_get_manual_methods(
+    org_id: int,
+    _admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.get_manual_methods(db_session, org_id)
+
+
+@router.put("/{org_id}/manual/methods/{method}", summary="Update one of bank transfer, Zelle or Binance (admin)")
+async def api_update_manual_method(
+    org_id: int,
+    method: str,
+    body: ManualMethodBody,
+    _admin=Depends(require_payments_admin),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    return await purchases_service.update_manual_method(db_session, org_id, method, body)
 
 
 @router.post("/{org_id}/cart/quote", summary="Price a cart (public)")
@@ -623,7 +645,7 @@ async def api_cart_quote(
     return await purchases_service.cart_quote(db_session, request, org_id, body.offer_uuids or [], user)
 
 
-@router.post("/{org_id}/cart/checkout", status_code=201, summary="Create a Pago Móvil purchase from a cart")
+@router.post("/{org_id}/cart/checkout", status_code=201, summary="Create a manual-payment purchase from a cart")
 async def api_cart_checkout(
     request: Request,
     org_id: int,

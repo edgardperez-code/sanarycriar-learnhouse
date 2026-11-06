@@ -6,9 +6,13 @@
 //   cart itself only stores offer_uuids (lib/sc-cart.ts). The quote is asked
 //   again on focus, every 5 minutes and after a failed confirmation, and
 //   "Confirmar pedido" only works on a fresh, successful one.
-// - Paying needs a session; "Confirmar pedido" creates the order and opens
-//   /store/purchases/<uuid> with the Pago Móvil details. Without Pago Móvil,
-//   each product can still be paid with PayPal from its own page.
+// - The buyer picks one of the manual methods the quote offers (Pago Móvil,
+//   transferencia, Zelle, Binance; contrato-pagos-manuales.md §A.4): the
+//   first one that can be paid, or the one she picked in this visit.
+// - Paying needs a session; "Confirmar pedido" creates the order with that
+//   method and opens /store/purchases/<uuid> with its details. Without any
+//   manual method, each product can still be paid with PayPal from its own
+//   page.
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -17,19 +21,27 @@ import toast from 'react-hot-toast'
 import { SiPaypal } from '@icons-pack/react-simple-icons'
 import {
   AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, BookMarked, BookOpen, CheckCircle2, Clock,
-  Loader2, LogIn, RefreshCw, ShoppingCart, Smartphone, Trash2, UserPlus,
+  Loader2, LogIn, RefreshCw, ShoppingCart, Trash2, UserPlus, Wallet,
 } from 'lucide-react'
 import GeneralWrapperStyled from '@components/Objects/StyledElements/Wrappers/GeneralWrapper'
 import { useLHSession } from '@components/Contexts/LHSessionContext'
 import { getUriWithOrg } from '@services/config/config'
 import { safeImageSrc } from '@services/security/url'
 import { checkoutCart, getCartQuote } from '@services/payments/cart'
-import { cssUrl, errorCode, errorField, normalizeProductType, stripCoursePrefix, withRedirect } from '@components/Payments/commerce'
-import { formatBs, formatIsoDate, formatRate, formatUsd } from '@/lib/sc-cart'
+import {
+  cssUrl, errorCode, errorField, methodLabel, normalizeProductType, stripCoursePrefix, withRedirect,
+  type ManualMethod,
+} from '@components/Payments/commerce'
+import { useScT, type ScTranslate } from '@components/Payments/useScT'
+import {
+  formatIsoDate, formatPayAmount, formatRate, formatUsd, isMethodUsable, pickMethod, readCartMethod, saveCartMethod,
+} from '@/lib/sc-cart'
 import { useCart } from './useCart'
 import { useCartT, type CartTranslate } from './useCartT'
 import { useMyPurchases } from './useMyPurchases'
 import { cartKeys } from './cartKeys'
+import { MethodIcon } from './MethodIcon'
+import { cartMethods, confirmHint, methodDescription, type CartMethod } from './payMethods'
 import { CartApiError, apiMessage, errorList, type CartQuote, type Purchase, type QuoteItem } from './types'
 
 interface CartPageProps {
@@ -43,6 +55,8 @@ interface CheckoutError {
   login?: boolean
   /** The cart it was about: it stops showing once the cart changes. */
   cartKey: string
+  /** About this method (unavailable, no rate): it goes away when she picks another one. */
+  method?: ManualMethod
 }
 
 const QUOTE_REFRESH_MS = 5 * 60_000
@@ -194,11 +208,86 @@ function CartRow({
 }
 
 // ---------------------------------------------------------------------------
+// One payment method (a radio card)
+// ---------------------------------------------------------------------------
+
+function MethodOption({
+  entry,
+  checked,
+  showAmount,
+  onSelect,
+  ct,
+  sc,
+}: {
+  entry: CartMethod
+  checked: boolean
+  /** False while nothing in the cart can be paid (the amount would be 0). */
+  showAmount: boolean
+  onSelect: (_method: ManualMethod) => void
+  ct: CartTranslate
+  sc: ScTranslate
+}) {
+  // Only a method in bolívares can fail (its rate): shown, but not selectable.
+  const usable = isMethodUsable(entry)
+  const withAmount = usable && showAmount
+  const id = `cart-method-${entry.method}`
+  const tone = !usable
+    ? 'cursor-not-allowed border-[#EAE8F2] bg-[#F4F2F8]'
+    : checked
+      ? 'cursor-pointer border-[#7D75E2] bg-[#FFFCF9]'
+      : 'cursor-pointer border-[#EAE8F2] bg-white hover:border-[#BBBBFF]'
+
+  return (
+    <label htmlFor={id} className={`flex items-start gap-3 rounded-2xl border-2 p-3.5 transition-colors ${tone}`}>
+      <span
+        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+          usable ? 'bg-[#EEEDFF] text-[#6559CA]' : 'bg-white text-[#6D6485]'
+        }`}
+      >
+        <MethodIcon method={entry.method} size={18} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span id={`${id}-name`} className={`block font-semibold leading-snug ${usable ? 'text-[#190933]' : 'text-[#584F72]'}`}>
+          {methodLabel(entry.method, sc)}
+        </span>
+        <span id={`${id}-description`} className="mt-0.5 block text-sm text-[#584F72] leading-relaxed">
+          {methodDescription(entry.method, ct)}
+        </span>
+        {withAmount && (
+          <span id={`${id}-amount`} className="mt-1 block font-bold text-[#190933] tabular-nums break-words">
+            {formatPayAmount(entry.amount, entry.currency)}
+          </span>
+        )}
+        {!usable && (
+          <span id={`${id}-reason`} className="mt-1 flex items-start gap-1.5 text-xs font-semibold text-amber-800">
+            <AlertTriangle size={13} className="mt-px shrink-0" aria-hidden="true" />
+            {ct('method.rate_unavailable')}
+          </span>
+        )}
+      </span>
+      <input
+        id={id}
+        type="radio"
+        name="cart-method"
+        value={entry.method}
+        checked={checked}
+        disabled={!usable}
+        onChange={() => onSelect(entry.method)}
+        aria-labelledby={withAmount ? `${id}-name ${id}-amount` : `${id}-name`}
+        aria-describedby={usable ? `${id}-description` : `${id}-description ${id}-reason`}
+        className="mt-1 h-5 w-5 shrink-0 cursor-pointer accent-[#6559CA] disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7D75E2]"
+      />
+    </label>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
 export default function CartPage({ orgslug, orgId }: CartPageProps) {
   const { ct } = useCartT()
+  const { sc } = useScT()
   const router = useRouter()
   const queryClient = useQueryClient()
   const session = useLHSession() as any
@@ -218,6 +307,10 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
   const [confirmErrorAt, setConfirmErrorAt] = useState(0)
   // OVERLAPPING_OFFERS marks, valid only for the cart they were about.
   const [overlap, setOverlap] = useState<{ cartKey: string; uuids: string[] } | null>(null)
+  // The method she picked (kept for this tab's visit). Read once on mount:
+  // the method cards only render after the quote loads in the browser, so
+  // the server render never depends on it.
+  const [chosenMethod, setChosenMethod] = useState<string | null>(() => readCartMethod(orgId))
 
   // Focus management: after removing a product, the next one (or the title).
   const titleRef = useRef<HTMLHeadingElement>(null)
@@ -300,23 +393,32 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
     : []
   const overlapUuids = new Set(overlap && overlap.cartKey === cartKey ? overlap.uuids.map((u) => u.toLowerCase()) : [])
 
-  const pm = quote?.pago_movil
-  const pmEnabled = !!pm?.enabled
-  const rate = pmEnabled && typeof pm?.rate === 'number' ? pm.rate : null
-  const amountVes = pmEnabled && typeof pm?.amount_ves === 'number' ? pm.amount_ves : null
-  const rateProblem = pmEnabled && (!!pm?.error || rate === null || amountVes === null)
-  const pagoMovilUsable = pmEnabled && !rateProblem
+  // The manual methods on, in display order; a method in bolívares whose
+  // rate failed stays listed but cannot be picked.
+  const methods = useMemo(() => cartMethods(quote), [quote])
+  const selectedMethod = pickMethod(methods, chosenMethod) as ManualMethod | null
+  const selected = methods.find((m) => m.method === selectedMethod) ?? null
+  const manualUsable = selected !== null
+  // Every method there is lacks its rate (only Pago Móvil / transferencia on).
+  const rateProblem = methods.length > 0 && !manualUsable
   const paypalEnabled = fresh && !!quote?.paypal?.enabled
-  // Pago Móvil works: PayPal is the alternative for a single product.
-  const paypalOfferUuid = paypalEnabled && pagoMovilUsable && availableUuids.length === 1 ? availableUuids[0] : null
-  // Pago Móvil off or without a rate: every product can go through PayPal.
-  const paypalForEach = paypalEnabled && !pagoMovilUsable && availableItems.length > 0
+  // A manual method works: PayPal is the alternative for a single product.
+  const paypalOfferUuid = paypalEnabled && manualUsable && availableUuids.length === 1 ? availableUuids[0] : null
+  // No manual method, or none can be paid now: every product can go through PayPal.
+  const paypalForEach = paypalEnabled && !manualUsable && availableItems.length > 0
 
   const quoteReady =
     fresh && !quoteQuery.isFetching && !quoteQuery.isError && quoteQuery.dataUpdatedAt > confirmErrorAt
   const canConfirm =
-    !!token && quoteReady && (quote?.count ?? 0) > 0 && availableUuids.length > 0 && pagoMovilUsable && !submitting
+    !!token && quoteReady && (quote?.count ?? 0) > 0 && availableUuids.length > 0 && manualUsable && !submitting
   const visibleError = checkoutError && checkoutError.cartKey === cartKey ? checkoutError : null
+
+  const chooseMethod = (method: ManualMethod) => {
+    setChosenMethod(method)
+    saveCartMethod(orgId, method)
+    // An error about the method she leaves goes away with it.
+    setCheckoutError((current) => (current?.method && current.method !== method ? null : current))
+  }
 
   const removeItem = (uuid: string) => {
     const index = uuids.indexOf(uuid)
@@ -331,7 +433,8 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
   }
 
   const confirmOrder = async () => {
-    if (submittingRef.current || !canConfirm || !token) return
+    const method = selectedMethod
+    if (submittingRef.current || !canConfirm || !token || !method) return
     submittingRef.current = true
     setSubmitting(true)
     setCheckoutError(null)
@@ -339,7 +442,7 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
     const sentKey = cartKey
     const quoteKey = cartKeys.quote(orgId, uuids, viewer)
     try {
-      const res = await checkoutCart(orgId, sent, token)
+      const res = await checkoutCart(orgId, sent, method, token)
       const purchase: Purchase | null = res.success && res.data?.purchase_uuid ? (res.data as Purchase) : null
       if (purchase) {
         setRedirecting(true)
@@ -365,7 +468,10 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
         })
       } else {
         if (code === 'OVERLAPPING_OFFERS') setOverlap({ cartKey: sentKey, uuids: errorList(res.data, 'offer_uuids') })
-        setCheckoutError({ message, cartKey: sentKey })
+        // METHOD_UNAVAILABLE names the method ("Zelle no está disponible…");
+        // the fresh quote below drops it from the list.
+        const aboutMethod = code === 'METHOD_UNAVAILABLE' || code === 'FX_UNAVAILABLE'
+        setCheckoutError({ message, cartKey: sentKey, method: aboutMethod ? method : undefined })
       }
       // Whatever failed, the button waits for a newer quote than the one on
       // screen: statuses, prices or the rate may have changed.
@@ -487,17 +593,22 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
                 </span>
               </div>
 
-              {pagoMovilUsable && (quote?.count ?? 0) > 0 && (
+              {selected && (quote?.count ?? 0) > 0 && (
                 <div className="mt-4 rounded-2xl bg-[#EEEDFF] p-4">
                   <p className="text-xs font-semibold text-[#4F43A4]">{ct('summary.to_pay')}</p>
                   <p className="mt-1 text-[1.75rem] sm:text-3xl font-black leading-tight text-[#190933] tabular-nums break-words">
-                    {formatBs(amountVes)}
+                    {formatPayAmount(selected.amount, selected.currency)}
                   </p>
-                  <p className="mt-1 text-xs text-[#584F72] leading-relaxed">
-                    {pm?.rate_source === 'manual'
-                      ? ct('summary.rate_manual', { rate: formatRate(rate) })
-                      : ct('summary.rate_bcv', { date: formatIsoDate(pm?.rate_date), rate: formatRate(rate) })}
-                  </p>
+                  {selected.currency === 'VES' && (
+                    <p className="mt-1 text-xs text-[#584F72] leading-relaxed">
+                      {selected.rate_source === 'manual'
+                        ? ct('summary.rate_manual', { rate: formatRate(selected.rate) })
+                        : ct('summary.rate_bcv', { date: formatIsoDate(selected.rate_date), rate: formatRate(selected.rate) })}
+                    </p>
+                  )}
+                  {selected.currency === 'USDT' && (
+                    <p className="mt-1 text-xs text-[#584F72] leading-relaxed">{ct('summary.rate_usdt')}</p>
+                  )}
                 </div>
               )}
               {rateProblem && (
@@ -521,16 +632,19 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
                 quoteFailed ? null : (
                   <div className="h-16 rounded-2xl bg-[#EEEDFF] animate-pulse" aria-hidden="true" />
                 )
-              ) : pmEnabled ? (
-                <div className="flex items-start gap-3 rounded-2xl border-2 border-[#7D75E2] bg-[#FFFCF9] p-4">
-                  <span className="w-9 h-9 rounded-xl bg-[#EEEDFF] flex items-center justify-center shrink-0">
-                    <Smartphone size={18} className="text-[#6559CA]" aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#190933]">{ct('method.pago_movil')}</p>
-                    <p className="text-sm text-[#584F72] leading-relaxed">{ct('method.pago_movil_description')}</p>
-                  </div>
-                  <CheckCircle2 size={20} className="text-[#6559CA] shrink-0" aria-hidden="true" />
+              ) : methods.length > 0 ? (
+                <div role="radiogroup" aria-labelledby="cart-method-title" className="space-y-2.5">
+                  {methods.map((entry) => (
+                    <MethodOption
+                      key={entry.method}
+                      entry={entry}
+                      checked={entry.method === selectedMethod}
+                      showAmount={(quote?.count ?? 0) > 0}
+                      onSelect={chooseMethod}
+                      ct={ct}
+                      sc={sc}
+                    />
+                  ))}
                 </div>
               ) : (
                 <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
@@ -580,9 +694,9 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
             )}
 
             {token ? (
-              // Without Pago Móvil there is nothing to confirm here (PayPal is
-              // paid on each product's page).
-              !fresh || pmEnabled ? (
+              // Without a manual method there is nothing to confirm here
+              // (PayPal is paid on each product's page).
+              !fresh || methods.length > 0 ? (
                 <div className="space-y-2.5">
                   <button
                     type="button"
@@ -593,12 +707,14 @@ export default function CartPage({ orgslug, orgId }: CartPageProps) {
                   >
                     {submitting ? (
                       <Loader2 size={17} className="animate-spin" aria-hidden="true" />
+                    ) : selectedMethod ? (
+                      <MethodIcon method={selectedMethod} size={17} />
                     ) : (
-                      <Smartphone size={17} aria-hidden="true" />
+                      <Wallet size={17} aria-hidden="true" />
                     )}
                     {submitting ? ct('confirm.sending') : ct('confirm.button')}
                   </button>
-                  <p className="text-xs text-center text-[#6D6485]">{ct('confirm.hint')}</p>
+                  <p className="text-xs text-center text-[#6D6485]">{confirmHint(selectedMethod, ct)}</p>
                   {visibleError && (
                     <div role="alert" className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-xl px-3 py-2 space-y-1">
                       <p>{visibleError.message}</p>

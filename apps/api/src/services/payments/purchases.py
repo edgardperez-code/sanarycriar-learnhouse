@@ -1,13 +1,14 @@
-"""Sanar y Criar: cart and Pago Móvil purchases confirmed by an admin.
+"""Sanar y Criar: cart purchases paid by hand and confirmed by an admin.
 
-A buyer quotes her cart (``cart_quote``), then creates a purchase
-(``cart_checkout``): one ``sc_pay_purchase`` with a public code
-(``SYC-7K4P9Q``), the total in US$ and in Bs. at the day's BCV rate, and one
-child order (``sc_pay_order``, provider ``manual``) plus enrollment per offer.
-She pays by Pago Móvil and sends the receipt by WhatsApp; an org admin then
-confirms (``confirm_purchase``), rejects or voids it from Pedidos. Unpaid
-purchases expire (``expire_due_purchases``, every reconciliation tick and
-before the purchase reads).
+A buyer quotes her cart (``cart_quote``), picks a manual method and creates a
+purchase (``cart_checkout``): one ``sc_pay_purchase`` with a public code
+(``SYC-7K4P9Q``), the total in US$ (and, for the methods paid in bolívares,
+in Bs. at the day's rate), and one child order (``sc_pay_order``, provider
+``manual``) plus enrollment per offer. She pays by Pago Móvil, bank
+transfer, Zelle or Binance (``manual_methods.py``) and sends the receipt by
+WhatsApp; an org admin then confirms (``confirm_purchase``), rejects or voids
+it from Pedidos. Unpaid purchases expire (``expire_due_purchases``, every
+reconciliation tick and before the purchase reads).
 
 Money safety: a child order only becomes ``paid`` through
 ``confirm_purchase`` (the manual provider never reports paid, has no
@@ -71,16 +72,14 @@ from src.services.payments.fulfillment import (
     fulfill_order,
     revoke_order,
 )
+from src.services.payments import manual_methods as mm
 from src.services.payments.fx import FxQuote, FxUnavailable, current_rate, recent_bcv_rate, to_ves
 from src.services.payments.providers.base import PaymentResult
 from src.services.payments.providers.manual import (
-    METHOD_ID,
     PROVIDER_ID,
-    REQUIRED_FIELDS,
     InvalidSetting,
     apply_settings,
     missing_fields,
-    payment_details_of,
     serialize_settings,
     settings_of,
 )
@@ -106,7 +105,8 @@ WHATSAPP_ORG_NAME = "Sanar y Criar"
 MANUAL_RATE_BCV_MAX_AGE = timedelta(days=7)
 MANUAL_RATE_MAX_DEVIATION = Decimal("0.5")
 
-_REFERENCE = re.compile(r"^[A-Z0-9]{4,30}$")
+_REFERENCE = re.compile(r"^[A-Z0-9]+$")
+REFERENCE_MIN_LENGTH = 4
 _REFERENCE_NOISE = re.compile(r"[\s.\-]")
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
@@ -130,6 +130,7 @@ ERRORS: dict[str, tuple[int, str]] = {
     # The message names both offers: «A» y «B» incluyen el mismo curso...
     "OVERLAPPING_OFFERS": (400, "Dos productos del carrito incluyen el mismo curso. Quita uno de los dos del carrito."),
     "CONFLICT": (409, "Otro cambio se guardó al mismo tiempo. Vuelve a intentarlo."),
+    "UNKNOWN_METHOD": (404, "Ese método de pago no existe."),
     # Not in the shared table: unexpected states, shown as they come.
     "NOT_FOUND": (404, "No encontramos este pedido."),
     "FULFILLMENT_INCOMPLETE": (
@@ -180,6 +181,26 @@ class ManualSettingsBody(BaseModel):
     notify_email: Any = None
 
 
+class ManualMethodBody(BaseModel):
+    """Transferencia, Zelle or Binance settings (``manual_methods.FIELDS``).
+    Every field optional: omitted = unchanged, ``""`` clears it; the fields of
+    the other methods are ignored. Typed loosely, like ManualSettingsBody."""
+
+    enabled: Any = None
+    bank_name: Any = None
+    bank_code: Any = None
+    account_number: Any = None
+    account_type: Any = None
+    holder_name: Any = None
+    id_document: Any = None
+    email: Any = None
+    phone: Any = None
+    pay_id: Any = None
+    usdt_address: Any = None
+    usdt_network: Any = None
+    instructions: Any = None
+
+
 class ConfirmBody(BaseModel):
     bank_reference: Any = None
     note: Any = None
@@ -198,9 +219,10 @@ class VoidBody(BaseModel):
 # ----------------------------------------------------------------- helpers
 
 
-def normalize_reference(value: Any) -> Optional[str]:
-    """Bank reference without spaces, dashes or dots, upper case; None when
-    it is not 4-30 letters or digits."""
+def normalize_reference(value: Any, max_length: int = mm.REFERENCE_MAX_LENGTH) -> Optional[str]:
+    """Bank reference (or Zelle confirmation, Binance order id / TxID) without
+    spaces, dashes or dots, upper case; None when it is not 4 to
+    ``max_length`` (30, 100 for Binance) letters or digits."""
     if isinstance(value, bool) or value is None:
         return None
     if isinstance(value, int):
@@ -208,7 +230,17 @@ def normalize_reference(value: Any) -> Optional[str]:
     if not isinstance(value, str):
         return None
     text = _REFERENCE_NOISE.sub("", value).upper()
-    return text if _REFERENCE.fullmatch(text) else None
+    ok = REFERENCE_MIN_LENGTH <= len(text) <= max_length and _REFERENCE.fullmatch(text)
+    return text if ok else None
+
+
+def reference_error(method: Optional[str]) -> HTTPException:
+    max_length = mm.reference_max_length(method)
+    if max_length == mm.REFERENCE_MAX_LENGTH:
+        return purchase_error("INVALID_REFERENCE")
+    return purchase_error(
+        "INVALID_REFERENCE", message=f"La referencia debe tener entre 4 y {max_length} letras o números."
+    )
 
 
 def _clean_reason(value: Any) -> str:
@@ -276,10 +308,21 @@ def greeting_name(user) -> str:
     return email_first_name(user.first_name if user is not None else None)
 
 
-def whatsapp_message(code: str, amount_ves, amount, names: list[str], buyer: str) -> str:
+# How the receipt message names each method: "Hola, hice ... para mi pedido".
+_WHATSAPP_PAID_WITH = {
+    mm.PAGO_MOVIL: "un Pago Móvil",
+    mm.TRANSFERENCIA: "una transferencia bancaria",
+    mm.ZELLE: "un pago por Zelle",
+    mm.BINANCE: "un pago por Binance",
+}
+
+
+def whatsapp_message(code: str, amount_ves, amount, names: list[str], buyer: str,
+                     method: str = mm.PAGO_MOVIL) -> str:
+    paid_with = _WHATSAPP_PAID_WITH.get(method, _WHATSAPP_PAID_WITH[mm.PAGO_MOVIL])
     return (
-        f"Hola, hice un Pago Móvil para mi pedido {code} en {WHATSAPP_ORG_NAME}.\n"
-        f"Monto: Bs. {purchase_emails.format_bs(amount_ves)} (US$ {purchase_emails.format_bs(amount)})\n"
+        f"Hola, hice {paid_with} para mi pedido {code} en {WHATSAPP_ORG_NAME}.\n"
+        f"Monto: {purchase_emails.amount_text(method, amount, amount_ves)}\n"
         f"Productos: {', '.join(names)}\n"
         f"Nombre: {buyer}\n"
         "Te envío el comprobante."
@@ -290,22 +333,31 @@ def whatsapp_url(number: str, message: str) -> str:
     return f"https://wa.me/{number}?text={quote(message)}"
 
 
-async def manual_config(db_session: AsyncSession, org_id: int) -> Optional[PaymentsConfig]:
-    return (await db_session.execute(
-        select(PaymentsConfig).where(PaymentsConfig.org_id == org_id, PaymentsConfig.provider == PROVIDER_ID)
-    )).scalars().first()
+async def manual_config(db_session: AsyncSession, org_id: int, *,
+                        for_update: bool = False) -> Optional[PaymentsConfig]:
+    """The org's manual config row. ``for_update`` locks it: the settings
+    cards save different parts of one JSON value, and two saves at the same
+    time must not undo each other."""
+    stmt = select(PaymentsConfig).where(PaymentsConfig.org_id == org_id, PaymentsConfig.provider == PROVIDER_ID)
+    if for_update:
+        stmt = stmt.with_for_update().execution_options(populate_existing=True)
+    return (await db_session.execute(stmt)).scalars().first()
 
 
 def manual_ready(cfg: Optional[PaymentsConfig]) -> bool:
-    return cfg is not None and bool(cfg.active) and bool(cfg.enabled)
+    """Pago Móvil on and complete (the row's own columns)."""
+    return mm.method_ready(cfg, mm.PAGO_MOVIL)
 
 
-def buyer_payment_details(current: dict, snapshot: Optional[dict]) -> dict:
-    """The admin's current Pago Móvil details (she may have changed account);
-    the ones shown at checkout when the current ones are incomplete."""
-    if all(current.get(field) for field in REQUIRED_FIELDS):
-        return payment_details_of(current)
-    return dict(snapshot or {})
+def method_of(purchase: PaymentsPurchase) -> str:
+    """The purchase's method (every purchase before Zelle & co. is Pago Móvil)."""
+    return purchase.method if purchase.method in mm.METHODS else mm.PAGO_MOVIL
+
+
+def pay_amount(purchase: PaymentsPurchase):
+    """What the buyer pays, in ``mm.CURRENCY[method]``: the bolívares of a
+    purchase paid in Bs., the dollar total otherwise (1 USDT = 1 US$)."""
+    return purchase.amount_ves if mm.CURRENCY[method_of(purchase)] == "VES" else purchase.amount
 
 
 async def _locked_purchase(db_session: AsyncSession, purchase_id: int) -> Optional[PaymentsPurchase]:
@@ -561,9 +613,21 @@ async def get_manual_settings(db_session: AsyncSession, org_id: int) -> dict:
     return await _settings_response(db_session, await manual_config(db_session, org_id))
 
 
+def _check_other_methods(cfg: Optional[PaymentsConfig], common: dict) -> None:
+    """A shared setting (the WhatsApp, the manual rate) cannot go away while
+    another method that needs it is on (``INCOMPLETE`` with ``method``)."""
+    for method in mm.EXTRA_METHODS:
+        if not mm.method_enabled(cfg, method):
+            continue
+        lacking = mm.common_missing(common, method)
+        if lacking:
+            raise purchase_error("INCOMPLETE", message=mm.needed_message(method, lacking), missing=lacking,
+                                 method=method)
+
+
 async def update_manual_settings(db_session: AsyncSession, org_id: int, body: ManualSettingsBody) -> dict:
     changes = body.model_dump(exclude_unset=True)
-    cfg = await manual_config(db_session, org_id)
+    cfg = await manual_config(db_session, org_id, for_update=True)
     current = settings_of(cfg)
     try:
         settings = apply_settings(current, changes)
@@ -578,7 +642,14 @@ async def update_manual_settings(db_session: AsyncSession, org_id: int, body: Ma
         enabled = changes["enabled"]
     missing = missing_fields(settings)
     if enabled and missing:
+        # Pago Móvil already on and a shared setting cleared (from the common
+        # card): say what to do, like the other methods.
+        already_on = cfg is not None and bool(cfg.enabled) and changes.get("enabled") is not True
+        if already_on and all(field in ("whatsapp", "fx_manual_rate") for field in missing):
+            raise purchase_error("INCOMPLETE", message=mm.needed_message(mm.PAGO_MOVIL, missing), missing=missing,
+                                 method=mm.PAGO_MOVIL)
         raise purchase_error("INCOMPLETE", missing=missing)
+    _check_other_methods(cfg, settings)
 
     if cfg is None:
         cfg = PaymentsConfig(org_id=org_id, provider=PROVIDER_ID, enabled=enabled, active=False, provider_config={})
@@ -600,6 +671,69 @@ async def update_manual_settings(db_session: AsyncSession, org_id: int, body: Ma
     if was != (bool(cfg.enabled), bool(cfg.active)):
         logger.info("Pago Móvil of org %s: enabled=%s active=%s", org_id, cfg.enabled, cfg.active)
     return await _settings_response(db_session, cfg)
+
+
+def _method_state(cfg: Optional[PaymentsConfig], method: str) -> dict:
+    missing = mm.method_missing(cfg, method)
+    return {
+        "method": method,
+        "enabled": mm.method_enabled(cfg, method),
+        "active": not missing,
+        "missing": missing,
+        "settings": mm.method_settings(cfg, method),
+    }
+
+
+async def get_manual_methods(db_session: AsyncSession, org_id: int) -> dict:
+    """Transferencia, Zelle and Binance: switch, completeness and details."""
+    cfg = await manual_config(db_session, org_id)
+    return {method: _method_state(cfg, method) for method in mm.EXTRA_METHODS}
+
+
+async def update_manual_method(db_session: AsyncSession, org_id: int, method: str,
+                               body: ManualMethodBody) -> dict:
+    """Save one of Transferencia, Zelle or Binance (its details and switch).
+    The row's own columns stay Pago Móvil's; a row is created when the org
+    has none yet (Pago Móvil off)."""
+    method = (method or "").strip().lower()
+    if method not in mm.EXTRA_METHODS:
+        raise purchase_error("UNKNOWN_METHOD")
+    changes = body.model_dump(exclude_unset=True)
+    cfg = await manual_config(db_session, org_id, for_update=True)
+    current = mm.method_settings(cfg, method)
+    try:
+        settings = mm.apply_method_settings(
+            method, current, {field: value for field, value in changes.items() if field in mm.FIELDS[method]}
+        )
+    except InvalidSetting as exc:
+        raise invalid_field(exc.field, exc.message)
+    enabled = mm.method_enabled(cfg, method)
+    if changes.get("enabled") is not None:
+        if not isinstance(changes["enabled"], bool):
+            raise invalid_field("enabled", mm.enabled_message(method))
+        enabled = changes["enabled"]
+    missing = mm.missing_of(method, settings, settings_of(cfg))
+    if enabled and missing:
+        raise purchase_error("INCOMPLETE", message=mm.missing_message(method, missing), missing=missing)
+
+    if cfg is None:
+        cfg = PaymentsConfig(org_id=org_id, provider=PROVIDER_ID, enabled=False, active=False, provider_config={})
+    was = mm.method_ready(cfg, method)
+    stored = dict(cfg.provider_config or {})
+    stored[method] = {**settings, "enabled": enabled}
+    stored["environment"] = "live"
+    cfg.provider_config = stored
+    cfg.update_date = utcnow()
+    db_session.add(cfg)
+    try:
+        await db_session.commit()
+    except IntegrityError:
+        await db_session.rollback()
+        raise purchase_error("CONFLICT")
+    await db_session.refresh(cfg)
+    if was != mm.method_ready(cfg, method):
+        logger.info("%s of org %s: ready=%s", mm.LABELS[method], org_id, not was)
+    return _method_state(cfg, method)
 
 
 # ------------------------------------------------------------------- quote
@@ -628,24 +762,40 @@ def _quote_item(uuid: str, offer: Optional[PaymentsOffer], courses: list[Course]
     }
 
 
-async def _pago_movil_quote(db_session: AsyncSession, cfg: Optional[PaymentsConfig], total: Decimal) -> dict:
-    if not manual_ready(cfg):
-        return {"enabled": False}
+async def _quote_rate(db_session: AsyncSession, cfg: Optional[PaymentsConfig]) -> Optional[FxQuote]:
     try:
-        fx = await current_rate(db_session, cfg)
+        return await current_rate(db_session, cfg)
     except Exception as exc:
         if not isinstance(exc, FxUnavailable):
             logger.warning("FX lookup failed", exc_info=True)
-        return {"enabled": True, "rate": None, "rate_date": None, "rate_source": None, "amount_ves": None,
-                "error": "FX_UNAVAILABLE"}
-    return {
-        "enabled": True,
-        "rate": float(fx.rate),
-        "rate_date": fx.rate_date.isoformat() if fx.rate_date else None,
-        "rate_source": fx.source,
-        "amount_ves": money(to_ves(total, fx.rate)),
-        "error": None,
+        return None
+
+
+async def _methods_quote(db_session: AsyncSession, cfg: Optional[PaymentsConfig],
+                         total: Decimal) -> tuple[dict, list[dict]]:
+    """``pago_movil`` (as before the other methods) and ``methods`` (every
+    method on and complete, in display order) of a quote. The rate is read
+    once, and only when a method paid in bolívares is on."""
+    ready = mm.ready_methods(cfg)
+    fx = await _quote_rate(db_session, cfg) if any(m in mm.VES_METHODS for m in ready) else None
+    rate = {
+        "rate": float(fx.rate) if fx else None,
+        "rate_date": fx.rate_date.isoformat() if fx and fx.rate_date else None,
+        "rate_source": fx.source if fx else None,
     }
+    amount_ves = money(to_ves(total, fx.rate)) if fx else None
+    methods = []
+    for method in ready:
+        if method in mm.VES_METHODS:
+            entry = {"amount": amount_ves, **rate, "error": None if fx else "FX_UNAVAILABLE"}
+        else:
+            entry = {"amount": money(total), "rate": None, "rate_date": None, "rate_source": None, "error": None}
+        methods.append({"method": method, "currency": mm.CURRENCY[method], **entry})
+    if mm.PAGO_MOVIL not in ready:
+        pago_movil: dict = {"enabled": False}
+    else:
+        pago_movil = {"enabled": True, **rate, "amount_ves": amount_ves, "error": None if fx else "FX_UNAVAILABLE"}
+    return pago_movil, methods
 
 
 async def cart_quote(db_session: AsyncSession, request: Optional[Request], org_id: int,
@@ -698,12 +848,14 @@ async def cart_quote(db_session: AsyncSession, request: Optional[Request], org_i
         items.append(item)
 
     paypal_cfg = await get_active_config(db_session, org_id, "paypal")
+    pago_movil, methods = await _methods_quote(db_session, await manual_config(db_session, org_id), total)
     return {
         "items": items,
         "count": count,
         "total": money(total),
         "currency": "USD",
-        "pago_movil": await _pago_movil_quote(db_session, await manual_config(db_session, org_id), total),
+        "pago_movil": pago_movil,
+        "methods": methods,
         "paypal": {"enabled": paypal_cfg is not None and (not is_test_mode(paypal_cfg) or is_admin)},
     }
 
@@ -723,11 +875,12 @@ async def cart_checkout(db_session: AsyncSession, request: Optional[Request], or
                         body: CartCheckoutBody, user) -> dict:
     _require_user(user)
     await get_org_or_404(db_session, org_id)
-    if (body.provider or "").strip().lower() != PROVIDER_ID or (body.method or "").strip().lower() != METHOD_ID:
+    method = (body.method or "").strip().lower()
+    if (body.provider or "").strip().lower() != PROVIDER_ID or method not in mm.METHODS:
         raise purchase_error("METHOD_UNAVAILABLE")
     cfg = await manual_config(db_session, org_id)
-    if not manual_ready(cfg):
-        raise purchase_error("METHOD_UNAVAILABLE")
+    if not mm.method_ready(cfg, method):
+        raise purchase_error("METHOD_UNAVAILABLE", message=mm.unavailable_message(method))
     uuids = dedupe(body.offer_uuids)
     if not uuids:
         raise purchase_error("EMPTY_CART")
@@ -749,6 +902,7 @@ async def cart_checkout(db_session: AsyncSession, request: Optional[Request], or
     # rollback (retrying a code collision) could have expired.
     lines = [_Line(offers[u].id, u, offers[u].name, Decimal(str(offers[u].amount))) for u in uuids]
     settings = settings_of(cfg)
+    details = mm.payment_details(cfg, method)
     is_admin = await _is_org_admin(db_session, user, org_id)
 
     async with _capture_lock(f"cart:{user.id}"):
@@ -773,15 +927,18 @@ async def cart_checkout(db_session: AsyncSession, request: Optional[Request], or
         if int(pending_count or 0) >= MAX_PENDING_PURCHASES:
             raise purchase_error("TOO_MANY_PENDING")
 
-        try:
-            fx = await current_rate(db_session, cfg)
-        except FxUnavailable:
-            raise purchase_error("FX_UNAVAILABLE")
+        # Only the methods paid in bolívares need the rate.
+        fx: Optional[FxQuote] = None
+        if method in mm.VES_METHODS:
+            try:
+                fx = await current_rate(db_session, cfg)
+            except FxUnavailable:
+                raise purchase_error("FX_UNAVAILABLE")
 
-        purchase_id = await _create_purchase(db_session, org_id, user.id, lines, settings, fx)
+        purchase_id = await _create_purchase(db_session, org_id, user.id, lines, settings, method, details, fx)
 
     purchase = await db_session.get(PaymentsPurchase, purchase_id)
-    logger.info("Purchase %s created by user %s (%s items, US$ %s)", purchase.code, user.id,
+    logger.info("Purchase %s created by user %s (%s, %s items, US$ %s)", purchase.code, user.id, method,
                 len(lines), purchase.amount)
     # The purchase exists from here on: nothing below may turn this into an
     # error (the emails roll back their own failures).
@@ -790,11 +947,11 @@ async def cart_checkout(db_session: AsyncSession, request: Optional[Request], or
 
 
 async def _create_purchase(db_session: AsyncSession, org_id: int, user_id: int, lines: list[_Line],
-                           settings: dict, fx: FxQuote) -> int:
+                           settings: dict, method: str, details: dict, fx: Optional[FxQuote]) -> int:
     """Purchase, enrollments, child orders and items in one transaction."""
     for attempt in range(CREATE_ATTEMPTS):
         try:
-            return await _insert_purchase(db_session, org_id, user_id, lines, settings, fx)
+            return await _insert_purchase(db_session, org_id, user_id, lines, settings, method, details, fx)
         except IntegrityError:
             await db_session.rollback()
             # uq_sc_pay_order_manual_pending: a concurrent purchase (another
@@ -819,14 +976,14 @@ async def _new_unique_code(db_session: AsyncSession) -> str:
 
 
 async def _insert_purchase(db_session: AsyncSession, org_id: int, user_id: int, lines: list[_Line],
-                           settings: dict, fx: FxQuote) -> int:
+                           settings: dict, method: str, details: dict, fx: Optional[FxQuote]) -> int:
     now = utcnow()
     code = await _new_unique_code(db_session)
     purchase_uuid = uuid4().hex
     amount = sum((line.amount for line in lines), Decimal("0")).quantize(Decimal("0.01"))
     hours = int(settings.get("payment_window_hours") or 24)
     raw: dict = {"emails": {}}
-    if fx.stale:
+    if fx is not None and fx.stale:
         raw["fx_stale"] = True
     purchase = PaymentsPurchase(
         purchase_uuid=purchase_uuid,
@@ -834,16 +991,17 @@ async def _insert_purchase(db_session: AsyncSession, org_id: int, user_id: int, 
         org_id=org_id,
         user_id=user_id,
         provider=PROVIDER_ID,
-        method=METHOD_ID,
+        method=method,
         status="pending",
         currency="USD",
         amount=amount,  # from the database, never from the client
-        fx_rate=fx.rate,
-        fx_source=fx.source,
-        fx_date=fx.rate_date,
-        amount_ves=to_ves(amount, fx.rate),
+        # Zelle and Binance: no rate, no bolívares.
+        fx_rate=fx.rate if fx else None,
+        fx_source=fx.source if fx else None,
+        fx_date=fx.rate_date if fx else None,
+        amount_ves=to_ves(amount, fx.rate) if fx else None,
         expires_at=now + timedelta(hours=hours),
-        payment_details=payment_details_of(settings),
+        payment_details=details,
         raw=raw,
     )
     db_session.add(purchase)
@@ -875,11 +1033,11 @@ async def _insert_purchase(db_session: AsyncSession, org_id: int, user_id: int, 
             user_id=user_id,
             enrollment_id=enrollment.id,
             provider=PROVIDER_ID,
-            method=METHOD_ID,
+            method=method,
             status="pending",
             amount=line.amount,
             currency="USD",
-            fx_rate=fx.rate,
+            fx_rate=fx.rate if fx else None,
             redirect_uri="",
             raw={"environment": "live", "purchase_code": code, "purchase_uuid": purchase_uuid},
         )
@@ -967,50 +1125,55 @@ async def serialize_purchases(db_session: AsyncSession, request: Optional[Reques
         select(User).where(User.id.in_(list(user_ids)))  # type: ignore[attr-defined]
     )).scalars().all()}
 
-    current = settings_of(await manual_config(db_session, org_id))
+    cfg = await manual_config(db_session, org_id)
 
-    reused: dict[str, list[tuple[int, str]]] = {}
+    # (reference, channel) -> the paid purchases that used it: a reference
+    # is reused only within one statement (bolívares, Zelle, Binance).
+    reused: dict[tuple[str, tuple[str, ...]], list[tuple[int, str]]] = {}
     if admin:
         references = {p.bank_reference for p in purchases if p.bank_reference}
         if references:
-            for pid, code, reference in (await db_session.execute(
-                select(PaymentsPurchase.id, PaymentsPurchase.code, PaymentsPurchase.bank_reference)
+            for pid, code, reference, paid_method in (await db_session.execute(
+                select(PaymentsPurchase.id, PaymentsPurchase.code, PaymentsPurchase.bank_reference,
+                       PaymentsPurchase.method)
                 .where(
                     PaymentsPurchase.org_id == org_id,
                     PaymentsPurchase.status == "paid",
                     PaymentsPurchase.bank_reference.in_(list(references)),  # type: ignore[union-attr]
                 ).order_by(PaymentsPurchase.creation_date, PaymentsPurchase.id)
             )).all():
-                reused.setdefault(reference, []).append((pid, code))
+                reused.setdefault((reference, mm.reference_channel(paid_method)), []).append((pid, code))
 
     result = []
     for purchase in purchases:
         items = items_of.get(purchase.id, [])
         buyer = users.get(purchase.user_id)
+        method = method_of(purchase)
         payment = number = url = None
         if purchase.status in ("pending", "expired"):
-            details = buyer_payment_details(current, purchase.payment_details)
-            payment = {k: details.get(k) or "" for k in (
-                "bank_name", "bank_code", "phone", "id_document", "holder_name", "instructions"
-            )}
+            details = mm.buyer_payment_details(cfg, method, purchase.payment_details)
+            payment = {k: details.get(k) or "" for k in mm.PAYMENT_KEYS[method]}
             number = details.get("whatsapp") or None
             if number:
                 url = whatsapp_url(number, whatsapp_message(
                     purchase.code, purchase.amount_ves, purchase.amount,
-                    [i["name"] for i in items], display_name(buyer),
+                    [i["name"] for i in items], display_name(buyer), method=method,
                 ))
         elif purchase.status in ("rejected", "voided"):
             # Only the number, so the buyer can ask what happened.
-            number = buyer_payment_details(current, purchase.payment_details).get("whatsapp") or None
+            number = mm.buyer_payment_details(cfg, method, purchase.payment_details).get("whatsapp") or None
         fx_date = purchase.fx_date
         body = {
             "purchase_uuid": purchase.purchase_uuid,
             "code": purchase.code,
             "status": purchase.status,
             "provider": purchase.provider,
-            "method": purchase.method,
+            "method": method,
             "currency": purchase.currency,
             "amount": money(purchase.amount),
+            # What the buyer pays: Bs., US$ (Zelle) or USDT (Binance).
+            "pay_currency": mm.CURRENCY[method],
+            "pay_amount": money(pay_amount(purchase)),
             "amount_ves": money(purchase.amount_ves),
             "fx_rate": float(purchase.fx_rate) if purchase.fx_rate is not None else None,
             "fx_source": purchase.fx_source,
@@ -1050,7 +1213,8 @@ async def serialize_purchases(db_session: AsyncSession, request: Optional[Reques
                     "name": display_name(confirmer),
                 } if confirmer is not None else None,
                 "reference_reused_in": [
-                    code for pid, code in reused.get(purchase.bank_reference or "", []) if pid != purchase.id
+                    code for pid, code in reused.get((purchase.bank_reference or "", mm.reference_channel(method)), [])
+                    if pid != purchase.id
                 ],
             })
         result.append(body)
@@ -1240,12 +1404,15 @@ async def cancel_purchase(db_session: AsyncSession, request: Optional[Request], 
 
 
 async def _paid_codes_with_reference(db_session: AsyncSession, org_id: int, reference: str,
-                                     exclude_id: int) -> list[str]:
+                                     exclude_id: int, method: str) -> list[str]:
+    """Paid purchases of the same statement (``mm.reference_channel``) that
+    already used ``reference``."""
     return list((await db_session.execute(
         select(PaymentsPurchase.code).where(
             PaymentsPurchase.org_id == org_id,
             PaymentsPurchase.status == "paid",
             PaymentsPurchase.bank_reference == reference,
+            PaymentsPurchase.method.in_(mm.reference_channel(method)),  # type: ignore[attr-defined]
             PaymentsPurchase.id != exclude_id,
         ).order_by(PaymentsPurchase.creation_date, PaymentsPurchase.id)
     )).scalars().all())
@@ -1259,11 +1426,13 @@ async def confirm_purchase(db_session: AsyncSession, request: Optional[Request],
     arrive late). Confirming a paid purchase again re-runs the fulfillment of
     its orders (healing a crash half way) and sends no new email.
     """
-    reference = normalize_reference(body.bank_reference)
-    if reference is None:
-        raise purchase_error("INVALID_REFERENCE")
-    note = _clean_note(body.note)
     purchase = await _purchase_or_404(db_session, org_id, purchase_uuid)
+    method = method_of(purchase)
+    # A Binance TxID is longer than a bank reference.
+    reference = normalize_reference(body.bank_reference, mm.reference_max_length(method))
+    if reference is None:
+        raise reference_error(method)
+    note = _clean_note(body.note)
     purchase_id = purchase.id
 
     async with _capture_lock(f"purchase:{purchase_id}"):
@@ -1276,7 +1445,7 @@ async def confirm_purchase(db_session: AsyncSession, request: Optional[Request],
                 await db_session.commit()
                 raise purchase_error("VOIDED")
             if status != "paid":
-                reused = await _paid_codes_with_reference(db_session, org_id, reference, purchase_id)
+                reused = await _paid_codes_with_reference(db_session, org_id, reference, purchase_id, method)
                 if reused and not body.allow_reused_reference:
                     await db_session.commit()
                     raise purchase_error("REFERENCE_USED", purchases=reused)
@@ -1469,6 +1638,7 @@ class _EmailContext:
     items: list[PaymentsPurchaseItem]
     platform: str
     settings: dict
+    cfg: Optional[PaymentsConfig]
 
 
 async def _email_context(db_session: AsyncSession, request: Optional[Request],
@@ -1483,13 +1653,15 @@ async def _email_context(db_session: AsyncSession, request: Optional[Request],
         select(PaymentsPurchaseItem).where(PaymentsPurchaseItem.purchase_id == purchase.id)
         .order_by(PaymentsPurchaseItem.id)
     )).scalars().all())
+    cfg = await manual_config(db_session, purchase.org_id)
     return _EmailContext(
         purchase=purchase,
         buyer=await db_session.get(User, purchase.user_id),
         branding=resolve_org_email_branding(org, org_config, request),
         items=items,
         platform=platform_base_url(request),
-        settings=settings_of(await manual_config(db_session, purchase.org_id)),
+        settings=settings_of(cfg),
+        cfg=cfg,
     )
 
 
@@ -1504,16 +1676,18 @@ async def _send_created_emails(db_session: AsyncSession, request: Optional[Reque
     code = purchase.code
     try:
         ctx = await _email_context(db_session, request, purchase)
-        details = buyer_payment_details(ctx.settings, purchase.payment_details)
+        method = method_of(purchase)
+        details = mm.buyer_payment_details(ctx.cfg, method, purchase.payment_details)
         buyer_name = display_name(ctx.buyer)
         number = details.get("whatsapp") or ""
         url = whatsapp_url(number, whatsapp_message(
             purchase.code, purchase.amount_ves, purchase.amount, [i.name for i in ctx.items], buyer_name,
+            method=method,
         )) if number else None
         common = dict(
             items=_item_lines(ctx.items), amount=purchase.amount, amount_ves=purchase.amount_ves,
             rate=purchase.fx_rate, rate_source=purchase.fx_source, rate_date=purchase.fx_date,
-            expires_at=purchase.expires_at,
+            expires_at=purchase.expires_at, method=method,
         )
         sent = {}
         if ctx.buyer is not None and ctx.buyer.email:

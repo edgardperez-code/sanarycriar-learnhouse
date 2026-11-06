@@ -1,5 +1,5 @@
 'use client'
-// Sanar y Criar: status chip of a Pago Móvil order (Por confirmar, Pagado, …).
+// Sanar y Criar: status chip of a cart order (Por confirmar, Pagado, …).
 import React from 'react'
 import { CheckCircle2, Clock, Ban, XCircle, CalendarX } from 'lucide-react'
 import { purchaseStatus, type PurchaseStatus } from '@/lib/sc-cart'

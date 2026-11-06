@@ -1,8 +1,9 @@
 'use client'
 // Sanar y Criar: amber "payment under review" card of a course/ebook page
 // (CoursesActions and CourseActionsMobile). When the open payment belongs to
-// a Pago Móvil order, it names the order and links to it (contract §D.3);
-// otherwise it is the generic card.
+// a cart order (any manual method: Pago Móvil, transferencia, Zelle,
+// Binance), it names the order and links to it (contract §D.3); otherwise it
+// is the generic card.
 import React from 'react'
 import Link from 'next/link'
 import { ArrowRight, ClockIcon } from 'lucide-react'
