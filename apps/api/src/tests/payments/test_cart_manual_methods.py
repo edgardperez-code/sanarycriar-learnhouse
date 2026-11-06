@@ -273,6 +273,24 @@ class TestMethodSettings:
         assert (await _set_method(client, current, admin_user, mm.ZELLE, {"enabled": False})).status_code == 200
         assert (await _set_settings(client, current, admin_user, {"whatsapp": ""})).status_code == 200
 
+    async def test_clearing_a_shared_setting_while_pago_movil_is_on(self, client, current, admin_user, manual):
+        response = await _set_settings(client, current, admin_user, {"whatsapp": ""})
+        assert response.status_code == 400
+        assert response.json()["detail"] == {
+            "code": "INCOMPLETE", "missing": ["whatsapp"], "method": "pago_movil",
+            "message": "Para quitar el WhatsApp, primero desactiva Pago Móvil: lo usa para los comprobantes.",
+        }
+        no_rate = await _set_settings(client, current, admin_user, {"fx_mode": "manual"})
+        assert no_rate.json()["detail"]["message"] == (
+            "Escribe la tasa manual: Pago Móvil la usa para calcular el monto en bolívares."
+        )
+        # Its own data, or switching it on, keep the usual message.
+        bank = await _set_settings(client, current, admin_user, {"bank_name": ""})
+        assert bank.json()["detail"] == {
+            "code": "INCOMPLETE", "missing": ["bank_name"],
+            "message": "Completa banco, código, teléfono, cédula o RIF y WhatsApp antes de activar Pago Móvil.",
+        }
+
     async def test_a_saved_pago_movil_stays_as_it_was(self, client, current, db, admin_user, manual):
         before = (await _rows(db, PaymentsConfig))[0]
         state = (before.enabled, before.active, dict(before.provider_config))

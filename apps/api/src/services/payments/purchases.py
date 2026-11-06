@@ -634,6 +634,12 @@ async def update_manual_settings(db_session: AsyncSession, org_id: int, body: Ma
         enabled = changes["enabled"]
     missing = missing_fields(settings)
     if enabled and missing:
+        # Pago Móvil already on and a shared setting cleared (from the common
+        # card): say what to do, like the other methods.
+        already_on = cfg is not None and bool(cfg.enabled) and changes.get("enabled") is not True
+        if already_on and all(field in ("whatsapp", "fx_manual_rate") for field in missing):
+            raise purchase_error("INCOMPLETE", message=mm.needed_message(mm.PAGO_MOVIL, missing), missing=missing,
+                                 method=mm.PAGO_MOVIL)
         raise purchase_error("INCOMPLETE", missing=missing)
     _check_other_methods(cfg, settings)
 
