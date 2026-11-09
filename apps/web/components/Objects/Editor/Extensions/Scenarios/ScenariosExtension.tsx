@@ -4,6 +4,8 @@ import { ArrowCounterClockwise, ArrowRight, CheckCircle, GitBranch, Sparkle } fr
 import dynamic from 'next/dynamic'
 import { useEditorProvider } from '@components/Contexts/Editor/EditorContext'
 import ScenariosModal from './ScenariosModal'
+// Sanar y Criar: learner-facing strings translated (were hard-coded English).
+import { useFixesT } from '@components/ScFixes/useFixesT'
 const AIScenarioGeneratorModal = dynamic(() => import('@components/Objects/AI/AIScenarioGeneratorModal'), { ssr: false })
 
 interface ScenarioOption {
@@ -20,6 +22,7 @@ interface Scenario {
 }
 
 const ScenariosExtension: React.FC = (props: any) => {
+  const { fx } = useFixesT()
   const [title, setTitle] = useState(props.node.attrs.title)
   const [scenarios, setScenarios] = useState<Scenario[]>(props.node.attrs.scenarios)
   const [currentScenarioId, setCurrentScenarioId] = useState(props.node.attrs.currentScenarioId)
@@ -76,14 +79,14 @@ const ScenariosExtension: React.FC = (props: any) => {
           <div className="flex items-center gap-2">
             <GitBranch weight="duotone" className="text-neutral-400" size={16} />
             <span className="uppercase tracking-widest text-xs font-bold text-neutral-400">
-              Interactive Scenario
+              {!isEditable && title ? title : fx('scenarios.label')}
             </span>
           </div>
 
           {/* Completion message */}
           {scenarioComplete && !isEditable && (
             <div className="text-xs font-medium px-2 py-1 rounded-md bg-emerald-100 text-emerald-700">
-              Scenario Complete!
+              {fx('scenarios.complete_badge')}
             </div>
           )}
 
@@ -110,7 +113,8 @@ const ScenariosExtension: React.FC = (props: any) => {
             <button
               onClick={resetScenario}
               className="p-1.5 rounded-md hover:bg-neutral-200 transition-colors"
-              title="Reset scenario"
+              title={fx('scenarios.reset')}
+              aria-label={fx('scenarios.reset')}
             >
               <ArrowCounterClockwise weight="duotone" className="text-neutral-500" size={15} />
             </button>
@@ -144,16 +148,16 @@ const ScenariosExtension: React.FC = (props: any) => {
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle weight="duotone" size={28} className="text-emerald-600" />
             </div>
-            <h4 className="text-xl font-bold text-neutral-900 mb-2">Scenario Complete!</h4>
+            <h4 className="text-xl font-bold text-neutral-900 mb-2">{fx('scenarios.complete_title')}</h4>
             <p className="text-neutral-600 mb-6 leading-relaxed max-w-md mx-auto">
-              You've successfully navigated through this interactive scenario.
+              {fx('scenarios.complete_body')}
             </p>
             <button
               onClick={resetScenario}
               className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-700 hover:bg-neutral-800 text-white rounded-lg transition-colors font-medium text-sm"
             >
               <ArrowCounterClockwise weight="duotone" size={16} />
-              Start Over
+              {fx('scenarios.start_over')}
             </button>
           </div>
         ) : (
@@ -166,8 +170,8 @@ const ScenariosExtension: React.FC = (props: any) => {
                     <div className="w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3">
                       <GitBranch weight="duotone" size={20} className="text-neutral-400" />
                     </div>
-                    <h3 className="text-base font-medium text-neutral-900 mb-2">Scenario Not Found</h3>
-                    <p className="text-neutral-500 text-sm">Please check your scenario configuration and try again.</p>
+                    <h3 className="text-base font-medium text-neutral-900 mb-2">{fx('scenarios.not_found_title')}</h3>
+                    <p className="text-neutral-500 text-sm">{fx('scenarios.not_found_body')}</p>
                   </div>
                 )
               }

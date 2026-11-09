@@ -26,6 +26,16 @@
       "confirm_free_one": "Archive and make it free",
       "confirm_free_other": "Archive and make them free",
       "archiving": "Archiving…"
+    },
+    "scenarios": {
+      "label": "Interactive scenario",
+      "complete_badge": "Scenario complete!",
+      "complete_title": "You reached the end!",
+      "complete_body": "You've gone through this scenario. You can start over and try other paths.",
+      "start_over": "Start over",
+      "reset": "Reset scenario",
+      "not_found_title": "Scenario not found",
+      "not_found_body": "Please check your scenario configuration and try again."
     }
   }
 }

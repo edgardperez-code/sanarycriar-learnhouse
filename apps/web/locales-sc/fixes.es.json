@@ -26,6 +26,16 @@
       "confirm_free_one": "Archivar y dejarlo gratis",
       "confirm_free_other": "Archivar y dejarlos gratis",
       "archiving": "Archivando…"
+    },
+    "scenarios": {
+      "label": "Escenario interactivo",
+      "complete_badge": "¡Escenario completado!",
+      "complete_title": "¡Llegaste al final!",
+      "complete_body": "Recorriste este escenario. Puedes volver a empezar y probar otros caminos.",
+      "start_over": "Volver a empezar",
+      "reset": "Reiniciar el escenario",
+      "not_found_title": "No encontramos este paso",
+      "not_found_body": "Revisa la configuración del escenario e inténtalo de nuevo."
     }
   }
 }
