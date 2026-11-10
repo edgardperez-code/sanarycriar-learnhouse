@@ -1176,7 +1176,9 @@ export function validateMethodDraft(method: ExtraMethod, draft: MethodDraft): Me
     tooLong('holder_name', ORDER_LIMITS.holder_name)
   } else {
     const payId = String(draft.pay_id ?? '').replace(/\s/g, '')
-    if (payId && !/^\d{5,20}$/.test(payId)) errors.push({ field: 'pay_id', code: 'pay_id' })
+    // Binance Pay sends to a Pay ID (digits) or to the account's email.
+    const payIdOk = payId.includes('@') ? payId.length <= 254 && EMAIL_RE.test(payId.toLowerCase()) : /^\d{5,20}$/.test(payId)
+    if (payId && !payIdOk) errors.push({ field: 'pay_id', code: 'pay_id' })
     const address = String(draft.usdt_address ?? '').replace(/\s/g, '')
     const network = text('usdt_network')
     if (address && (address.length > 100 || !/^[A-Za-z0-9]+$/.test(address))) {

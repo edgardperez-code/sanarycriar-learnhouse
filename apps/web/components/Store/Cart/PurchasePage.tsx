@@ -218,7 +218,8 @@ function detailRows(pay: PurchasePay, payment: PurchasePayment, ct: CartTranslat
       const payId = text(payment.pay_id)
       const address = text(payment.usdt_address)
       return [
-        { key: 'pay_id', label: ct('purchase.field_pay_id'), value: payId, copy: payId },
+        // Binance Pay sends to a Pay ID or to the account's email: name what it is.
+        { key: 'pay_id', label: ct(payId.includes('@') ? 'purchase.field_pay_email' : 'purchase.field_pay_id'), value: payId, copy: payId },
         { key: 'address', label: ct('purchase.field_usdt_address'), value: address, copy: address, mono: true },
         // The network is chosen from a list in Binance: nothing to copy.
         {

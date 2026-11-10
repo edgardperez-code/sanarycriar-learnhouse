@@ -729,6 +729,9 @@ describe('bank transfer, Zelle and Binance settings (§A.2, §A.3)', () => {
     expect(codes('binance', empty)).toEqual([])
     expect(codes('binance', { ...empty, pay_id: '123 456 789' })).toEqual([])
     expect(codes('binance', { ...empty, pay_id: '1234' })).toEqual(['pay_id:pay_id'])
+    // Binance Pay also sends to the account's email (2026-11).
+    expect(codes('binance', { ...empty, pay_id: 'Pagos@Ejemplo.com' })).toEqual([])
+    expect(codes('binance', { ...empty, pay_id: 'pagos@ejemplo' })).toEqual(['pay_id:pay_id'])
     expect(codes('binance', { ...empty, pay_id: '12345a' })).toEqual(['pay_id:pay_id'])
     expect(codes('binance', { ...empty, usdt_address: tron, usdt_network: 'TRC20' })).toEqual([])
     // An address needs its network.

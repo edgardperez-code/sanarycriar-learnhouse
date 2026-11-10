@@ -147,7 +147,7 @@
       "binance_address_title": "Si pagas a la dirección USDT",
       "binance_network_warning": "Usa solo la red {{network}}: si envías por otra red, el dinero se puede perder.",
       "binance_fee_note": "La comisión de la red corre por tu cuenta: debe llegar el monto completo.",
-      "binance_pay_id_note": "Enviar con Binance Pay a un Pay ID no tiene comisión.",
+      "binance_pay_id_note": "Enviar con Binance Pay a un Pay ID o a un correo no tiene comisión.",
       "instructions_title": "Ten en cuenta",
       "step2_title": "Envíanos el comprobante por WhatsApp",
       "step2_description": "El mensaje ya va escrito con tu pedido: solo adjunta la captura del pago.",
@@ -180,7 +180,8 @@
       "voided_title": "Este pedido fue anulado.",
       "session_expired": "Tu sesión expiró. Entra de nuevo para cancelar el pedido.",
       "contact_whatsapp": "Escríbenos por WhatsApp",
-      "new_order_full": "No cupieron todos los productos en tu carrito: puedes pagar hasta 20 productos por pedido."
+      "new_order_full": "No cupieron todos los productos en tu carrito: puedes pagar hasta 20 productos por pedido.",
+      "field_pay_email": "Correo de Binance Pay"
     },
     "course": {
       "pending_title": "Tu pedido {{code}} está por confirmar",

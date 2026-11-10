@@ -147,7 +147,7 @@
       "binance_address_title": "If you pay to the USDT address",
       "binance_network_warning": "Use only the {{network}} network: if you send it on another network, the money can be lost.",
       "binance_fee_note": "The network fee is on you: the full amount must arrive.",
-      "binance_pay_id_note": "Sending with Binance Pay to a Pay ID has no fee.",
+      "binance_pay_id_note": "Sending with Binance Pay to a Pay ID or an email has no fee.",
       "instructions_title": "Please note",
       "step2_title": "Send us the receipt on WhatsApp",
       "step2_description": "The message is already written with your order: just attach the payment screenshot.",
@@ -180,7 +180,8 @@
       "voided_title": "This order was voided.",
       "session_expired": "Your session expired. Sign in again to cancel the order.",
       "contact_whatsapp": "Write to us on WhatsApp",
-      "new_order_full": "Not all products fit in your cart: you can pay for up to 20 products per order."
+      "new_order_full": "Not all products fit in your cart: you can pay for up to 20 products per order.",
+      "field_pay_email": "Binance Pay email"
     },
     "course": {
       "pending_title": "Your order {{code}} is awaiting confirmation",

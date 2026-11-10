@@ -243,6 +243,7 @@ class TestMethodSettings:
         ("zelle", "holder_name", "H" * 81),
         ("binance", "pay_id", "abc123"),
         ("binance", "pay_id", "1234"),
+        ("binance", "pay_id", "pagos@ejemplo"),
         ("binance", "usdt_network", "BTC"),
         ("binance", "usdt_address", "T" + "0" * 33),
         ("binance", "usdt_address", "dirección con ñ"),
@@ -555,7 +556,7 @@ class TestPieces:
 
     def test_missing_message(self):
         assert mm.missing_message("binance", ["pay_id_or_address", "whatsapp"]) == (
-            "Para activar Binance falta: Binance Pay ID o dirección USDT y WhatsApp."
+            "Para activar Binance falta: Binance Pay ID o correo, o dirección USDT y WhatsApp."
         )
         assert mm.missing_message("transferencia", ["bank_name", "account_number", "whatsapp"]) == (
             "Para activar Transferencia bancaria falta: banco, número de cuenta y WhatsApp."
@@ -590,3 +591,36 @@ class TestPieces:
         assert pay_text("transferencia", Decimal("40"), Decimal("35492.08")) == "Bs. 35.492,08"
         assert amount_text("pago_movil", Decimal("40"), Decimal("35492.08")) == "Bs. 35.492,08 (US$ 40,00)"
         assert amount_text("zelle", Decimal("40"), None) == "US$ 40,00"
+
+
+class TestBinancePayEmail:
+    """Binance Pay also sends to the account's email (client request, 2026-11)."""
+
+    def test_pay_id_accepts_digits_or_an_email(self):
+        from src.services.payments import manual_methods as mm
+
+        assert mm._pay_id(" 123 456 789 ") == "123456789"
+        assert mm._pay_id("Pagos@Ejemplo.com") == "pagos@ejemplo.com"
+        assert mm.is_pay_email("pagos@ejemplo.com") is True
+        assert mm.is_pay_email("123456789") is False
+        for bad in ("abc123", "1234", "pagos@ejemplo", "@ejemplo.com"):
+            with pytest.raises(mm.InvalidSetting):
+                mm._pay_id(bad)
+
+    def test_order_email_names_the_binance_email(self):
+        from types import SimpleNamespace
+        from datetime import date, datetime, timedelta, timezone
+        from decimal import Decimal
+
+        from src.services.payments import manual_methods as mm
+        from src.services.payments.purchase_emails import ItemLine, render_created
+
+        branding = SimpleNamespace(org_name="Sanar y Criar", logo_url=None, brand_color=None, powered_by=True)
+        _, html_doc = render_created(
+            branding=branding, first_name="Ana", code="SYC-1", items=[ItemLine(name="Ebook", amount=Decimal("29"))],
+            amount=Decimal("29"), amount_ves=None, rate=None, rate_source=None, rate_date=date.today(),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1), payment={"pay_id": "pagos@ejemplo.com"},
+            whatsapp_url=None, purchase_url="https://x/p", method=mm.BINANCE,
+        )
+        assert "Correo de Binance Pay" in html_doc and "pagos@ejemplo.com" in html_doc
+        assert "Binance Pay ID" not in html_doc

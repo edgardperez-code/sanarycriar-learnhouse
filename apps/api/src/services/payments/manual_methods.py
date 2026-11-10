@@ -122,7 +122,7 @@ FIELD_MESSAGES = {
     "id_document": "Escribe la cédula o el RIF, por ejemplo V-12345678 o J-412345678.",
     "email": "Escribe un correo válido.",
     "phone": "Escribe el teléfono de Zelle con código de área, por ejemplo +1 305 555 1234.",
-    "pay_id": "El Binance Pay ID son solo números, por ejemplo 123456789.",
+    "pay_id": "Escribe tu Binance Pay ID (solo números, por ejemplo 123456789) o el correo de tu cuenta de Binance.",
     "usdt_address": "Revisa la dirección USDT.",
     "usdt_network": "Elige la red de la dirección USDT.",
     "instructions": "Las instrucciones admiten hasta 500 caracteres.",
@@ -138,7 +138,7 @@ MISSING_LABELS = {
     "account_type": "tipo de cuenta",
     "holder_name": "titular",
     "email_or_phone": "correo o teléfono de Zelle",
-    "pay_id_or_address": "Binance Pay ID o dirección USDT",
+    "pay_id_or_address": "Binance Pay ID o correo, o dirección USDT",
     "usdt_network": "red de la dirección USDT",
     "whatsapp": "WhatsApp",
     "fx_manual_rate": "tasa manual",
@@ -195,12 +195,24 @@ def _zelle_phone(value: Any) -> str:
 
 
 def _pay_id(value: Any) -> str:
+    """Binance Pay receiver: the Pay ID (digits) or the account's email.
+
+    Binance Pay sends to either one, so both are accepted (client request,
+    2026-11). An email is checked and stored like the other emails.
+    """
     text = re.sub(r"\s", "", _as_text("pay_id", value))
     if not text:
         return ""
+    if "@" in text:
+        return _wrap("pay_id", _notify_email)(text)
     if not re.fullmatch(r"\d{5,20}", text):
         raise _field_error("pay_id")
     return text
+
+
+def is_pay_email(pay_id: Any) -> bool:
+    """True when the Binance Pay receiver is an email, not a Pay ID."""
+    return "@" in str(pay_id or "")
 
 
 def _network(value: Any) -> str:

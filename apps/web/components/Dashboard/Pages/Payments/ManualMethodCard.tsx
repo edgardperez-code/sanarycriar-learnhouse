@@ -637,7 +637,10 @@ function BinanceFields({ idp, ot, draft, update, errorFor }: FieldsProps) {
         <Field id={`${idp}-pay-id`} label={ot('binance.pay_id_label')} hint={ot('binance.pay_id_hint')} error={errorFor('pay_id')}>
           <Input
             id={`${idp}-pay-id`}
-            inputMode="numeric"
+            // A Pay ID (digits) or the Binance account email.
+            autoComplete="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={draft.pay_id}
             onChange={(e) => update('pay_id', e.target.value)}
             className="font-mono"

@@ -7311,6 +7311,16 @@
       "confirm_free_one": "Archive and make it free",
       "confirm_free_other": "Archive and make them free",
       "archiving": "Archiving…"
+    },
+    "scenarios": {
+      "label": "Interactive scenario",
+      "complete_badge": "Scenario complete!",
+      "complete_title": "You reached the end!",
+      "complete_body": "You've gone through this scenario. You can start over and try other paths.",
+      "start_over": "Start over",
+      "reset": "Reset scenario",
+      "not_found_title": "Scenario not found",
+      "not_found_body": "Please check your scenario configuration and try again."
     }
   },
   "sc_errors": {
@@ -8146,7 +8156,7 @@
       "account_type": "Account type",
       "zelle_email": "Zelle email",
       "zelle_phone": "Zelle phone",
-      "pay_id": "Binance Pay ID",
+      "pay_id": "Binance Pay ID or email",
       "usdt_address": "USDT address",
       "usdt_network": "Network",
       "section_confirmation": "Payment review",
@@ -8238,7 +8248,7 @@
       "account_type": "account type",
       "holder_name": "account holder",
       "email_or_phone": "Zelle email or phone",
-      "pay_id_or_address": "Binance Pay ID or USDT address",
+      "pay_id_or_address": "Binance Pay ID or email, or USDT address",
       "usdt_network": "network of the USDT address",
       "whatsapp": "WhatsApp",
       "fx_manual_rate": "manual rate"
@@ -8383,12 +8393,12 @@
       "toggled_off": "Binance turned off.",
       "saved": "Binance saved.",
       "required_to_enable": "This is needed to turn Binance on.",
-      "pay_id_or_address_required": "Write the Binance Pay ID or the USDT address.",
+      "pay_id_or_address_required": "Write the Binance Pay ID or email, or the USDT address.",
       "incomplete": "To turn Binance on, this is missing: {{fields}}.",
       "section_account": "Where you receive the USDT",
-      "either_hint": "You can give the Binance Pay ID, the USDT address or both.",
-      "pay_id_label": "Binance Pay ID",
-      "pay_id_hint": "Digits only, for example 123456789. You'll find it in the Binance app, under Pay.",
+      "either_hint": "You can give the Binance Pay ID or the Binance email, the USDT address, or both.",
+      "pay_id_label": "Binance Pay ID or email",
+      "pay_id_hint": "Your Pay ID (digits only, for example 123456789) or your Binance account email. You will find them in the Binance app, under Pay.",
       "address_label": "USDT address",
       "address_hint": "The address to receive USDT, as you copy it from your wallet.",
       "network_label": "Network of the address",
@@ -8403,7 +8413,7 @@
       "id_document": "Write the ID or RIF, for example V-12345678 or J-412345678.",
       "email": "Write a valid email.",
       "zelle_phone": "Write the Zelle phone with the area code, for example +1 305 555 1234.",
-      "pay_id": "The Binance Pay ID is digits only, for example 123456789.",
+      "pay_id": "Write your Binance Pay ID (digits only, for example 123456789) or your Binance account email.",
       "usdt_address": "Check the USDT address.",
       "address_network": "Check the USDT address: it doesn't match the {{network}} network.",
       "network_required": "Choose the network of the USDT address."
@@ -8557,7 +8567,7 @@
       "binance_address_title": "If you pay to the USDT address",
       "binance_network_warning": "Use only the {{network}} network: if you send it on another network, the money can be lost.",
       "binance_fee_note": "The network fee is on you: the full amount must arrive.",
-      "binance_pay_id_note": "Sending with Binance Pay to a Pay ID has no fee.",
+      "binance_pay_id_note": "Sending with Binance Pay to a Pay ID or an email has no fee.",
       "instructions_title": "Please note",
       "step2_title": "Send us the receipt on WhatsApp",
       "step2_description": "The message is already written with your order: just attach the payment screenshot.",
@@ -8590,7 +8600,8 @@
       "voided_title": "This order was voided.",
       "session_expired": "Your session expired. Sign in again to cancel the order.",
       "contact_whatsapp": "Write to us on WhatsApp",
-      "new_order_full": "Not all products fit in your cart: you can pay for up to 20 products per order."
+      "new_order_full": "Not all products fit in your cart: you can pay for up to 20 products per order.",
+      "field_pay_email": "Binance Pay email"
     },
     "course": {
       "pending_title": "Your order {{code}} is awaiting confirmation",

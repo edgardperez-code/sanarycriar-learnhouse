@@ -261,7 +261,7 @@ def _detail_rows(method: str, payment: dict, pay: str) -> list[tuple[str, str]]:
     if method == mm.BINANCE:
         network = payment.get("usdt_network") or ""
         return [
-            ("Binance Pay ID", payment.get("pay_id") or ""),
+            ("Correo de Binance Pay" if mm.is_pay_email(payment.get("pay_id")) else "Binance Pay ID", payment.get("pay_id") or ""),
             ("Dirección USDT", payment.get("usdt_address") or ""),
             ("Red", mm.NETWORK_LABELS.get(network, network) if payment.get("usdt_address") else ""),
             ("Monto", pay),
